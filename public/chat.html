@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>채팅방 — RasPIchat</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="chat-layout">
+    <div class="chat-header">
+      <div>
+        <div class="code-badge" id="header-code"></div>
+        <div class="room-info"><span id="user-count">0</span>명 참여 중</div>
+      </div>
+    </div>
+
+    <div class="messages" id="messages"></div>
+
+    <div class="chat-input-wrap">
+      <input type="text" id="msg-input" placeholder="메시지를 입력하세요" maxlength="200" autocomplete="off">
+      <button id="btn-send">전송</button>
+    </div>
+  </div>
+
+  <script src="/socket.io.min.js"></script>
+  <script src="/client.js"></script>
+</body>
+</html>

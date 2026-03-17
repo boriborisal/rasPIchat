@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>방 생성 완료 — RasPIchat</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>방이 만들어졌어요</h1>
+    <p class="subtitle">아래 코드나 QR코드로 친구들을 초대하세요</p>
+
+    <div class="card text-center">
+      <p style="color:#888; font-size:0.85rem;">방 코드</p>
+      <div class="room-code" id="room-code">------</div>
+      <div class="qr-wrap">
+        <img id="qr-img" src="" alt="QR코드 로딩 중...">
+      </div>
+      <p style="color:#aaa; font-size:0.8rem;">QR코드를 스캔하면 바로 입장</p>
+    </div>
+
+    <button class="btn btn-primary" id="btn-start">채팅 시작하기</button>
+  </div>
+
+  <script>
+    const code = location.pathname.split('/')[2];
+
+    document.getElementById('room-code').textContent = code;
+    document.getElementById('qr-img').src = `/api/room/${code}/qr`;
+
+    document.getElementById('btn-start').addEventListener('click', () => {
+      location.href = `/room/${code}/join`;
+    });
+  </script>
+</body>
+</html>

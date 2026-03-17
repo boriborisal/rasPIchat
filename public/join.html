@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>닉네임 입력 — RasPIchat</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>입장하기</h1>
+    <p class="subtitle">방 코드: <strong id="room-code-display"></strong></p>
+
+    <div class="card">
+      <input type="text" id="input-nickname" placeholder="닉네임 (최대 10자)" maxlength="10" class="gap-12">
+      <button class="btn btn-primary" id="btn-enter">채팅 입장</button>
+      <p class="error-msg" id="error-msg" style="display:none"></p>
+    </div>
+  </div>
+
+  <script>
+    const code = location.pathname.split('/')[2];
+    document.getElementById('room-code-display').textContent = code;
+
+    // 방 존재 여부 먼저 확인
+    fetch(`/api/room/${code}`).then(res => {
+      if (!res.ok) {
+        document.body.innerHTML = '<div class="container"><p>존재하지 않는 방입니다.</p></div>';
+      }
+    });
+
+    document.getElementById('btn-enter').addEventListener('click', () => {
+      const nickname = document.getElementById('input-nickname').value.trim();
+      if (!nickname) {
+        showError('닉네임을 입력해주세요');
+        return;
+      }
+      sessionStorage.setItem('nickname', nickname);
+      sessionStorage.setItem('roomCode', code);
+      location.href = `/room/${code}/chat`;
+    });
+
+    document.getElementById('input-nickname').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('btn-enter').click();
+    });
+
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+  </script>
+</body>
+</html>

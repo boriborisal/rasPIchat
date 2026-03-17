@@ -1,0 +1,238 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f0f2f5;
+  color: #1a1a2e;
+  min-height: 100vh;
+}
+
+/* ── 공통 컨테이너 ── */
+.container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: #666;
+  font-size: 0.95rem;
+  margin-bottom: 32px;
+}
+
+/* ── 버튼 ── */
+button, .btn {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+button:active, .btn:active {
+  opacity: 0.8;
+}
+
+.btn-primary {
+  background: #4f46e5;
+  color: #fff;
+}
+
+.btn-secondary {
+  background: #fff;
+  color: #4f46e5;
+  border: 2px solid #4f46e5;
+}
+
+/* ── 입력창 ── */
+input[type="text"] {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid #ddd;
+  border-radius: 12px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+  background: #fff;
+}
+
+input[type="text"]:focus {
+  border-color: #4f46e5;
+}
+
+/* ── 카드 ── */
+.card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+
+.divider {
+  text-align: center;
+  color: #aaa;
+  margin: 20px 0;
+  font-size: 0.85rem;
+}
+
+/* ── 방 코드 표시 ── */
+.room-code {
+  font-size: 2.8rem;
+  font-weight: 800;
+  letter-spacing: 6px;
+  color: #4f46e5;
+  text-align: center;
+  margin: 16px 0;
+}
+
+/* ── QR 이미지 ── */
+.qr-wrap {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.qr-wrap img {
+  width: 200px;
+  height: 200px;
+  border-radius: 8px;
+}
+
+/* ── 채팅방 ── */
+.chat-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.chat-header {
+  background: #4f46e5;
+  color: #fff;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.chat-header .room-info {
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+.chat-header .code-badge {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── 메시지 버블 ── */
+.msg {
+  display: flex;
+  flex-direction: column;
+  max-width: 75%;
+}
+
+.msg.mine {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.msg.other {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.msg .nickname {
+  font-size: 0.75rem;
+  color: #888;
+  margin-bottom: 3px;
+}
+
+.bubble {
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.msg.mine .bubble {
+  background: #4f46e5;
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.msg.other .bubble {
+  background: #fff;
+  color: #1a1a2e;
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.msg .time {
+  font-size: 0.7rem;
+  color: #aaa;
+  margin-top: 3px;
+}
+
+/* ── 시스템 메시지 ── */
+.sys-msg {
+  text-align: center;
+  font-size: 0.78rem;
+  color: #999;
+  padding: 4px 0;
+}
+
+/* ── 입력창 영역 ── */
+.chat-input-wrap {
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #fff;
+  border-top: 1px solid #eee;
+  flex-shrink: 0;
+}
+
+.chat-input-wrap input {
+  flex: 1;
+  border-radius: 24px;
+  padding: 12px 16px;
+  font-size: 0.95rem;
+}
+
+.chat-input-wrap button {
+  width: auto;
+  padding: 12px 20px;
+  border-radius: 24px;
+  background: #4f46e5;
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.gap-12 { margin-bottom: 12px; }
+.gap-20 { margin-bottom: 20px; }
+.text-center { text-align: center; }
+.error-msg { color: #e53e3e; font-size: 0.85rem; margin-top: 8px; }

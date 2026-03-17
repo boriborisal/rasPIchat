@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RasPIchat</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>RasPIchat</h1>
+    <p class="subtitle">인터넷 없이 즐기는 실시간 채팅</p>
+
+    <div class="card">
+      <button class="btn btn-primary gap-12" id="btn-create">방 만들기</button>
+    </div>
+
+    <div class="divider">또는</div>
+
+    <div class="card">
+      <input type="text" id="input-code" placeholder="방 코드 6자리 입력" maxlength="6"
+             style="text-transform:uppercase" class="gap-12">
+      <button class="btn btn-secondary" id="btn-join">입장하기</button>
+      <p class="error-msg" id="error-msg" style="display:none"></p>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('btn-create').addEventListener('click', async () => {
+      const res = await fetch('/api/room', { method: 'POST' });
+      const data = await res.json();
+      location.href = `/room/${data.code}/host`;
+    });
+
+    document.getElementById('btn-join').addEventListener('click', async () => {
+      const code = document.getElementById('input-code').value.trim().toUpperCase();
+      if (code.length !== 6) {
+        showError('6자리 코드를 입력해주세요');
+        return;
+      }
+      const res = await fetch(`/api/room/${code}`);
+      if (res.ok) {
+        location.href = `/room/${code}/join`;
+      } else {
+        showError('존재하지 않는 방입니다');
+      }
+    });
+
+    document.getElementById('input-code').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('btn-join').click();
+    });
+
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
