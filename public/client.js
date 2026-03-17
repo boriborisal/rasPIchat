@@ -11,6 +11,28 @@ document.getElementById('header-code').textContent = roomCode;
 const socket = io();
 const messagesEl = document.getElementById('messages');
 const msgInput = document.getElementById('msg-input');
+const langSelect = document.getElementById('lang-select');
+
+// 지원 언어 목록 로드 후 저장된 언어로 초기화
+fetch('/api/languages')
+  .then(r => r.json())
+  .then(langs => {
+    if (!Array.isArray(langs)) return;
+    langs.forEach(({ code, name }) => {
+      const opt = document.createElement('option');
+      opt.value = code;
+      opt.textContent = name;
+      langSelect.appendChild(opt);
+    });
+    const saved = sessionStorage.getItem('translateLang');
+    if (saved) langSelect.value = saved;
+  })
+  .catch(() => {});
+
+// 드롭다운 변경 시 sessionStorage에 저장
+langSelect.addEventListener('change', () => {
+  sessionStorage.setItem('translateLang', langSelect.value);
+});
 
 // 방 입장
 socket.emit('join-room', { code: roomCode, nickname });
@@ -52,13 +74,47 @@ function sendMessage() {
 function appendMessage({ sender, text, timestamp, isMine }) {
   const div = document.createElement('div');
   div.className = `msg ${isMine ? 'mine' : 'other'}`;
-  div.innerHTML = `
-    ${!isMine ? `<span class="nickname">${escHtml(sender)}</span>` : ''}
-    <div class="bubble">${escHtml(text)}</div>
-    <span class="time">${escHtml(timestamp)}</span>
-  `;
+
+  const bubbleEl = document.createElement('div');
+  bubbleEl.className = 'bubble';
+  bubbleEl.textContent = text;
+
+  const translationEl = document.createElement('div');
+  translationEl.className = 'translation';
+
+  div.innerHTML = !isMine ? `<span class="nickname">${escHtml(sender)}</span>` : '';
+  div.appendChild(bubbleEl);
+
+  const timeEl = document.createElement('span');
+  timeEl.className = 'time';
+  timeEl.textContent = timestamp;
+  div.appendChild(timeEl);
+  div.appendChild(translationEl);
+
   messagesEl.appendChild(div);
   scrollToBottom();
+
+  // 번역 언어가 선택된 경우 번역 요청
+  const target = langSelect.value;
+  if (target) {
+    translateText(text, target, translationEl);
+  }
+}
+
+function translateText(text, target, el) {
+  el.textContent = '번역 중…';
+  fetch('/api/translate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ q: text, source: 'auto', target })
+  })
+    .then(r => r.json())
+    .then(data => {
+      el.textContent = data.translatedText || '';
+    })
+    .catch(() => {
+      el.textContent = '';
+    });
 }
 
 function appendSystem(msg) {

@@ -1,21 +1,23 @@
 # CLAUDE.md
 
 ## 프로젝트 개요
-인터넷 없이 동작하는 실시간 채팅 웹앱.
-라즈베리파이를 서버로 사용하며, QR코드나 방 코드로 입장하는 방식.
+실시간 채팅 웹앱 — 인터넷 연결 필요.
+Railway에 배포하며, QR코드나 방 코드로 입장하는 방식.
 회원가입 없이 닉네임만 입력하면 바로 채팅 가능.
+LibreTranslate API를 통해 메시지 실시간 번역 지원.
 
 ## 기술 스택
 - **Runtime**: Node.js (v18 이상)
 - **Server**: Express.js
 - **실시간 통신**: Socket.io
-- **Frontend**: Vanilla HTML / CSS / JS (프레임워크 없음 — 오프라인 경량화)
+- **Frontend**: Vanilla HTML / CSS / JS (프레임워크 없음)
 - **QR 생성**: qrcode (npm)
-- **배포 환경**: 라즈베리파이 4 (ARM, Ubuntu/Raspberry Pi OS)
+- **번역**: LibreTranslate API (공개 인스턴스 또는 자체 호스팅)
+- **배포 환경**: Railway (인터넷 연결 필수)
 
 ## 프로젝트 구조
 ```
-chat-app/
+rasPIchat/
 ├── server.js          # Express + Socket.io 메인 서버
 ├── package.json
 ├── CLAUDE.md
@@ -34,7 +36,13 @@ chat-app/
 2. **방 입장** — 코드 직접 입력 or QR 스캔 → 닉네임 입력 → 채팅 입장
 3. **실시간 채팅** — Socket.io로 같은 방 사람들에게 메시지 브로드캐스트
 4. **입퇴장 알림** — "OO님이 입장했습니다" 시스템 메시지
-5. **오프라인 완전 동작** — CDN 없음, 모든 리소스 로컬
+5. **실시간 번역** — LibreTranslate API로 메시지 자동 번역 (선택 언어로)
+
+## LibreTranslate 설정
+- 공개 인스턴스: `https://libretranslate.com` (API 키 필요할 수 있음)
+- 자체 호스팅: Railway에 LibreTranslate 별도 서비스 배포 가능
+- 환경변수: `LIBRETRANSLATE_URL`, `LIBRETRANSLATE_API_KEY` (선택)
+- 서버 측에서 번역 요청 → 클라이언트에 번역 결과 전달 (API 키 노출 방지)
 
 ## 개발 명령어
 ```bash
@@ -44,17 +52,15 @@ npm start            # 프로덕션 실행
 ```
 
 ## 서버 실행 포트
-- 기본: `3000`
-- 라즈베리파이 배포 시 `pm2`로 상시 실행
+- 기본: `process.env.PORT || 3000` (Railway가 PORT 자동 주입)
+
+## Railway 배포 체크리스트
+- [ ] `railway login` 및 프로젝트 연결
+- [ ] 환경변수 설정: `LIBRETRANSLATE_URL`, `LIBRETRANSLATE_API_KEY`
+- [ ] `railway up` 또는 GitHub 자동 배포 연결
+- [ ] Railway 도메인으로 QR코드 생성 (예: `https://raspichat.up.railway.app`)
 
 ## 주의사항
-- **CDN 절대 사용 금지** — 오프라인 환경이므로 모든 JS/CSS는 로컬에 포함
-- Socket.io 클라이언트도 node_modules에서 복사해서 public에 넣기
-- QR코드는 서버의 **로컬 IP + 포트**를 기반으로 생성 (예: `http://192.168.0.10:3000/room/ABC123`)
-
-## 라즈베리파이 배포 체크리스트
-- [ ] Node.js v18 이상 설치 확인
-- [ ] `npm install` 완료
-- [ ] `pm2 start server.js` 로 상시 실행 등록
-- [ ] 라즈베리파이 IP 고정 (공유기 설정)
-- [ ] 핫스팟 모드 설정 시 `hostapd` + `dnsmasq` 사용
+- LibreTranslate 번역은 서버에서 수행 (클라이언트에 API 키 노출 금지)
+- QR코드는 Railway 공개 URL 기반으로 생성
+- 인터넷 연결이 필요하므로 CDN 사용 가능하지만, 안정성을 위해 로컬 자산 권장

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>닉네임 입력 — RasPIchat</title>
+  <title>입장하기 — RasPIchat</title>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
@@ -11,12 +11,44 @@
     <h1>입장하기</h1>
     <p class="subtitle">방 코드: <strong id="room-code-display"></strong></p>
 
-    <div class="card">
+    <!-- 1단계: 닉네임 -->
+    <div id="step-nickname" class="card">
       <input type="text" id="input-nickname" placeholder="닉네임 (최대 10자)" maxlength="10" class="gap-12">
+      <button class="btn btn-primary" id="btn-next">다음</button>
+      <p class="error-msg" id="error-nickname" style="display:none"></p>
+    </div>
+
+    <!-- 2단계: 번역 언어 선택 -->
+    <div id="step-lang" class="card" style="display:none">
+      <p style="font-weight:600; margin-bottom:12px;">번역 언어 선택</p>
+      <p style="color:#888; font-size:0.85rem; margin-bottom:16px;">채팅 메시지를 자동으로 번역합니다. 나중에 채팅방에서도 변경할 수 있어요.</p>
+      <select id="lang-select-join" class="lang-select-join gap-12">
+        <option value="">번역 안 함</option>
+      </select>
+      <p class="error-msg" id="error-lang" style="display:none">언어 목록을 불러오지 못했습니다. 번역 없이 입장할 수 있어요.</p>
       <button class="btn btn-primary" id="btn-enter">채팅 입장</button>
-      <p class="error-msg" id="error-msg" style="display:none"></p>
     </div>
   </div>
+
+  <style>
+    .lang-select-join {
+      display: block;
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #ddd;
+      border-radius: 12px;
+      font-size: 1rem;
+      outline: none;
+      background: #fff;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23888' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+      cursor: pointer;
+    }
+    .lang-select-join:focus { border-color: #4f46e5; }
+  </style>
 
   <script>
     const code = location.pathname.split('/')[2];
@@ -29,23 +61,56 @@
       }
     });
 
-    document.getElementById('btn-enter').addEventListener('click', () => {
+    // 닉네임 단계 → 언어 선택 단계
+    function goToLangStep() {
       const nickname = document.getElementById('input-nickname').value.trim();
       if (!nickname) {
-        showError('닉네임을 입력해주세요');
+        showError('error-nickname', '닉네임을 입력해주세요');
         return;
       }
       sessionStorage.setItem('nickname', nickname);
+      document.getElementById('step-nickname').style.display = 'none';
+      document.getElementById('step-lang').style.display = 'block';
+      loadLanguages();
+    }
+
+    document.getElementById('btn-next').addEventListener('click', goToLangStep);
+    document.getElementById('input-nickname').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') goToLangStep();
+    });
+
+    // 언어 목록 로드
+    function loadLanguages() {
+      fetch('/api/languages')
+        .then(r => r.json())
+        .then(langs => {
+          if (!Array.isArray(langs)) throw new Error();
+          const sel = document.getElementById('lang-select-join');
+          langs.forEach(({ code, name }) => {
+            const opt = document.createElement('option');
+            opt.value = code;
+            opt.textContent = name;
+            sel.appendChild(opt);
+          });
+          // 이전에 선택한 언어 복원
+          const saved = sessionStorage.getItem('translateLang');
+          if (saved) sel.value = saved;
+        })
+        .catch(() => {
+          document.getElementById('error-lang').style.display = 'block';
+        });
+    }
+
+    // 채팅 입장
+    document.getElementById('btn-enter').addEventListener('click', () => {
+      const lang = document.getElementById('lang-select-join').value;
+      sessionStorage.setItem('translateLang', lang);
       sessionStorage.setItem('roomCode', code);
       location.href = `/room/${code}/chat`;
     });
 
-    document.getElementById('input-nickname').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') document.getElementById('btn-enter').click();
-    });
-
-    function showError(msg) {
-      const el = document.getElementById('error-msg');
+    function showError(id, msg) {
+      const el = document.getElementById(id);
       el.textContent = msg;
       el.style.display = 'block';
     }

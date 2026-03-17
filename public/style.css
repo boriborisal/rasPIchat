@@ -232,6 +232,41 @@ input[type="text"]:focus {
   font-size: 0.95rem;
 }
 
+/* ── 번역 언어 선택 ── */
+.translate-wrap {
+  display: flex;
+  align-items: center;
+}
+
+.translate-wrap select {
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.translate-wrap select option {
+  background: #4f46e5;
+  color: #fff;
+}
+
+/* ── 번역문 ── */
+.translation {
+  font-size: 0.78rem;
+  color: #888;
+  margin-top: 4px;
+  font-style: italic;
+  word-break: break-word;
+}
+
+.msg.mine .translation {
+  text-align: right;
+}
+
 .gap-12 { margin-bottom: 12px; }
 .gap-20 { margin-bottom: 20px; }
 .text-center { text-align: center; }

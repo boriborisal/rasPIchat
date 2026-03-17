@@ -1,4 +1,4 @@
-# SPEC.md — 오프라인 채팅 웹앱 기능 명세
+# SPEC.md — 채팅 웹앱 기능 명세
 
 ## 화면 구성
 
@@ -18,8 +18,9 @@
 - 입장 버튼
 
 ### 4. 채팅방 (`/room/:code/chat`)
-- 상단: 방 코드 + 현재 참여자 수
+- 상단: 방 코드 + 현재 참여자 수 + 번역 언어 선택 드롭다운
 - 중앙: 메시지 목록 (내 메시지 오른쪽, 상대 왼쪽)
+  - 각 메시지 아래 번역된 텍스트 표시 (번역 언어 선택 시)
 - 하단: 입력창 + 전송 버튼
 - 시스템 메시지: 입퇴장 알림 (가운데 회색 텍스트)
 
@@ -32,6 +33,8 @@
 | POST | `/api/room` | 방 생성, 코드 반환 |
 | GET | `/api/room/:code` | 방 존재 여부 확인 |
 | GET | `/api/room/:code/qr` | QR코드 이미지 반환 |
+| POST | `/api/translate` | 메시지 번역 (LibreTranslate 프록시) |
+| GET | `/api/languages` | 지원 언어 목록 반환 |
 
 ---
 
@@ -41,10 +44,27 @@
 |--------|------|------|
 | `join-room` | 클→서 | 방 입장 (code, nickname) |
 | `send-message` | 클→서 | 메시지 전송 |
-| `receive-message` | 서→클 | 메시지 수신 |
+| `receive-message` | 서→클 | 메시지 수신 (원문 포함) |
 | `user-joined` | 서→클 | 입장 알림 |
 | `user-left` | 서→클 | 퇴장 알림 |
 | `room-users` | 서→클 | 현재 참여자 수 |
+
+---
+
+## 번역 기능
+
+### 동작 방식
+1. 사용자가 채팅방 상단에서 번역 언어 선택 (예: 한국어 → 영어)
+2. 메시지가 서버로 전송될 때 원문(source text)도 함께 저장
+3. 클라이언트가 `/api/translate` 엔드포인트에 번역 요청
+4. 서버가 LibreTranslate API를 호출하여 번역 결과 반환
+5. 메시지 원문 아래 번역문 표시
+
+### LibreTranslate 연동
+- **환경변수**: `LIBRETRANSLATE_URL` (기본: `https://libretranslate.com`)
+- **환경변수**: `LIBRETRANSLATE_API_KEY` (공개 인스턴스에서 필요할 수 있음)
+- 언어 자동 감지(`source: "auto"`) 지원
+- 지원 언어: Korean, English, Japanese, Chinese, Spanish, French 등
 
 ---
 
@@ -70,10 +90,20 @@
 }
 ```
 
+### 번역 요청
+```js
+// POST /api/translate
+{ q: "안녕하세요", source: "auto", target: "en" }
+
+// 응답
+{ translatedText: "Hello" }
+```
+
 ---
 
 ## 비기능 요구사항
 - 서버 재시작 시 방/메시지 초기화 OK (DB 없음, 메모리만 사용)
 - 모바일 브라우저 우선 최적화
-- 오프라인 완전 동작 (외부 CDN, 폰트, 이미지 없음)
+- **인터넷 연결 필수** — LibreTranslate API 호출, Railway 배포
 - 동시 접속 30명 이내 가정
+- Railway 환경변수로 LibreTranslate URL/키 관리
