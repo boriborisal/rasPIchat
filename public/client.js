@@ -40,11 +40,11 @@ socket.on('receive-message', ({ nickname: sender, text, timestamp }) => {
 });
 
 socket.on('user-joined', ({ nickname: who }) => {
-  appendSystem(`${who}님이 입장했습니다`);
+  appendSystem(`${who} arrived`);
 });
 
 socket.on('user-left', ({ nickname: who }) => {
-  appendSystem(`${who}님이 퇴장했습니다`);
+  appendSystem(`${who} is go out for walk`);
 });
 
 socket.on('room-users', ({ count }) => {
@@ -93,7 +93,7 @@ function appendMessage({ sender, text, timestamp, isMine }) {
 }
 
 function translateText(text, target, el) {
-  el.textContent = '번역 중…';
+  el.textContent = 'translating…';
   fetch('/api/translate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

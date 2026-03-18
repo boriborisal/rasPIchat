@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>채팅방 — RasPIchat</title>
+  <title>chatroom — RasPIchat</title>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
@@ -14,8 +14,8 @@
         <div class="room-info"><span id="user-count">0</span>명 참여 중</div>
       </div>
       <div class="translate-wrap">
-        <select id="lang-select" title="번역 언어 선택">
-          <option value="">번역 끄기</option>
+        <select id="lang-select" title="Choose language">
+          <option value="">translate off</option>
         </select>
       </div>
     </div>
@@ -23,8 +23,8 @@
     <div class="messages" id="messages"></div>
 
     <div class="chat-input-wrap">
-      <input type="text" id="msg-input" placeholder="메시지를 입력하세요" maxlength="200" autocomplete="off">
-      <button id="btn-send">전송</button>
+      <input type="text" id="msg-input" placeholder="type the messages" maxlength="200" autocomplete="off">
+      <button id="btn-send">send</button>
     </div>
   </div>
 
