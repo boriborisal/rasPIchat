@@ -28,6 +28,10 @@
   <script>
     document.getElementById('btn-create').addEventListener('click', async () => {
       const res = await fetch('/api/room', { method: 'POST' });
+      if (!res.ok) {
+        showError('방 생성에 실패했습니다. 다시 시도해주세요');
+        return;
+      }
       const data = await res.json();
       location.href = `/room/${data.code}/host`;
     });

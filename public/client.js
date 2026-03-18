@@ -1,9 +1,9 @@
 const nickname = sessionStorage.getItem('nickname');
 const roomCode = sessionStorage.getItem('roomCode');
 
-// 닉네임 없으면 메인으로
 if (!nickname || !roomCode) {
   location.href = '/';
+  throw new Error('세션 정보 없음 — 메인 페이지로 이동합니다');
 }
 
 document.getElementById('header-code').textContent = roomCode;
@@ -13,7 +13,6 @@ const messagesEl = document.getElementById('messages');
 const msgInput = document.getElementById('msg-input');
 const langSelect = document.getElementById('lang-select');
 
-// 지원 언어 목록 로드 후 저장된 언어로 초기화
 fetch('/api/languages')
   .then(r => r.json())
   .then(langs => {
@@ -29,36 +28,29 @@ fetch('/api/languages')
   })
   .catch(() => {});
 
-// 드롭다운 변경 시 sessionStorage에 저장
 langSelect.addEventListener('change', () => {
   sessionStorage.setItem('translateLang', langSelect.value);
 });
 
-// 방 입장
 socket.emit('join-room', { code: roomCode, nickname });
 
-// 메시지 수신
 socket.on('receive-message', ({ nickname: sender, text, timestamp }) => {
   const isMine = sender === nickname;
   appendMessage({ sender, text, timestamp, isMine });
 });
 
-// 입장 알림
 socket.on('user-joined', ({ nickname: who }) => {
   appendSystem(`${who}님이 입장했습니다`);
 });
 
-// 퇴장 알림
 socket.on('user-left', ({ nickname: who }) => {
   appendSystem(`${who}님이 퇴장했습니다`);
 });
 
-// 참여자 수 갱신
 socket.on('room-users', ({ count }) => {
   document.getElementById('user-count').textContent = count;
 });
 
-// 전송
 document.getElementById('btn-send').addEventListener('click', sendMessage);
 msgInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') sendMessage();
@@ -94,7 +86,6 @@ function appendMessage({ sender, text, timestamp, isMine }) {
   messagesEl.appendChild(div);
   scrollToBottom();
 
-  // 번역 언어가 선택된 경우 번역 요청
   const target = langSelect.value;
   if (target) {
     translateText(text, target, translationEl);

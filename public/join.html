@@ -54,14 +54,12 @@
     const code = location.pathname.split('/')[2];
     document.getElementById('room-code-display').textContent = code;
 
-    // 방 존재 여부 먼저 확인
     fetch(`/api/room/${code}`).then(res => {
       if (!res.ok) {
         document.body.innerHTML = '<div class="container"><p>존재하지 않는 방입니다.</p></div>';
       }
     });
 
-    // 닉네임 단계 → 언어 선택 단계
     function goToLangStep() {
       const nickname = document.getElementById('input-nickname').value.trim();
       if (!nickname) {
@@ -79,7 +77,6 @@
       if (e.key === 'Enter') goToLangStep();
     });
 
-    // 언어 목록 로드
     function loadLanguages() {
       fetch('/api/languages')
         .then(r => r.json())
@@ -92,7 +89,6 @@
             opt.textContent = name;
             sel.appendChild(opt);
           });
-          // 이전에 선택한 언어 복원
           const saved = sessionStorage.getItem('translateLang');
           if (saved) sel.value = saved;
         })
@@ -101,7 +97,6 @@
         });
     }
 
-    // 채팅 입장
     document.getElementById('btn-enter').addEventListener('click', () => {
       const lang = document.getElementById('lang-select-join').value;
       sessionStorage.setItem('translateLang', lang);
