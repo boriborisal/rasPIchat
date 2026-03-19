@@ -254,17 +254,31 @@ input[type="text"]:focus {
   color: #fff;
 }
 
-/* ── 번역문 ── */
-.translation {
-  font-size: 0.78rem;
-  color: #888;
-  margin-top: 4px;
-  font-style: italic;
+/* ── 말풍선 내부 번역 구조 ── */
+/* 원문 텍스트: 기존 bubble 스타일 그대로 */
+.bubble-original {
   word-break: break-word;
 }
 
-.msg.mine .translation {
-  text-align: right;
+/* 원문/번역 구분선: 번역이 있을 때만 표시 (기본값: 숨김) */
+.bubble-divider {
+  display: none;
+  height: 1px;
+  margin: 6px 0;
+  background: rgba(255, 255, 255, 0.35); /* mine(파란 배경)용 */
+}
+
+.msg.other .bubble-divider {
+  background: rgba(0, 0, 0, 0.1); /* other(흰 배경)용 */
+}
+
+/* 번역 텍스트: 말풍선 내부 하단, 원문보다 작고 기울임 */
+.bubble-translation {
+  font-size: 0.8rem;
+  font-style: italic;
+  opacity: 0.82;
+  word-break: break-word;
+  line-height: 1.35;
 }
 
 .gap-12 { margin-bottom: 12px; }

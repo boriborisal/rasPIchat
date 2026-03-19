@@ -11,11 +11,13 @@
     <div class="chat-header">
       <div>
         <div class="code-badge" id="header-code"></div>
-        <div class="room-info"><span id="user-count">0</span>명 참여 중</div>
+        <!-- 참여자 수: client.js의 applyI18n()이 언어에 맞게 텍스트 전체를 교체 -->
+        <div class="room-info" id="user-count-wrap">0 online</div>
       </div>
       <div class="translate-wrap">
         <select id="lang-select" title="Choose language">
-          <option value="">translate off</option>
+          <!-- id="opt-translate-off": applyI18n()이 언어에 맞는 텍스트로 교체 -->
+          <option value="" id="opt-translate-off">Translate off</option>
         </select>
       </div>
     </div>
@@ -23,8 +25,9 @@
     <div class="messages" id="messages"></div>
 
     <div class="chat-input-wrap">
-      <input type="text" id="msg-input" placeholder="type the messages" maxlength="200" autocomplete="off">
-      <button id="btn-send">send</button>
+      <!-- placeholder·버튼 텍스트: client.js의 applyI18n()이 언어에 맞게 동적으로 변경 -->
+      <input type="text" id="msg-input" placeholder="Type a message..." maxlength="200" autocomplete="off">
+      <button id="btn-send">Send</button>
     </div>
   </div>
 

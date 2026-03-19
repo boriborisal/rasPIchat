@@ -1,36 +1,42 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>입장하기 — RasPIchat</title>
+  <!-- 공통 언어(영어)로 타이틀 표기 — 언어 선택 전 페이지이므로 영어 고정 -->
+  <title>Join Room — RasPIchat</title>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
   <div class="container">
-    <h1>입장하기</h1>
-    <p class="subtitle">방 코드: <strong id="room-code-display"></strong></p>
+    <h1>Join Room</h1>
+    <p class="subtitle">Room Code: <strong id="room-code-display"></strong></p>
 
-    <!-- 1단계: 닉네임 -->
+    <!-- 1단계: 닉네임 입력 -->
     <div id="step-nickname" class="card">
-      <input type="text" id="input-nickname" placeholder="닉네임 (최대 10자)" maxlength="10" class="gap-12">
-      <button class="btn btn-primary" id="btn-next">다음</button>
+      <input type="text" id="input-nickname" placeholder="Nickname (max 10 chars)" maxlength="10" class="gap-12">
+      <button class="btn btn-primary" id="btn-next">Next</button>
       <p class="error-msg" id="error-nickname" style="display:none"></p>
     </div>
 
     <!-- 2단계: 번역 언어 선택 -->
     <div id="step-lang" class="card" style="display:none">
-      <p style="font-weight:600; margin-bottom:12px;">번역 언어 선택</p>
-      <p style="color:#888; font-size:0.85rem; margin-bottom:16px;">채팅 메시지를 자동으로 번역합니다. 나중에 채팅방에서도 변경할 수 있어요.</p>
+      <p style="font-weight:600; margin-bottom:12px;">Select translation language</p>
+      <p style="color:#888; font-size:0.85rem; margin-bottom:16px;">
+        Messages will be automatically translated. You can change this in the chat room.
+      </p>
       <select id="lang-select-join" class="lang-select-join gap-12">
-        <option value="">번역 안 함</option>
+        <option value="">No translation</option>
       </select>
-      <p class="error-msg" id="error-lang" style="display:none">언어 목록을 불러오지 못했습니다. 번역 없이 입장할 수 있어요.</p>
-      <button class="btn btn-primary" id="btn-enter">채팅 입장</button>
+      <p class="error-msg" id="error-lang" style="display:none">
+        Failed to load language list. You can still join without translation.
+      </p>
+      <button class="btn btn-primary" id="btn-enter">Enter Chat</button>
     </div>
   </div>
 
   <style>
+    /* 언어 선택 드롭다운 스타일 — 커스텀 화살표 아이콘 포함 */
     .lang-select-join {
       display: block;
       width: 100%;
@@ -51,19 +57,22 @@
   </style>
 
   <script>
+    // URL에서 방 코드 추출 (예: /room/ABC123/join → "ABC123")
     const code = location.pathname.split('/')[2];
     document.getElementById('room-code-display').textContent = code;
 
+    // 방 존재 여부 확인 — 없으면 오류 메시지 표시
     fetch(`/api/room/${code}`).then(res => {
       if (!res.ok) {
-        document.body.innerHTML = '<div class="container"><p>존재하지 않는 방입니다.</p></div>';
+        document.body.innerHTML = '<div class="container"><p>Room not found.</p></div>';
       }
     });
 
+    // 닉네임 확인 후 언어 선택 단계로 이동
     function goToLangStep() {
       const nickname = document.getElementById('input-nickname').value.trim();
       if (!nickname) {
-        showError('error-nickname', '닉네임을 입력해주세요');
+        showError('error-nickname', 'Please enter a nickname.');
         return;
       }
       sessionStorage.setItem('nickname', nickname);
@@ -77,6 +86,7 @@
       if (e.key === 'Enter') goToLangStep();
     });
 
+    // /api/languages 에서 지원 언어 목록 로드 후 드롭다운에 추가
     function loadLanguages() {
       fetch('/api/languages')
         .then(r => r.json())
@@ -89,14 +99,17 @@
             opt.textContent = name;
             sel.appendChild(opt);
           });
+          // 이전에 선택한 언어 복원
           const saved = sessionStorage.getItem('translateLang');
           if (saved) sel.value = saved;
         })
         .catch(() => {
+          // 언어 목록 로드 실패 시 오류 메시지 표시
           document.getElementById('error-lang').style.display = 'block';
         });
     }
 
+    // "Enter Chat" 버튼: 선택 언어 저장 후 채팅방으로 이동
     document.getElementById('btn-enter').addEventListener('click', () => {
       const lang = document.getElementById('lang-select-join').value;
       sessionStorage.setItem('translateLang', lang);

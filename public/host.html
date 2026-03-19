@@ -1,34 +1,37 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>방 생성 완료 — RasPIchat</title>
+  <!-- 공통 언어(영어)로 타이틀 표기 — 언어 선택 전 페이지이므로 영어 고정 -->
+  <title>Room Created — RasPIchat</title>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
   <div class="container">
-    <h1>방이 만들어졌어요</h1>
-    <p class="subtitle">아래 코드나 QR코드로 친구들을 초대하세요</p>
+    <h1>Room Created!</h1>
+    <p class="subtitle">Share the code or QR code with your friends</p>
 
     <div class="card text-center">
-      <p style="color:#888; font-size:0.85rem;">방 코드</p>
+      <p style="color:#888; font-size:0.85rem;">Room Code</p>
       <div class="room-code" id="room-code">------</div>
       <div class="qr-wrap">
-        <img id="qr-img" src="" alt="QR코드 로딩 중...">
+        <img id="qr-img" src="" alt="Loading QR code...">
       </div>
-      <p style="color:#aaa; font-size:0.8rem;">QR코드를 스캔하면 바로 입장</p>
+      <p style="color:#aaa; font-size:0.8rem;">Scan QR code to join instantly</p>
     </div>
 
-    <button class="btn btn-primary" id="btn-start">채팅 시작하기</button>
+    <button class="btn btn-primary" id="btn-start">Start Chat</button>
   </div>
 
   <script>
+    // URL에서 방 코드 추출 (예: /room/ABC123/host → "ABC123")
     const code = location.pathname.split('/')[2];
 
     document.getElementById('room-code').textContent = code;
     document.getElementById('qr-img').src = `/api/room/${code}/qr`;
 
+    // "Start Chat" 버튼: 호스트도 join 페이지를 통해 닉네임·언어 선택 후 입장
     document.getElementById('btn-start').addEventListener('click', () => {
       location.href = `/room/${code}/join`;
     });

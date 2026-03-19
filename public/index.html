@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,47 +9,51 @@
 <body>
   <div class="container">
     <h1>RasPIchat</h1>
-    <p class="subtitle">인터넷 없이 즐기는 실시간 채팅</p>
+    <!-- 공통 언어(영어)로 서비스 소개 — 언어 선택 전 페이지이므로 영어 고정 -->
+    <p class="subtitle">Real-time chat without internet</p>
 
     <div class="card">
-      <button class="btn btn-primary gap-12" id="btn-create">방 만들기</button>
+      <button class="btn btn-primary gap-12" id="btn-create">Create Room</button>
     </div>
 
-    <div class="divider">또는</div>
+    <div class="divider">or</div>
 
     <div class="card">
-      <input type="text" id="input-code" placeholder="방 코드 6자리 입력" maxlength="6"
+      <input type="text" id="input-code" placeholder="Enter 6-digit room code" maxlength="6"
              style="text-transform:uppercase" class="gap-12">
-      <button class="btn btn-secondary" id="btn-join">입장하기</button>
+      <button class="btn btn-secondary" id="btn-join">Join</button>
       <p class="error-msg" id="error-msg" style="display:none"></p>
     </div>
   </div>
 
   <script>
+    // 방 생성 버튼 — POST /api/room 호출 후 host 페이지로 이동
     document.getElementById('btn-create').addEventListener('click', async () => {
       const res = await fetch('/api/room', { method: 'POST' });
       if (!res.ok) {
-        showError('방 생성에 실패했습니다. 다시 시도해주세요');
+        showError('Failed to create room. Please try again.');
         return;
       }
       const data = await res.json();
       location.href = `/room/${data.code}/host`;
     });
 
+    // 방 입장 버튼 — GET /api/room/:code 로 방 존재 확인 후 join 페이지로 이동
     document.getElementById('btn-join').addEventListener('click', async () => {
       const code = document.getElementById('input-code').value.trim().toUpperCase();
       if (code.length !== 6) {
-        showError('6자리 코드를 입력해주세요');
+        showError('Please enter a 6-digit code.');
         return;
       }
       const res = await fetch(`/api/room/${code}`);
       if (res.ok) {
         location.href = `/room/${code}/join`;
       } else {
-        showError('존재하지 않는 방입니다');
+        showError('Room not found.');
       }
     });
 
+    // Enter 키로 입장 버튼 동작
     document.getElementById('input-code').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') document.getElementById('btn-join').click();
     });
