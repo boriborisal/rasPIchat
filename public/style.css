@@ -255,28 +255,42 @@ input[type="text"]:focus {
 }
 
 /* ── 말풍선 내부 번역 구조 ── */
-/* 원문 텍스트: 기존 bubble 스타일 그대로 */
+/*
+ * ★ [변경 4 — 말풍선 내부 번역] 아래 세 클래스 전체가 새로 추가됨
+ *   이전: .bubble 안에 텍스트 노드 하나만 있었음 (번역이 있으면 bubble 바깥에 별도 요소)
+ *         예) <div class="bubble">원문</div>  +  <div class="translation">번역</div>
+ *   변경: bubble 내부에 원문 / 구분선 / 번역 3단 구조로 재설계
+ *         이유: 번역이 말풍선 안에 있어야 "하나의 메시지"처럼 보이고 UX가 자연스러움
+ *              말풍선 바깥에 두면 번역이 독립된 요소처럼 보여서 어색함
+ *   방법: 순수 CSS — JS에서 createElement로 생성한 요소에 클래스를 붙여 스타일 적용
+ *         구분선은 display:none 기본값으로 숨기고,
+ *         translateText() 완료 시 dividerEl.style.display = 'block'으로 JS에서 열어줌
+ *         참고(data 속성 + DOM 구조 설계): https://velog.io/@yunsungyang-omc/HTML-데이터-속성-사용하기-data-attribute
+ */
+
+/* [변경 4] 원문 텍스트 영역 — 기존 .bubble 텍스트 스타일을 별도 클래스로 분리 */
 .bubble-original {
   word-break: break-word;
 }
 
-/* 원문/번역 구분선: 번역이 있을 때만 표시 (기본값: 숨김) */
+/* [변경 4] 원문/번역 구분선 — 번역 있을 때만 표시, translateText()가 block으로 바꿈 */
 .bubble-divider {
-  display: none;
+  display: none;             /* 기본값: 숨김. 번역 완료 시 JS에서 block으로 변경 */
   height: 1px;
   margin: 6px 0;
-  background: rgba(255, 255, 255, 0.35); /* mine(파란 배경)용 */
+  background: rgba(255, 255, 255, 0.35); /* mine(파란 배경) 버블용 밝은 선 */
 }
 
+/* other 버블(흰 배경)은 구분선 색을 어둡게 따로 지정 */
 .msg.other .bubble-divider {
-  background: rgba(0, 0, 0, 0.1); /* other(흰 배경)용 */
+  background: rgba(0, 0, 0, 0.1); /* other(흰 배경) 버블용 어두운 선 */
 }
 
-/* 번역 텍스트: 말풍선 내부 하단, 원문보다 작고 기울임 */
+/* [변경 4] 번역 텍스트 영역 — 말풍선 내부 하단, 원문보다 작고 기울임으로 구분 */
 .bubble-translation {
-  font-size: 0.8rem;
-  font-style: italic;
-  opacity: 0.82;
+  font-size: 0.8rem;    /* 원문(0.95rem)보다 작게 — 번역임을 시각적으로 구분 */
+  font-style: italic;   /* 기울임 — 번역 텍스트임을 추가로 표시 */
+  opacity: 0.82;        /* 약간 투명 — 원문보다 덜 강조 */
   word-break: break-word;
   line-height: 1.35;
 }
