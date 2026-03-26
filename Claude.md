@@ -80,8 +80,23 @@ rasPIchat/
 |------|--------|------|
 | `PORT` | `3000` | 서버 포트 |
 | `SECRET_KEY` | `raspichat-secret` | Flask 세션 키 |
-| `MYMEMORY_EMAIL` | (없음) | MyMemory 이메일 등록 시 번역 한도 상향 |
+| `DEEPL_API_KEY` | (없음) | **필수** — DeepL 번역 API 키. 미설정 시 번역 기능 비활성화. 무료 키는 끝이 `:fx` |
 | `FLASK_DEBUG` | `0` | `1`로 설정 시 디버그 모드 |
+
+### DEEPL_API_KEY 설정 방법
+```bash
+# 방법 1: 서비스 실행 전 쉘에서 직접 설정
+export DEEPL_API_KEY="your-key-here"
+
+# 방법 2: systemd 서비스에 영구 설정 (권장)
+sudo systemctl edit raspichat.service
+# 아래 내용 추가:
+# [Service]
+# Environment="DEEPL_API_KEY=your-key-here"
+
+# 방법 3: .env 파일 (start.sh가 로드하도록 수정 필요)
+echo 'DEEPL_API_KEY=your-key-here' >> .env
+```
 
 ## 개발 명령어
 ```bash

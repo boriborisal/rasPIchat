@@ -12,14 +12,27 @@ from routes.room import blueprint as room_blueprint
 from store import rooms
 
 PORT = int(os.environ.get('PORT', 3000))
-MYMEMORY_EMAIL = os.environ.get('MYMEMORY_EMAIL', '')
 
+# DeepL API 키 — 환경변수 DEEPL_API_KEY에 설정
+# 무료 키는 끝이 ':fx' (예: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:fx)
+# 유료 키는 ':fx' 없음 → 엔드포인트가 다름 (아래 DEEPL_API_URL 자동 판별)
+DEEPL_API_KEY = os.environ.get('DEEPL_API_KEY', '')
+
+# 무료 키: api-free.deepl.com / 유료 키: api.deepl.com — 키 suffix로 자동 판별
+DEEPL_API_URL = (
+    'https://api-free.deepl.com/v2/translate'
+    if DEEPL_API_KEY.endswith(':fx')
+    else 'https://api.deepl.com/v2/translate'
+)
+
+# DeepL 지원 언어 목록 (2024 기준)
+# 제거: Hindi(hi), Thai(th), Vietnamese(vi) — DeepL 미지원
+# zh-CN/zh-TW → DeepL 코드 ZH로 통합 (번체 별도 지원 없음)
 LANGUAGES = [
     {'code': 'en',    'name': 'English'},
     {'code': 'ko',    'name': '한국어'},
     {'code': 'ja',    'name': '日本語'},
     {'code': 'zh-CN', 'name': '中文 (간체)'},
-    {'code': 'zh-TW', 'name': '中文 (번체)'},
     {'code': 'es',    'name': 'Español'},
     {'code': 'fr',    'name': 'Français'},
     {'code': 'de',    'name': 'Deutsch'},
@@ -27,9 +40,6 @@ LANGUAGES = [
     {'code': 'ar',    'name': 'العربية'},
     {'code': 'pt',    'name': 'Português'},
     {'code': 'it',    'name': 'Italiano'},
-    {'code': 'hi',    'name': 'हिन्दी'},
-    {'code': 'th',    'name': 'ภาษาไทย'},
-    {'code': 'vi',    'name': 'Tiếng Việt'},
     {'code': 'id',    'name': 'Bahasa Indonesia'},
     {'code': 'tr',    'name': 'Türkçe'},
     {'code': 'pl',    'name': 'Polski'},
@@ -37,6 +47,29 @@ LANGUAGES = [
     {'code': 'sv',    'name': 'Svenska'},
     {'code': 'uk',    'name': 'Українська'},
 ]
+
+# 클라이언트 언어 코드 → DeepL 언어 코드 변환 테이블
+# DeepL은 대문자 코드 사용, zh-CN → ZH 등 일부 매핑 필요
+DEEPL_LANG_MAP = {
+    'zh-CN': 'ZH',   # 중국어 간체
+    'zh-TW': 'ZH',   # 중국어 번체 (DeepL은 ZH 단일 코드)
+    'en':    'EN',
+    'ko':    'KO',
+    'ja':    'JA',
+    'es':    'ES',
+    'fr':    'FR',
+    'de':    'DE',
+    'ru':    'RU',
+    'ar':    'AR',
+    'pt':    'PT',
+    'it':    'IT',
+    'id':    'ID',
+    'tr':    'TR',
+    'pl':    'PL',
+    'nl':    'NL',
+    'sv':    'SV',
+    'uk':    'UK',
+}
 
 app = Flask(__name__, static_folder='public', static_url_path='')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'raspichat-secret')
@@ -75,33 +108,38 @@ def get_languages():
 
 @app.route('/api/translate', methods=['POST'])
 def translate():
+    # DEEPL_API_KEY가 설정되지 않은 경우 번역 기능 비활성화
+    if not DEEPL_API_KEY:
+        return jsonify({'error': 'DEEPL_API_KEY가 설정되지 않았습니다.'}), 503
+
     body = request.get_json(silent=True) or {}
     q = body.get('q')
-    source = body.get('source', 'auto')
-    target = body.get('target')
+    target = body.get('target')  # 클라이언트 언어 코드 (예: 'ko', 'zh-CN')
 
     if not q or not target:
         return jsonify({'error': '필수 파라미터 누락'}), 400
 
-    source_lang = 'autodetect' if source == 'auto' else source
-    langpair = f'{source_lang}|{target}'
-
-    params = {'q': q, 'langpair': langpair}
-    if MYMEMORY_EMAIL:
-        params['de'] = MYMEMORY_EMAIL
+    # 클라이언트 코드 → DeepL 코드 변환 (예: 'zh-CN' → 'ZH', 'en' → 'EN')
+    deepl_target = DEEPL_LANG_MAP.get(target, target.upper())
 
     try:
-        resp = requests.get(
-            'https://api.mymemory.translated.net/get',
-            params=params,
+        resp = requests.post(
+            DEEPL_API_URL,
+            headers={'Authorization': f'DeepL-Auth-Key {DEEPL_API_KEY}'},
+            json={
+                'text': [q],
+                'target_lang': deepl_target,
+                # source_lang 생략 시 DeepL이 자동 감지 (auto-detect)
+            },
             timeout=10
         )
+
+        if resp.status_code != 200:
+            return jsonify({'error': f'DeepL 오류: {resp.status_code}'}), 502
+
         data = resp.json()
-
-        if data.get('responseStatus') != 200:
-            return jsonify({'error': data.get('responseDetails', '번역 실패')}), 502
-
-        return jsonify({'translatedText': data['responseData']['translatedText']})
+        translated = data['translations'][0]['text']
+        return jsonify({'translatedText': translated})
 
     except Exception:
         return jsonify({'error': '번역 요청 실패'}), 502

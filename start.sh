@@ -15,4 +15,12 @@ else
     source venv/bin/activate
 fi
 
+# .env 파일이 있으면 환경변수로 로드 (export)
+# DEEPL_API_KEY 등 민감한 키를 코드에 하드코딩하지 않기 위한 방법
+if [ -f ".env" ]; then
+    set -a                  # 이후 선언되는 변수를 자동으로 export
+    source .env
+    set +a                  # 자동 export 해제
+fi
+
 python server.py

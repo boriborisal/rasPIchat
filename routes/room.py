@@ -35,6 +35,7 @@ def generate_code() -> str:
     return ''.join(random.choices(chars, k=6))
 
 
+@blueprint.route('', methods=['POST'])
 @blueprint.route('/', methods=['POST'])
 def create_room():
     code = generate_code()
