@@ -251,6 +251,29 @@ const msgInput      = document.getElementById('msg-input');
 const langSelect    = document.getElementById('lang-select');
 const userCountWrap = document.getElementById('user-count-wrap');
 const btnSend       = document.getElementById('btn-send');
+const btnFile        = document.getElementById('btn-file');
+const fileInput      = document.getElementById('file-input');
+const typingEl       = document.getElementById('typing-indicator');
+const dragOverlay    = document.getElementById('drag-overlay');
+
+// 파일 크기 제한: 5MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+// ----- 메시지 그룹핑 상태 -----
+// 직전 메시지의 발신자·분(minute)을 기억 — 같으면 닉네임·타임스탬프 숨겨 묶음 표시
+let lastMsgSender = null;
+let lastMsgMinute = null;  // "HH:MM" 형식의 timestamp와 동일
+
+// ----- 입력 중 표시 상태 -----
+// 현재 타이핑 중인 사람 목록 (Set — 중복 없는 닉네임 집합)
+// Node.js+React에서는 useState([])로 관리하지만 여기서는 Set + DOM 직접 업데이트
+const typingUsers = new Set();
+
+// 타이핑 디바운스 타이머 ID — 2초 무입력 시 typing-stop 자동 전송
+// ※ 디바운스: 연속 이벤트에서 마지막 이벤트로부터 일정 시간 후에만 실행하는 패턴
+//   예) 타이핑 중 매 키마다 이벤트를 보내면 서버 부하가 크므로, "멈춘 뒤 2초" 후에만 stop 전송
+let typingTimer = null;
+let isTyping = false; // 현재 typing-start를 이미 서버에 보냈는지 여부
 
 // 참여자 수 상태 변수: 언어 변경 시 UI 재렌더링을 위해 보관
 let currentUserCount = 0;
@@ -383,7 +406,130 @@ function sendMessage() {
   if (!text) return;
   socket.emit('send-message', { text });
   msgInput.value = '';
+  // 전송 즉시 타이핑 중 상태 해제
+  stopTyping();
 }
+
+// ----- 타이핑 감지 -----
+// 입력창에 글자를 치면 typing-start, 2초 무입력 또는 전송 시 typing-stop 전송
+// Node.js socket.io에서 흔히 쓰는 패턴과 동일 (socket.emit('typing') / socket.emit('stop typing'))
+msgInput.addEventListener('input', () => {
+  if (!isTyping) {
+    // 처음 타이핑 시작 시에만 이벤트 전송 (매 키마다 보내지 않음)
+    isTyping = true;
+    socket.emit('typing-start');
+  }
+  // 이전 타이머 취소 후 2초 후 stop 전송 (디바운스)
+  clearTimeout(typingTimer);
+  typingTimer = setTimeout(stopTyping, 2000);
+});
+
+function stopTyping() {
+  if (!isTyping) return;
+  isTyping = false;
+  clearTimeout(typingTimer);
+  socket.emit('typing-stop');
+}
+
+// 입력창 포커스 잃으면 타이핑 중 해제
+msgInput.addEventListener('blur', stopTyping);
+
+// ----- 타이핑 중인 사람 목록 UI 업데이트 -----
+function updateTypingIndicator() {
+  const users = [...typingUsers];
+  if (users.length === 0) {
+    typingEl.textContent = '';
+    return;
+  }
+  // 1명: "홍길동님이 입력 중이에요."
+  // 2명: "홍길동, 김철수님이 입력 중이에요."
+  // 4명 이상: "홍길동 외 3명이 입력 중이에요."
+  let text;
+  if (users.length <= 3) {
+    text = `${users.join(', ')}님이 입력 중이에요.`;
+  } else {
+    text = `${users[0]} 외 ${users.length - 1}명이 입력 중이에요.`;
+  }
+  typingEl.textContent = text;
+}
+
+// 다른 사람이 타이핑 시작
+socket.on('user-typing', ({ nickname: who }) => {
+  typingUsers.add(who);
+  updateTypingIndicator();
+});
+
+// 다른 사람이 타이핑 멈춤
+socket.on('user-stop-typing', ({ nickname: who }) => {
+  typingUsers.delete(who);
+  updateTypingIndicator();
+});
+
+// ----- 파일 전송 공통 함수 (input change + 드래그앤드롭 공용) -----
+// 이전: 파일 읽기 로직이 fileInput change 이벤트 안에만 있어 드래그앤드롭에서 재사용 불가
+// 변경: sendFile(file)로 분리 — 호출하는 쪽(input / drop)만 다르게 처리
+function sendFile(file) {
+  if (file.size > MAX_FILE_SIZE) {
+    alert(`파일 크기가 너무 큽니다. 최대 5MB까지 전송 가능합니다.\n(현재: ${(file.size / 1024 / 1024).toFixed(1)}MB)`);
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    socket.emit('send-file', {
+      filename: file.name,
+      mimeType: file.type || 'application/octet-stream',
+      dataUrl: e.target.result,
+    });
+  };
+  reader.onerror = () => alert('파일을 읽는 중 오류가 발생했습니다.');
+  reader.readAsDataURL(file);
+}
+
+// ----- 파일 첨부 버튼 클릭 → 숨겨진 file input 트리거 -----
+// Node.js + React에서는 useRef()로 input을 참조하여 ref.current.click()으로 처리
+btnFile.addEventListener('click', () => fileInput.click());
+
+// ----- 파일 input 선택 이벤트 -----
+fileInput.addEventListener('change', () => {
+  const file = fileInput.files[0];
+  if (!file) return;
+  fileInput.value = ''; // 같은 파일 재선택 가능하도록 리셋
+  sendFile(file);
+});
+
+// ----- 드래그 앤 드롭 -----
+// dragenter/dragover: 오버레이 표시 + 기본 동작(브라우저가 파일을 직접 여는 것) 방지
+// dragleave: 화면 밖으로 나가면 오버레이 숨김
+// drop: 드롭된 파일을 sendFile()로 전송
+document.addEventListener('dragenter', (e) => {
+  // 드래그 중인 항목에 파일이 포함된 경우에만 오버레이 활성화
+  if ([...e.dataTransfer.types].includes('Files')) {
+    dragOverlay.classList.add('active');
+  }
+});
+
+document.addEventListener('dragover', (e) => {
+  e.preventDefault(); // 브라우저 기본 동작(파일 열기) 차단
+});
+
+document.addEventListener('dragleave', (e) => {
+  // relatedTarget이 null = 마우스가 브라우저 창 밖으로 나간 것
+  if (!e.relatedTarget) dragOverlay.classList.remove('active');
+});
+
+document.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dragOverlay.classList.remove('active');
+  const file = e.dataTransfer.files[0]; // 여러 파일 드롭 시 첫 번째만 처리
+  if (file) sendFile(file);
+});
+
+// ----- 파일 수신 이벤트 -----
+// 같은 방의 다른 사람이 send-file 했을 때 서버가 broadcast한 receive-file 이벤트 수신
+socket.on('receive-file', ({ nickname: sender, filename, mimeType, dataUrl, timestamp }) => {
+  const isMine = sender === nickname;
+  appendFile({ sender, filename, mimeType, dataUrl, timestamp, isMine });
+});
 
 // ----- 메시지 말풍선 생성 -----
 // ★ [변경 3 — 언어 변경 시 재번역] data-text 속성 추가
@@ -410,12 +556,19 @@ function sendMessage() {
 //         번역 완료 시 translateText() 안에서 dividerEl.style.display = 'block'으로 표시
 //   Node.js + React에서는 state에 메시지 배열을 저장하고 리렌더링하는 방식
 function appendMessage({ sender, text, timestamp, isMine }) {
+  // 직전 메시지와 발신자·분(minute)이 같으면 그룹핑 — 닉네임·간격 숨김
+  // timestamp는 "HH:MM" 형식이므로 그대로 분(minute) 비교에 사용 가능
+  const isGrouped = sender === lastMsgSender && timestamp === lastMsgMinute;
+  lastMsgSender = sender;
+  lastMsgMinute = timestamp;
+
   const div = document.createElement('div');
-  div.className = `msg ${isMine ? 'mine' : 'other'}`;
+  // msg-grouped: 같은 발신자·분의 연속 메시지 — CSS에서 상단 간격과 닉네임을 숨김
+  div.className = `msg ${isMine ? 'mine' : 'other'}${isGrouped ? ' msg-grouped' : ''}`;
   div.dataset.text = text; // ← [변경 3] 재번역용 원문 보존 (HTML5 data 속성)
 
-  // 상대방 메시지에만 닉네임 표시
-  if (!isMine) {
+  // 그룹핑된 메시지는 닉네임 생략 (첫 메시지에만 표시)
+  if (!isMine && !isGrouped) {
     const nickEl = document.createElement('span');
     nickEl.className = 'nickname';
     nickEl.textContent = escHtml(sender);
@@ -448,9 +601,9 @@ function appendMessage({ sender, text, timestamp, isMine }) {
 
   div.appendChild(bubbleEl);
 
-  // 타임스탬프
+  // 타임스탬프 — 그룹핑된 메시지는 숨김 (같은 분이므로 중복 표시 불필요)
   const timeEl = document.createElement('span');
-  timeEl.className = 'time';
+  timeEl.className = `time${isGrouped ? ' time-hidden' : ''}`;
   timeEl.textContent = timestamp;
   div.appendChild(timeEl);
 
@@ -526,8 +679,90 @@ function retranslateAll(target) {
   });
 }
 
+// ----- DataURL → Blob 변환 유틸 -----
+// Base64 DataURL을 Blob 객체로 변환 — Blob URL(blob:https://...)은 모바일 브라우저에서도 동작
+// window.open(dataUrl) 방식은 브라우저 보안 정책(CSP)에 막혀 흰 화면이 뜨는 경우가 있어
+// Blob URL로 우회해야 안정적으로 열림
+// Node.js에서는 Buffer.from(base64, 'base64')로 동일한 변환 수행
+function dataUrlToBlob(dataUrl) {
+  const [header, base64] = dataUrl.split(',');
+  const mime = header.match(/:(.*?);/)[1];          // "data:image/png;base64," → "image/png"
+  const binary = atob(base64);                       // Base64 디코딩 → 바이너리 문자열
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new Blob([bytes], { type: mime });
+}
+
+// ----- 파일 말풍선 생성 -----
+// appendMessage()와 동일한 말풍선 구조 — 내용만 이미지 또는 파일 다운로드 링크로 다름
+function appendFile({ sender, filename, mimeType, dataUrl, timestamp, isMine }) {
+  const div = document.createElement('div');
+  div.className = `msg ${isMine ? 'mine' : 'other'}`;
+
+  // 상대방 메시지에만 닉네임 표시
+  if (!isMine) {
+    const nickEl = document.createElement('span');
+    nickEl.className = 'nickname';
+    nickEl.textContent = escHtml(sender);
+    div.appendChild(nickEl);
+  }
+
+  const bubbleEl = document.createElement('div');
+  bubbleEl.className = 'bubble bubble-file';
+
+  // mimeType이 image/*이면 인라인 이미지로 표시, 그 외는 다운로드 링크
+  // Node.js+React에서는 조건부 렌더링(<img> vs <a>)으로 처리하는 것과 동일 개념
+  if (mimeType.startsWith('image/')) {
+    // 이미지 파일: <img> 태그로 인라인 미리보기
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    img.alt = escHtml(filename);
+    img.className = 'file-image';
+    img.style.cursor = 'pointer';
+
+    // [버그1 수정] 이미지 클릭 시 Blob URL로 변환 후 새 탭에서 열기
+    // 이전: window.open(dataUrl) → 모바일에서 보안 정책에 막혀 흰 화면
+    // 변경: dataUrl → Blob → URL.createObjectURL() → 안정적으로 열림
+    // [버그1 재수정] 모바일에서 window.open()은 팝업 차단에 막힘
+    // → 새 탭 대신 페이지 내 오버레이(라이트박스)로 이미지를 전체화면 표시
+    img.addEventListener('click', () => openImageOverlay(dataUrl));
+    bubbleEl.appendChild(img);
+
+  } else {
+    // 이미지 외 파일: 클릭 시 보안 확인 모달을 먼저 표시한 뒤 다운로드
+    // 이전: <a href="blob:..."> 직접 클릭 → 확인 없이 즉시 다운로드
+    // 변경: 버튼 클릭 → openDownloadConfirm() → 사용자가 "다운로드" 눌러야 저장
+    const blob = dataUrlToBlob(dataUrl);
+    const blobUrl = URL.createObjectURL(blob);
+
+    const link = document.createElement('button');
+    link.className = 'file-link';
+    link.textContent = `📄 ${filename}`;
+    link.addEventListener('click', () => {
+      openDownloadConfirm({ filename, sender, blobUrl });
+    });
+    bubbleEl.appendChild(link);
+  }
+
+  div.appendChild(bubbleEl);
+
+  const timeEl = document.createElement('span');
+  timeEl.className = 'time';
+  timeEl.textContent = timestamp;
+  div.appendChild(timeEl);
+
+  messagesEl.appendChild(div);
+  scrollToBottom();
+}
+
 // ----- 시스템 메시지 표시 (입장/퇴장) -----
 function appendSystem(msg) {
+  // 시스템 메시지가 끼어들면 그룹핑 리셋 — 다음 메시지는 새 그룹으로 시작
+  lastMsgSender = null;
+  lastMsgMinute = null;
+
   const div = document.createElement('div');
   div.className = 'sys-msg';
   div.textContent = msg;
@@ -538,6 +773,84 @@ function appendSystem(msg) {
 function scrollToBottom() {
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
+
+// ----- 파일 다운로드 보안 확인 모달 -----
+// 파일 다운로드 전 보안 경고를 표시하여 악성 파일 실수 다운로드를 방지
+// Node.js+React에서는 useState로 모달 상태를 관리하지만,
+// 여기서는 DOM 직접 조작 + 클로저(pendingDownload 변수)로 동일한 흐름 구현
+const dlModal        = document.getElementById('dl-modal');
+const dlModalDesc    = document.getElementById('dl-modal-desc');
+const dlModalCancel  = document.getElementById('dl-modal-cancel');
+const dlModalConfirm = document.getElementById('dl-modal-confirm');
+
+// 확인 버튼 클릭 시 실행할 다운로드 함수를 임시 보관
+// 클로저 패턴: openDownloadConfirm()이 호출될 때마다 새 함수를 이 변수에 할당
+let pendingDownload = null;
+
+function openDownloadConfirm({ filename, sender, blobUrl }) {
+  // 모달 설명 텍스트 업데이트
+  dlModalDesc.textContent =
+    `"${sender}"님이 보낸 파일입니다.\n` +
+    `파일명: ${filename}\n\n` +
+    `출처를 알 수 없는 파일은 악성 소프트웨어를 포함할 수 있습니다. 신뢰하는 경우에만 다운로드하세요.`;
+
+  // 확인 시 실행할 다운로드 동작을 클로저로 저장
+  pendingDownload = () => {
+    // <a> 태그를 임시 생성해 프로그래밍 방식으로 클릭 — 사용자에게 파일 저장 다이얼로그 표시
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  dlModal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDownloadModal() {
+  dlModal.style.display = 'none';
+  pendingDownload = null;
+  document.body.style.overflow = '';
+}
+
+dlModalCancel.addEventListener('click', closeDownloadModal);
+dlModalConfirm.addEventListener('click', () => {
+  if (pendingDownload) pendingDownload();
+  closeDownloadModal();
+});
+// 배경 클릭 시 취소
+dlModal.addEventListener('click', (e) => {
+  if (e.target === dlModal) closeDownloadModal();
+});
+
+// ----- 이미지 오버레이 (라이트박스) -----
+// window.open()은 모바일 팝업 차단에 막히므로,
+// 페이지 안에 고정 오버레이를 띄워 이미지를 전체화면으로 보여줌
+const imgOverlay      = document.getElementById('img-overlay');
+const imgOverlayImg   = document.getElementById('img-overlay-img');
+const imgOverlayClose = document.getElementById('img-overlay-close');
+
+function openImageOverlay(src) {
+  imgOverlayImg.src = src;
+  imgOverlay.style.display = 'flex';
+  // 오버레이 열린 동안 body 스크롤 막기
+  document.body.style.overflow = 'hidden';
+}
+
+function closeImageOverlay() {
+  imgOverlay.style.display = 'none';
+  imgOverlayImg.src = '';
+  document.body.style.overflow = '';
+}
+
+// X 버튼 또는 어두운 배경 클릭 시 닫기
+imgOverlayClose.addEventListener('click', closeImageOverlay);
+imgOverlay.addEventListener('click', (e) => {
+  // 이미지 자체 클릭은 무시, 배경(오버레이)만 닫기
+  if (e.target === imgOverlay) closeImageOverlay();
+});
 
 // XSS 방지용 HTML 이스케이프 (보안: < > & 문자 치환)
 // Node.js에서는 DOMPurify 또는 escape-html 패키지 사용

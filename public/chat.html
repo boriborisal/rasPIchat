@@ -24,13 +24,59 @@
 
     <div class="messages" id="messages"></div>
 
+    <!-- 드래그 앤 드롭 오버레이: 파일을 화면에 드래그하면 나타남 -->
+    <div id="drag-overlay">📎 파일을 여기에 놓으세요</div>
+
+    <!-- 입력 중 표시: 다른 사람이 타이핑할 때 소켓 이벤트로 채움 -->
+    <div id="typing-indicator"></div>
+
     <div class="chat-input-wrap">
+      <!-- 파일 첨부 버튼: 클릭 시 숨겨진 file input을 트리거 -->
+      <button id="btn-file" title="파일 첨부">📎</button>
+      <!-- 실제 파일 선택 input — display:none으로 숨겨두고 btn-file 클릭 시 열림 -->
+      <!-- accept="*/*": 모든 파일 형식 허용 (특정 확장자만 지정하면 .hwp 등 못 보냄) -->
+      <input type="file" id="file-input" accept="*/*" style="display:none">
       <!-- placeholder·버튼 텍스트: client.js의 applyI18n()이 언어에 맞게 동적으로 변경 -->
       <input type="text" id="msg-input" placeholder="Type a message..." maxlength="200" autocomplete="off">
       <button id="btn-send">Send</button>
     </div>
   </div>
 
+  <!-- 파일 다운로드 보안 확인 모달 -->
+  <!-- client.js의 openDownloadConfirm()이 파일명·발신자를 채운 뒤 display:flex로 열고, 버튼 클릭 시 닫힘 -->
+  <div id="dl-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6);
+       z-index:1000; align-items:center; justify-content:center; padding:24px;">
+    <div style="background:#fff; border-radius:16px; padding:24px; max-width:340px; width:100%; box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+      <div style="font-size:2rem; text-align:center; margin-bottom:8px;">⚠️</div>
+      <h3 style="font-size:1rem; font-weight:700; margin-bottom:8px; text-align:center;">파일 다운로드</h3>
+      <p id="dl-modal-desc" style="font-size:0.85rem; color:#555; text-align:center; margin-bottom:20px; line-height:1.5;"></p>
+      <div style="display:flex; gap:10px;">
+        <button id="dl-modal-cancel" style="flex:1; background:#f0f2f5; color:#333; border-radius:12px; padding:12px; font-size:0.9rem;">취소</button>
+        <button id="dl-modal-confirm" style="flex:1; background:#4f46e5; color:#fff; border-radius:12px; padding:12px; font-size:0.9rem;">다운로드</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 이미지 전체화면 오버레이 (라이트박스) -->
+  <!-- 클릭 시 client.js에서 display:flex로 열고, 오버레이 또는 X 버튼 클릭 시 닫힘 -->
+  <div id="img-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9);
+       z-index:1000; align-items:center; justify-content:center; flex-direction:column;">
+    <button id="img-overlay-close" style="position:absolute; top:16px; right:16px;
+            background:none; border:none; color:#fff; font-size:2rem; cursor:pointer;
+            width:auto; padding:4px 12px;">✕</button>
+    <img id="img-overlay-img" src="" alt="" style="max-width:95vw; max-height:90vh; object-fit:contain; border-radius:8px;">
+  </div>
+
+  <script>
+    // dvh 미지원 구형 기기 대응: window.innerHeight로 실제 뷰포트 높이를 CSS 변수에 주입
+    // 100vh는 주소창 포함 높이라 입력창이 잘리는 기종이 있음 → innerHeight는 실제 보이는 높이
+    function setRealVh() {
+      document.documentElement.style.setProperty('--real-vh', (window.innerHeight * 0.01) + 'px');
+    }
+    setRealVh();
+    // 화면 회전, 키보드 열림/닫힘 시 재계산
+    window.addEventListener('resize', setRealVh);
+  </script>
   <script src="/socket.io.min.js"></script>
   <script src="/client.js"></script>
 </body>

@@ -41,7 +41,10 @@ LANGUAGES = [
 app = Flask(__name__, static_folder='public', static_url_path='')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'raspichat-secret')
 
-socketio = SocketIO(app, async_mode='eventlet', cors_allowed_origins='*')
+# max_http_buffer_size: 소켓 메시지 최대 크기를 10MB로 설정
+# 기본값은 1MB — Base64 파일 전송 시 이 한도를 초과할 수 있으므로 확장 필요
+# Node.js socket.io에서는 new Server(httpServer, { maxHttpBufferSize: 10e6 }) 와 동일
+socketio = SocketIO(app, async_mode='eventlet', cors_allowed_origins='*', max_http_buffer_size=10_000_000)
 
 app.register_blueprint(room_blueprint, url_prefix='/api/room')
 
@@ -143,6 +146,57 @@ def on_send_message(data):
     emit('receive-message', {
         'nickname': nickname,
         'text': text,
+        'timestamp': timestamp
+    }, to=code)
+
+
+@socketio.on('typing-start')
+def on_typing_start():
+    # 클라이언트가 입력창에 타이핑 시작 시 발생 — 같은 방 사람들에게 브로드캐스트
+    # Node.js에서는 socket.on('typing-start', () => socket.to(room).emit(...)) 와 동일
+    session = socket_sessions.get(request.sid, {})
+    code = session.get('room_code')
+    nickname = session.get('nickname')
+    if not code or code not in rooms:
+        return
+    emit('user-typing', {'nickname': nickname}, to=code, skip_sid=request.sid)
+
+
+@socketio.on('typing-stop')
+def on_typing_stop():
+    # 클라이언트가 타이핑 멈춤(전송, 2초 무입력, 창 이탈) 시 발생
+    session = socket_sessions.get(request.sid, {})
+    code = session.get('room_code')
+    nickname = session.get('nickname')
+    if not code or code not in rooms:
+        return
+    emit('user-stop-typing', {'nickname': nickname}, to=code, skip_sid=request.sid)
+
+
+@socketio.on('send-file')
+def on_send_file(data):
+    # 파일 전송 이벤트 핸들러
+    # data = { filename: str, mimeType: str, dataUrl: str (base64) }
+    # Node.js에서는 socket.on('send-file', (data) => { io.to(room).emit(...) }) 와 동일
+    session = socket_sessions.get(request.sid, {})
+    code = session.get('room_code')
+    nickname = session.get('nickname')
+
+    if not code or code not in rooms:
+        return
+
+    filename = data.get('filename', 'file')
+    mime_type = data.get('mimeType', 'application/octet-stream')
+    data_url = data.get('dataUrl', '')
+    timestamp = datetime.now().strftime('%H:%M')
+
+    # 같은 방의 모든 클라이언트에게 파일 데이터 브로드캐스트
+    # Base64 dataUrl을 그대로 전달 — 서버는 저장하지 않음 (메모리에도 남지 않음)
+    emit('receive-file', {
+        'nickname': nickname,
+        'filename': filename,
+        'mimeType': mime_type,
+        'dataUrl': data_url,
         'timestamp': timestamp
     }, to=code)
 

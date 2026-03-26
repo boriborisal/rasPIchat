@@ -116,7 +116,13 @@ input[type="text"]:focus {
 .chat-layout {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  /* 모바일 브라우저 높이 호환성 3단계 폴백:
+   * 1) --real-vh: client.js가 window.innerHeight로 계산한 실제 높이 (JS 폴백)
+   * 2) 100dvh: 주소창/키보드를 제외한 동적 뷰포트 높이 (iOS 15.4+, Chrome 108+)
+   * 3) 100vh: 위 둘 다 미지원 시 기본값 (주소창 포함되어 일부 기기에서 입력창 잘릴 수 있음)
+   * dvh를 쓰면 키보드가 올라와도 레이아웃이 재계산되어 입력창이 항상 보임 */
+  height: calc(var(--real-vh, 1vh) * 100); /* JS 폴백 */
+  height: 100dvh;                           /* 동적 뷰포트 높이 (우선 적용) */
 }
 
 .chat-header {
@@ -295,7 +301,108 @@ input[type="text"]:focus {
   line-height: 1.35;
 }
 
+/* ── 메시지 그룹핑 ── */
+/* 같은 발신자·분(minute)의 연속 메시지: 상단 간격 줄이고 닉네임 숨김 */
+.msg.msg-grouped {
+  margin-top: -4px; /* 일반 gap:10px 에서 더 붙여서 묶음처럼 보이게 */
+}
+
+/* 그룹핑된 메시지의 타임스탬프 숨김 */
+.time.time-hidden {
+  display: none;
+}
+
+/* ── 입력 중 표시 ── */
+#typing-indicator {
+  min-height: 18px;
+  padding: 2px 16px 4px;
+  font-size: 0.75rem;
+  color: #888;
+  font-style: italic;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+/* ── 드래그 앤 드롭 오버레이 ── */
+#drag-overlay {
+  display: none;             /* 기본 숨김 — JS에서 .active 클래스로 열고 닫음 */
+  position: fixed;
+  inset: 0;
+  background: rgba(79, 70, 229, 0.15);
+  border: 3px dashed #4f46e5;
+  border-radius: 16px;
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: #4f46e5;
+  font-weight: 600;
+  pointer-events: none;      /* 오버레이가 drop 이벤트를 가로채지 않도록 */
+}
+
+#drag-overlay.active {
+  display: flex;
+}
+
 .gap-12 { margin-bottom: 12px; }
 .gap-20 { margin-bottom: 20px; }
 .text-center { text-align: center; }
 .error-msg { color: #e53e3e; font-size: 0.85rem; margin-top: 8px; }
+
+/* ── 파일 첨부 버튼 ── */
+/* chat-input-wrap 내 📎 버튼 — 텍스트 input과 구분되도록 별도 스타일 */
+#btn-file {
+  width: auto;
+  padding: 10px 12px;
+  border-radius: 50%;        /* 원형 버튼 */
+  background: #f0f2f5;
+  color: #555;
+  font-size: 1.1rem;
+  flex-shrink: 0;            /* 공간이 좁아도 버튼 크기 유지 */
+  border: 1px solid #ddd;
+}
+
+#btn-file:active {
+  background: #e0e2e8;
+}
+
+/* ── 파일 말풍선 ── */
+/* bubble-file: 기본 .bubble 위에 추가 스타일 — 패딩을 줄여 이미지가 자연스럽게 표시되도록 */
+.bubble.bubble-file {
+  padding: 6px;              /* 이미지 주변 여백 최소화 */
+  overflow: hidden;
+}
+
+/* ── 인라인 이미지 ── */
+.file-image {
+  display: block;
+  max-width: 220px;          /* 말풍선 최대 너비에 맞게 제한 */
+  max-height: 300px;
+  border-radius: 12px;       /* bubble 안에서 둥글게 */
+  object-fit: cover;
+}
+
+/* ── 파일 다운로드 버튼 ── */
+/* <button>으로 변경 — 클릭 시 보안 확인 모달을 먼저 띄움 */
+.file-link {
+  display: block;
+  padding: 6px 8px;
+  font-size: 0.9rem;
+  word-break: break-all;
+  background: none;          /* 기본 버튼 배경 제거 */
+  border: none;
+  width: auto;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* mine(파란 배경) 버블의 파일 버튼 색상 */
+.msg.mine .file-link {
+  color: #fff;
+}
+
+/* other(흰 배경) 버블의 파일 버튼 색상 */
+.msg.other .file-link {
+  color: #4f46e5;
+}
