@@ -1,38 +1,49 @@
 #!/bin/bash
 # =============================================================
-# Cloudflare Tunnel URL 확인 스크립트
-# - systemd 서비스 로그에서 trycloudflare.com URL 파싱하여 출력
-# - 서버 시작 직후, 또는 URL을 다시 확인하고 싶을 때 실행
+# TalkBridge — Cloudflare Tunnel URL 확인 스크립트
+# - 현재 실행 중인 터널 프로세스의 로그에서만 URL 파싱
+# - --since 옵션으로 현재 서비스 기동 시점 이후 로그만 검색
+#   (재시작 전 이전 URL이 잡히는 문제 방지)
 # =============================================================
 
-MAX_WAIT=30   # 최대 대기 시간 (초) — 터널 URL 발급 대기
-INTERVAL=2    # 확인 간격 (초)
+MAX_WAIT=30
+INTERVAL=2
 ELAPSED=0
 
 echo ""
-echo "Cloudflare Tunnel URL 확인 중..."
+echo "TalkBridge — Cloudflare Tunnel URL 확인 중..."
+
+# 현재 서비스가 기동된 시각을 구함 → 그 이후 로그만 검색
+# systemctl show 로 ActiveEnterTimestamp 파싱
+SINCE=$(systemctl show talkbridge-tunnel.service --property=ActiveEnterTimestamp \
+    | cut -d= -f2 | xargs -I{} date -d "{}" "+%Y-%m-%d %H:%M:%S" 2>/dev/null)
 
 while [ $ELAPSED -lt $MAX_WAIT ]; do
-    # journalctl 로그에서 trycloudflare.com 도메인 추출
-    # cloudflared는 URL을 stderr에 출력 → StandardError=journal 로 캡처됨
-    URL=$(journalctl -u raspichat-tunnel.service -n 100 --no-pager 2>/dev/null \
-        | grep -o 'https://[a-zA-Z0-9-]*\.trycloudflare\.com' \
-        | tail -1)
+    if [ -n "$SINCE" ]; then
+        URL=$(journalctl -u talkbridge-tunnel.service --since "$SINCE" --no-pager 2>/dev/null \
+            | grep -o 'https://[a-zA-Z0-9-]*\.trycloudflare\.com' \
+            | tail -1)
+    else
+        # SINCE 파싱 실패 시 최근 50줄만 검색 (폴백)
+        URL=$(journalctl -u talkbridge-tunnel.service -n 50 --no-pager 2>/dev/null \
+            | grep -o 'https://[a-zA-Z0-9-]*\.trycloudflare\.com' \
+            | tail -1)
+    fi
 
     if [ -n "$URL" ]; then
         echo ""
         echo "┌──────────────────────────────────────────────────┐"
-        echo "│  외부 접속 URL (임시 도메인):                    │"
+        echo "│  TalkBridge 외부 접속 URL:                       │"
         echo "│                                                    │"
         printf  "│  %-50s│\n" "$URL"
         echo "│                                                    │"
-        echo "│  이 URL은 재시작 시 변경됩니다.                  │"
+        echo "│  ※ 서비스 재시작 시 URL이 변경됩니다.           │"
         echo "└──────────────────────────────────────────────────┘"
         echo ""
-        echo "서비스 상태 확인 명령어:"
-        echo "  sudo systemctl status raspichat.service"
-        echo "  sudo systemctl status raspichat-tunnel.service"
-        echo "  journalctl -u raspichat-tunnel.service -f  (실시간 로그)"
+        echo "서비스 상태 확인:"
+        echo "  sudo systemctl status talkbridge.service"
+        echo "  sudo systemctl status talkbridge-tunnel.service"
+        echo "  journalctl -u talkbridge-tunnel.service -f  (실시간 로그)"
         echo ""
         exit 0
     fi
@@ -42,12 +53,9 @@ while [ $ELAPSED -lt $MAX_WAIT ]; do
     echo "  대기 중... (${ELAPSED}s / ${MAX_WAIT}s)"
 done
 
-# 타임아웃 — URL을 찾지 못한 경우 서비스 상태 출력
 echo ""
 echo "⚠ URL을 찾지 못했습니다. 서비스 상태를 확인하세요:"
 echo ""
-echo "--- raspichat-tunnel.service 상태 ---"
-systemctl status raspichat-tunnel.service --no-pager -l | head -30
+systemctl status talkbridge-tunnel.service --no-pager -l | head -30
 echo ""
-echo "--- 최근 로그 ---"
-journalctl -u raspichat-tunnel.service -n 20 --no-pager
+journalctl -u talkbridge-tunnel.service -n 20 --no-pager

@@ -1,3 +1,249 @@
+/* =====================================================
+ * TalkBridge — style.css
+ * CSS 변수(Custom Properties) 기반 테마 시스템
+ * :root에 기본(purple) 테마를 정의하고,
+ * [data-theme="..."] 속성으로 다른 테마를 덮어씀
+ * Node.js+React에서는 ThemeContext + styled-components로 처리하는 역할과 동일
+ * =====================================================
+ */
+
+/* ── 테마 변수 정의 ── */
+
+/* 기본 테마: Purple (기존 #4f46e5 계열) */
+:root {
+  --primary:             #4f46e5;  /* 주 브랜드 색상 */
+  --primary-dark:        #3730a3;  /* 호버·활성 상태용 어두운 색 */
+  --primary-alpha:       rgba(79, 70, 229, 0.15); /* 드래그 오버레이 등 반투명 */
+  --bg:                  #f0f2f5;  /* 페이지 배경 */
+  --surface:             #ffffff;  /* 카드·말풍선·입력창 배경 */
+  --surface2:            #f8f9fb;  /* 보조 서피스 */
+  --text:                #1a1a2e;  /* 기본 텍스트 */
+  --text-secondary:      #666666;  /* 보조 텍스트 */
+  --text-muted:          #999999;  /* 약한 텍스트 */
+  --border:              #eeeeee;  /* 구분선·테두리 */
+  --input-border:        #dddddd;  /* 입력창 테두리 */
+  --bubble-mine-bg:      var(--primary);  /* 내 말풍선 배경 */
+  --bubble-mine-text:    #ffffff;          /* 내 말풍선 글자 */
+  --bubble-other-bg:     #ffffff;          /* 상대 말풍선 배경 */
+  --bubble-other-text:   #1a1a2e;          /* 상대 말풍선 글자 */
+  --bubble-other-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  --header-bg:           var(--primary);  /* 헤더 배경 */
+  --header-text:         #ffffff;          /* 헤더 글자 */
+  --header-secondary:    rgba(255,255,255,0.7); /* 헤더 보조 텍스트 */
+  --sys-text:            #999999;  /* 시스템 메시지 색 */
+  --divider-mine:        rgba(255,255,255,0.35); /* 내 버블 구분선 */
+  --divider-other:       rgba(0,0,0,0.10);       /* 상대 버블 구분선 */
+  --select-bg:           rgba(255,255,255,0.15); /* 헤더 셀렉트 박스 배경 */
+  --select-border:       rgba(255,255,255,0.30);
+  --select-option-bg:    var(--primary);
+  --overlay-bg:          rgba(0,0,0,0.6);  /* 모달 배경 */
+  --modal-bg:            #ffffff;
+  --modal-text:          #1a1a2e;
+  --btn-file-bg:         #f0f2f5;
+  --btn-file-color:      #555555;
+  --btn-file-border:     #dddddd;
+  --panel-bg:            #ffffff;          /* 참여자 패널 배경 */
+  --panel-shadow:        0 4px 24px rgba(0,0,0,0.15);
+  --tag-bg:              #f0f0f8;          /* 참여자 태그 배경 */
+  --tag-text:            #4f46e5;
+}
+
+/* 다크 테마 */
+[data-theme="dark"] {
+  --primary:             #7c73f5;
+  --primary-dark:        #6d64e8;
+  --primary-alpha:       rgba(124, 115, 245, 0.2);
+  --bg:                  #16161f;
+  --surface:             #222233;
+  --surface2:            #1b1b28;
+  --text:                #e0e0f0;
+  --text-secondary:      #9090bb;
+  --text-muted:          #6060aa;
+  --border:              #2d2d48;
+  --input-border:        #333355;
+  --bubble-mine-bg:      var(--primary);
+  --bubble-mine-text:    #ffffff;
+  --bubble-other-bg:     #2a2a42;
+  --bubble-other-text:   #e0e0f0;
+  --bubble-other-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  --header-bg:           #1b1b28;
+  --header-text:         #e0e0f0;
+  --header-secondary:    rgba(224,224,240,0.6);
+  --sys-text:            #6060aa;
+  --divider-mine:        rgba(255,255,255,0.25);
+  --divider-other:       rgba(255,255,255,0.08);
+  --select-bg:           rgba(255,255,255,0.08);
+  --select-border:       rgba(255,255,255,0.15);
+  --select-option-bg:    #2a2a42;
+  --overlay-bg:          rgba(0,0,0,0.8);
+  --modal-bg:            #222233;
+  --modal-text:          #e0e0f0;
+  --btn-file-bg:         #2a2a42;
+  --btn-file-color:      #9090bb;
+  --btn-file-border:     #333355;
+  --panel-bg:            #222233;
+  --panel-shadow:        0 4px 24px rgba(0,0,0,0.5);
+  --tag-bg:              #2a2a52;
+  --tag-text:            #a0a0ff;
+}
+
+/* 오션 테마 (파란색 계열) */
+[data-theme="ocean"] {
+  --primary:             #0ea5e9;
+  --primary-dark:        #0284c7;
+  --primary-alpha:       rgba(14, 165, 233, 0.15);
+  --bg:                  #f0f9ff;
+  --surface:             #ffffff;
+  --surface2:            #e8f5ff;
+  --text:                #0c1a2e;
+  --text-secondary:      #4a7a99;
+  --text-muted:          #90b0c0;
+  --border:              #d0e8f5;
+  --input-border:        #b0d4e8;
+  --bubble-mine-bg:      var(--primary);
+  --bubble-mine-text:    #ffffff;
+  --bubble-other-bg:     #ffffff;
+  --bubble-other-text:   #0c1a2e;
+  --bubble-other-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  --header-bg:           var(--primary);
+  --header-text:         #ffffff;
+  --header-secondary:    rgba(255,255,255,0.7);
+  --sys-text:            #90b0c0;
+  --divider-mine:        rgba(255,255,255,0.35);
+  --divider-other:       rgba(0,0,0,0.08);
+  --select-bg:           rgba(255,255,255,0.15);
+  --select-border:       rgba(255,255,255,0.30);
+  --select-option-bg:    var(--primary);
+  --overlay-bg:          rgba(0,0,0,0.6);
+  --modal-bg:            #ffffff;
+  --modal-text:          #0c1a2e;
+  --btn-file-bg:         #e8f5ff;
+  --btn-file-color:      #4a7a99;
+  --btn-file-border:     #b0d4e8;
+  --panel-bg:            #ffffff;
+  --panel-shadow:        0 4px 24px rgba(14,165,233,0.15);
+  --tag-bg:              #e0f5ff;
+  --tag-text:            #0ea5e9;
+}
+
+/* 포레스트 테마 (초록색 계열) */
+[data-theme="forest"] {
+  --primary:             #16a34a;
+  --primary-dark:        #15803d;
+  --primary-alpha:       rgba(22, 163, 74, 0.15);
+  --bg:                  #f0fdf4;
+  --surface:             #ffffff;
+  --surface2:            #e8faf0;
+  --text:                #052e16;
+  --text-secondary:      #4a7a5a;
+  --text-muted:          #86a892;
+  --border:              #d0f0dc;
+  --input-border:        #a0e0b8;
+  --bubble-mine-bg:      var(--primary);
+  --bubble-mine-text:    #ffffff;
+  --bubble-other-bg:     #ffffff;
+  --bubble-other-text:   #052e16;
+  --bubble-other-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  --header-bg:           var(--primary);
+  --header-text:         #ffffff;
+  --header-secondary:    rgba(255,255,255,0.7);
+  --sys-text:            #86a892;
+  --divider-mine:        rgba(255,255,255,0.35);
+  --divider-other:       rgba(0,0,0,0.08);
+  --select-bg:           rgba(255,255,255,0.15);
+  --select-border:       rgba(255,255,255,0.30);
+  --select-option-bg:    var(--primary);
+  --overlay-bg:          rgba(0,0,0,0.6);
+  --modal-bg:            #ffffff;
+  --modal-text:          #052e16;
+  --btn-file-bg:         #e8faf0;
+  --btn-file-color:      #4a7a5a;
+  --btn-file-border:     #a0e0b8;
+  --panel-bg:            #ffffff;
+  --panel-shadow:        0 4px 24px rgba(22,163,74,0.15);
+  --tag-bg:              #e0faea;
+  --tag-text:            #16a34a;
+}
+
+/* 로즈 테마 (분홍/빨간 계열) */
+[data-theme="rose"] {
+  --primary:             #e11d48;
+  --primary-dark:        #be123c;
+  --primary-alpha:       rgba(225, 29, 72, 0.15);
+  --bg:                  #fff1f2;
+  --surface:             #ffffff;
+  --surface2:            #ffe8ea;
+  --text:                #2d0a14;
+  --text-secondary:      #9a4060;
+  --text-muted:          #c08090;
+  --border:              #ffd0d5;
+  --input-border:        #ffb0ba;
+  --bubble-mine-bg:      var(--primary);
+  --bubble-mine-text:    #ffffff;
+  --bubble-other-bg:     #ffffff;
+  --bubble-other-text:   #2d0a14;
+  --bubble-other-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  --header-bg:           var(--primary);
+  --header-text:         #ffffff;
+  --header-secondary:    rgba(255,255,255,0.7);
+  --sys-text:            #c08090;
+  --divider-mine:        rgba(255,255,255,0.35);
+  --divider-other:       rgba(0,0,0,0.08);
+  --select-bg:           rgba(255,255,255,0.15);
+  --select-border:       rgba(255,255,255,0.30);
+  --select-option-bg:    var(--primary);
+  --overlay-bg:          rgba(0,0,0,0.6);
+  --modal-bg:            #ffffff;
+  --modal-text:          #2d0a14;
+  --btn-file-bg:         #ffe8ea;
+  --btn-file-color:      #9a4060;
+  --btn-file-border:     #ffb0ba;
+  --panel-bg:            #ffffff;
+  --panel-shadow:        0 4px 24px rgba(225,29,72,0.15);
+  --tag-bg:              #ffe0e5;
+  --tag-text:            #e11d48;
+}
+
+/* 선셋 테마 (주황/금색 계열) */
+[data-theme="sunset"] {
+  --primary:             #f59e0b;
+  --primary-dark:        #d97706;
+  --primary-alpha:       rgba(245, 158, 11, 0.15);
+  --bg:                  #fffbeb;
+  --surface:             #ffffff;
+  --surface2:            #fef5d0;
+  --text:                #2d1a00;
+  --text-secondary:      #996620;
+  --text-muted:          #c09040;
+  --border:              #fde68a;
+  --input-border:        #fcd34d;
+  --bubble-mine-bg:      var(--primary);
+  --bubble-mine-text:    #ffffff;
+  --bubble-other-bg:     #ffffff;
+  --bubble-other-text:   #2d1a00;
+  --bubble-other-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  --header-bg:           var(--primary);
+  --header-text:         #ffffff;
+  --header-secondary:    rgba(255,255,255,0.7);
+  --sys-text:            #c09040;
+  --divider-mine:        rgba(255,255,255,0.35);
+  --divider-other:       rgba(0,0,0,0.08);
+  --select-bg:           rgba(255,255,255,0.15);
+  --select-border:       rgba(255,255,255,0.30);
+  --select-option-bg:    var(--primary);
+  --overlay-bg:          rgba(0,0,0,0.6);
+  --modal-bg:            #ffffff;
+  --modal-text:          #2d1a00;
+  --btn-file-bg:         #fef5d0;
+  --btn-file-color:      #996620;
+  --btn-file-border:     #fcd34d;
+  --panel-bg:            #ffffff;
+  --panel-shadow:        0 4px 24px rgba(245,158,11,0.18);
+  --tag-bg:              #fef0b0;
+  --tag-text:            #d97706;
+}
+
+/* ── 리셋 & 기본 ── */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -6,9 +252,10 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #f0f2f5;
-  color: #1a1a2e;
+  background: var(--bg);
+  color: var(--text);
   min-height: 100vh;
+  transition: background 0.2s, color 0.2s;
 }
 
 /* ── 공통 컨테이너 ── */
@@ -25,7 +272,7 @@ h1 {
 }
 
 .subtitle {
-  color: #666;
+  color: var(--text-secondary);
   font-size: 0.95rem;
   margin-bottom: 32px;
 }
@@ -48,35 +295,36 @@ button:active, .btn:active {
 }
 
 .btn-primary {
-  background: #4f46e5;
+  background: var(--primary);
   color: #fff;
 }
 
 .btn-secondary {
-  background: #fff;
-  color: #4f46e5;
-  border: 2px solid #4f46e5;
+  background: var(--surface);
+  color: var(--primary);
+  border: 2px solid var(--primary);
 }
 
 /* ── 입력창 ── */
 input[type="text"] {
   width: 100%;
   padding: 14px 16px;
-  border: 2px solid #ddd;
+  border: 2px solid var(--input-border);
   border-radius: 12px;
   font-size: 1rem;
   outline: none;
   transition: border-color 0.2s;
-  background: #fff;
+  background: var(--surface);
+  color: var(--text);
 }
 
 input[type="text"]:focus {
-  border-color: #4f46e5;
+  border-color: var(--primary);
 }
 
 /* ── 카드 ── */
 .card {
-  background: #fff;
+  background: var(--surface);
   border-radius: 16px;
   padding: 28px 24px;
   margin-bottom: 16px;
@@ -85,7 +333,7 @@ input[type="text"]:focus {
 
 .divider {
   text-align: center;
-  color: #aaa;
+  color: var(--text-muted);
   margin: 20px 0;
   font-size: 0.85rem;
 }
@@ -95,7 +343,7 @@ input[type="text"]:focus {
   font-size: 2.8rem;
   font-weight: 800;
   letter-spacing: 6px;
-  color: #4f46e5;
+  color: var(--primary);
   text-align: center;
   margin: 16px 0;
 }
@@ -112,7 +360,7 @@ input[type="text"]:focus {
   border-radius: 8px;
 }
 
-/* ── 채팅방 ── */
+/* ── 채팅방 레이아웃 ── */
 .chat-layout {
   display: flex;
   flex-direction: column;
@@ -120,24 +368,28 @@ input[type="text"]:focus {
    * 1) --real-vh: client.js가 window.innerHeight로 계산한 실제 높이 (JS 폴백)
    * 2) 100dvh: 주소창/키보드를 제외한 동적 뷰포트 높이 (iOS 15.4+, Chrome 108+)
    * 3) 100vh: 위 둘 다 미지원 시 기본값 (주소창 포함되어 일부 기기에서 입력창 잘릴 수 있음)
-   * dvh를 쓰면 키보드가 올라와도 레이아웃이 재계산되어 입력창이 항상 보임 */
+   */
   height: calc(var(--real-vh, 1vh) * 100); /* JS 폴백 */
   height: 100dvh;                           /* 동적 뷰포트 높이 (우선 적용) */
 }
 
+/* ── 헤더 ── */
 .chat-header {
-  background: #4f46e5;
-  color: #fff;
+  background: var(--header-bg);
+  color: var(--header-text);
   padding: 14px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
+  transition: background 0.2s;
 }
 
 .chat-header .room-info {
   font-size: 0.9rem;
   opacity: 0.85;
+  cursor: pointer; /* 클릭 시 참여자 목록 패널 열림 */
+  text-decoration: underline dotted;
 }
 
 .chat-header .code-badge {
@@ -145,6 +397,29 @@ input[type="text"]:focus {
   font-size: 1.1rem;
 }
 
+/* 헤더 우측 버튼 그룹 */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 테마 선택 버튼 🎨 */
+.btn-theme {
+  width: auto;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--select-bg);
+  color: var(--header-text);
+  border: 1px solid var(--select-border);
+  font-size: 1rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.btn-theme:hover { background: rgba(255,255,255,0.25); }
+
+/* ── 메시지 영역 ── */
 .messages {
   flex: 1;
   overflow-y: auto;
@@ -152,6 +427,7 @@ input[type="text"]:focus {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  background: var(--bg);
 }
 
 /* ── 메시지 버블 ── */
@@ -173,7 +449,7 @@ input[type="text"]:focus {
 
 .msg .nickname {
   font-size: 0.75rem;
-  color: #888;
+  color: var(--text-muted);
   margin-bottom: 3px;
 }
 
@@ -186,21 +462,23 @@ input[type="text"]:focus {
 }
 
 .msg.mine .bubble {
-  background: #4f46e5;
-  color: #fff;
+  background: var(--bubble-mine-bg);
+  color: var(--bubble-mine-text);
   border-bottom-right-radius: 4px;
+  transition: background 0.2s;
 }
 
 .msg.other .bubble {
-  background: #fff;
-  color: #1a1a2e;
+  background: var(--bubble-other-bg);
+  color: var(--bubble-other-text);
   border-bottom-left-radius: 4px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  box-shadow: var(--bubble-other-shadow);
+  transition: background 0.2s;
 }
 
 .msg .time {
   font-size: 0.7rem;
-  color: #aaa;
+  color: var(--text-muted);
   margin-top: 3px;
 }
 
@@ -208,7 +486,7 @@ input[type="text"]:focus {
 .sys-msg {
   text-align: center;
   font-size: 0.78rem;
-  color: #999;
+  color: var(--sys-text);
   padding: 4px 0;
 }
 
@@ -217,8 +495,8 @@ input[type="text"]:focus {
   display: flex;
   gap: 10px;
   padding: 12px 16px;
-  background: #fff;
-  border-top: 1px solid #eee;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
   flex-shrink: 0;
 }
 
@@ -227,15 +505,19 @@ input[type="text"]:focus {
   border-radius: 24px;
   padding: 12px 16px;
   font-size: 0.95rem;
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--input-border);
 }
 
 .chat-input-wrap button {
   width: auto;
   padding: 12px 20px;
   border-radius: 24px;
-  background: #4f46e5;
+  background: var(--primary);
   color: #fff;
   font-size: 0.95rem;
+  transition: background 0.2s;
 }
 
 /* ── 번역 언어 선택 ── */
@@ -245,9 +527,9 @@ input[type="text"]:focus {
 }
 
 .translate-wrap select {
-  background: rgba(255,255,255,0.15);
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.3);
+  background: var(--select-bg);
+  color: var(--header-text);
+  border: 1px solid var(--select-border);
   border-radius: 8px;
   padding: 6px 10px;
   font-size: 0.82rem;
@@ -256,58 +538,39 @@ input[type="text"]:focus {
 }
 
 .translate-wrap select option {
-  background: #4f46e5;
-  color: #fff;
+  background: var(--select-option-bg);
+  color: var(--header-text);
 }
 
 /* ── 말풍선 내부 번역 구조 ── */
-/*
- * ★ [변경 4 — 말풍선 내부 번역] 아래 세 클래스 전체가 새로 추가됨
- *   이전: .bubble 안에 텍스트 노드 하나만 있었음 (번역이 있으면 bubble 바깥에 별도 요소)
- *         예) <div class="bubble">원문</div>  +  <div class="translation">번역</div>
- *   변경: bubble 내부에 원문 / 구분선 / 번역 3단 구조로 재설계
- *         이유: 번역이 말풍선 안에 있어야 "하나의 메시지"처럼 보이고 UX가 자연스러움
- *              말풍선 바깥에 두면 번역이 독립된 요소처럼 보여서 어색함
- *   방법: 순수 CSS — JS에서 createElement로 생성한 요소에 클래스를 붙여 스타일 적용
- *         구분선은 display:none 기본값으로 숨기고,
- *         translateText() 완료 시 dividerEl.style.display = 'block'으로 JS에서 열어줌
- *         참고(data 속성 + DOM 구조 설계): https://velog.io/@yunsungyang-omc/HTML-데이터-속성-사용하기-data-attribute
- */
-
-/* [변경 4] 원문 텍스트 영역 — 기존 .bubble 텍스트 스타일을 별도 클래스로 분리 */
 .bubble-original {
   word-break: break-word;
 }
 
-/* [변경 4] 원문/번역 구분선 — 번역 있을 때만 표시, translateText()가 block으로 바꿈 */
 .bubble-divider {
-  display: none;             /* 기본값: 숨김. 번역 완료 시 JS에서 block으로 변경 */
+  display: none;           /* 번역 완료 시 JS에서 block으로 변경 */
   height: 1px;
   margin: 6px 0;
-  background: rgba(255, 255, 255, 0.35); /* mine(파란 배경) 버블용 밝은 선 */
+  background: var(--divider-mine);
 }
 
-/* other 버블(흰 배경)은 구분선 색을 어둡게 따로 지정 */
 .msg.other .bubble-divider {
-  background: rgba(0, 0, 0, 0.1); /* other(흰 배경) 버블용 어두운 선 */
+  background: var(--divider-other);
 }
 
-/* [변경 4] 번역 텍스트 영역 — 말풍선 내부 하단, 원문보다 작고 기울임으로 구분 */
 .bubble-translation {
-  font-size: 0.8rem;    /* 원문(0.95rem)보다 작게 — 번역임을 시각적으로 구분 */
-  font-style: italic;   /* 기울임 — 번역 텍스트임을 추가로 표시 */
-  opacity: 0.82;        /* 약간 투명 — 원문보다 덜 강조 */
+  font-size: 0.8rem;
+  font-style: italic;
+  opacity: 0.82;
   word-break: break-word;
   line-height: 1.35;
 }
 
 /* ── 메시지 그룹핑 ── */
-/* 같은 발신자·분(minute)의 연속 메시지: 상단 간격 줄이고 닉네임 숨김 */
 .msg.msg-grouped {
-  margin-top: -4px; /* 일반 gap:10px 에서 더 붙여서 묶음처럼 보이게 */
+  margin-top: -4px;
 }
 
-/* 그룹핑된 메시지의 타임스탬프 숨김 */
 .time.time-hidden {
   display: none;
 }
@@ -317,79 +580,78 @@ input[type="text"]:focus {
   min-height: 18px;
   padding: 2px 16px 4px;
   font-size: 0.75rem;
-  color: #888;
+  color: var(--text-muted);
   font-style: italic;
-  background: #fff;
+  background: var(--surface);
   flex-shrink: 0;
 }
 
 /* ── 드래그 앤 드롭 오버레이 ── */
 #drag-overlay {
-  display: none;             /* 기본 숨김 — JS에서 .active 클래스로 열고 닫음 */
+  display: none;
   position: fixed;
   inset: 0;
-  background: rgba(79, 70, 229, 0.15);
-  border: 3px dashed #4f46e5;
+  background: var(--primary-alpha);
+  border: 3px dashed var(--primary);
   border-radius: 16px;
   z-index: 500;
   align-items: center;
   justify-content: center;
   font-size: 1.4rem;
-  color: #4f46e5;
+  color: var(--primary);
   font-weight: 600;
-  pointer-events: none;      /* 오버레이가 drop 이벤트를 가로채지 않도록 */
+  pointer-events: none;
 }
 
 #drag-overlay.active {
   display: flex;
 }
 
+/* ── 유틸리티 ── */
 .gap-12 { margin-bottom: 12px; }
 .gap-20 { margin-bottom: 20px; }
 .text-center { text-align: center; }
 .error-msg { color: #e53e3e; font-size: 0.85rem; margin-top: 8px; }
 
 /* ── 파일 첨부 버튼 ── */
-/* chat-input-wrap 내 📎 버튼 — 텍스트 input과 구분되도록 별도 스타일 */
 #btn-file {
   width: auto;
   padding: 10px 12px;
-  border-radius: 50%;        /* 원형 버튼 */
-  background: #f0f2f5;
-  color: #555;
+  border-radius: 50%;
+  background: var(--btn-file-bg);
+  color: var(--btn-file-color);
   font-size: 1.1rem;
-  flex-shrink: 0;            /* 공간이 좁아도 버튼 크기 유지 */
-  border: 1px solid #ddd;
+  flex-shrink: 0;
+  border: 1px solid var(--btn-file-border);
+  transition: background 0.2s;
 }
 
 #btn-file:active {
-  background: #e0e2e8;
+  opacity: 0.7;
 }
 
 /* ── 파일 말풍선 ── */
-/* bubble-file: 기본 .bubble 위에 추가 스타일 — 패딩을 줄여 이미지가 자연스럽게 표시되도록 */
 .bubble.bubble-file {
-  padding: 6px;              /* 이미지 주변 여백 최소화 */
+  padding: 6px;
   overflow: hidden;
 }
 
 /* ── 인라인 이미지 ── */
 .file-image {
   display: block;
-  max-width: 220px;          /* 말풍선 최대 너비에 맞게 제한 */
+  max-width: 220px;
   max-height: 300px;
-  border-radius: 12px;       /* bubble 안에서 둥글게 */
+  border-radius: 12px;
   object-fit: cover;
 }
 
 /* ── 파일 다운로드 버튼 ── */
-/* <button>으로 변경 — 클릭 시 보안 확인 모달을 먼저 띄움 */
 .file-link {
   display: block;
   padding: 6px 8px;
   font-size: 0.9rem;
   word-break: break-all;
-  background: none;          /* 기본 버튼 배경 제거 */
+  background: none;
   border: none;
   width: auto;
   text-align: left;
@@ -397,12 +659,494 @@ input[type="text"]:focus {
   font-family: inherit;
 }
 
-/* mine(파란 배경) 버블의 파일 버튼 색상 */
 .msg.mine .file-link {
-  color: #fff;
+  color: var(--bubble-mine-text);
 }
 
-/* other(흰 배경) 버블의 파일 버튼 색상 */
 .msg.other .file-link {
-  color: #4f46e5;
+  color: var(--primary);
+}
+
+/* ================================================================
+ * 참여자 목록 패널 (슬라이드 오버레이)
+ * 헤더의 "N online" 텍스트 클릭 시 열리고,
+ * 외부 클릭 또는 닫기 버튼으로 닫힘
+ * ================================================================ */
+#participants-panel {
+  position: fixed;
+  top: 0;
+  right: -280px;          /* 기본: 화면 밖으로 숨김 */
+  width: 260px;
+  height: 100%;
+  background: var(--panel-bg);
+  box-shadow: var(--panel-shadow);
+  z-index: 600;
+  transition: right 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#participants-panel.open {
+  right: 0;               /* 열림: 화면 안으로 이동 */
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.panel-close {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  width: auto;
+  padding: 4px 8px;
+}
+
+#participants-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 참여자 항목 태그 */
+.participant-tag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--tag-bg);
+  color: var(--tag-text);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* 참여자 패널 열릴 때 배경 어둡게 */
+#participants-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 599;
+}
+
+#participants-backdrop.open {
+  display: block;
+}
+
+/* ================================================================
+ * 테마 선택 패널
+ * 헤더 🎨 버튼 클릭 시 열리는 바텀시트(bottom-sheet) 스타일 패널
+ * ================================================================ */
+#theme-panel {
+  position: fixed;
+  bottom: -200px;         /* 기본: 화면 아래로 숨김 */
+  left: 0;
+  right: 0;
+  background: var(--panel-bg);
+  border-radius: 20px 20px 0 0;
+  box-shadow: var(--panel-shadow);
+  z-index: 600;
+  transition: bottom 0.25s ease;
+  padding: 16px;
+}
+
+#theme-panel.open {
+  bottom: 0;
+}
+
+.theme-panel-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text);
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+/* 테마 버튼 그리드 */
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.theme-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 6px;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  background: var(--surface2);
+  cursor: pointer;
+  font-size: 0.78rem;
+  color: var(--text);
+  font-weight: 500;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+
+.theme-btn.active {
+  border-color: var(--primary);
+}
+
+.theme-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(0,0,0,0.08);
+}
+
+#theme-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 599;
+}
+#theme-backdrop.open {
+  display: block;
+}
+
+/* ================================================================
+ * 긴 메시지 전체보기 오버레이
+ * 300자 이상 메시지에서 "전체 보기" 버튼 클릭 시 표시
+ * ================================================================ */
+#text-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--overlay-bg);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+#text-overlay.open {
+  display: flex;
+}
+
+.text-overlay-box {
+  background: var(--modal-bg);
+  color: var(--modal-text);
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.text-overlay-content {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.text-overlay-close {
+  align-self: flex-end;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  width: auto;
+}
+
+/* 메시지 버블 아래 "전체 보기" 버튼 */
+.btn-show-more {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: var(--primary-alpha);
+  color: var(--primary);
+  border: none;
+  cursor: pointer;
+  width: auto;
+}
+
+/* ================================================================
+ * 비밀방 — 호스트 입장 승인 요청 모달
+ * 새 사람이 입장 요청할 때 호스트에게 표시
+ * ================================================================ */
+#join-request-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--overlay-bg);
+  z-index: 1000;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 60px;
+}
+
+#join-request-modal.open {
+  display: flex;
+}
+
+.join-request-box {
+  background: var(--modal-bg);
+  color: var(--modal-text);
+  border-radius: 16px;
+  padding: 20px;
+  max-width: 320px;
+  width: 100%;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.join-request-name {
+  font-weight: 700;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.join-request-sub {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.join-request-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-approve {
+  flex: 1;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  width: auto;
+}
+
+.btn-deny {
+  flex: 1;
+  background: var(--surface2);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  width: auto;
+}
+
+/* ================================================================
+ * 비밀방 대기 화면 — join-pending 이벤트 수신 시 표시
+ * ================================================================ */
+#waiting-screen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+}
+
+#waiting-screen.open {
+  display: flex;
+}
+
+.waiting-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.waiting-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.waiting-sub {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  text-align: center;
+  max-width: 240px;
+  line-height: 1.5;
+}
+
+/* ================================================================
+ * 파일 다운로드 확인 모달 / 이미지 라이트박스 — 테마 변수 연동
+ * ================================================================ */
+#dl-modal-inner {
+  background: var(--modal-bg);
+  color: var(--modal-text);
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 340px;
+  width: 100%;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+
+#dl-modal-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: 20px;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.dl-btn-wrap {
+  display: flex;
+  gap: 10px;
+}
+
+.dl-btn-cancel {
+  flex: 1;
+  background: var(--surface2);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 0.9rem;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  width: auto;
+}
+
+.dl-btn-confirm {
+  flex: 1;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  width: auto;
+  border: none;
+}
+
+/* join.html 언어 선택 드롭다운 */
+.lang-select-join {
+  display: block;
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid var(--input-border);
+  border-radius: 12px;
+  font-size: 1rem;
+  outline: none;
+  background: var(--surface);
+  color: var(--text);
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23888' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  cursor: pointer;
+}
+.lang-select-join:focus { border-color: var(--primary); }
+
+/* host.html 비밀방 토글 스타일 */
+.secret-toggle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 2px solid var(--input-border);
+  border-radius: 12px;
+  background: var(--surface);
+  cursor: pointer;
+  user-select: none;
+}
+
+.secret-toggle-label {
+  flex: 1;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.secret-toggle-sub {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* 토글 스위치 */
+.toggle-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--input-border);
+  border-radius: 12px;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 3px;
+  top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background: var(--primary);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(20px);
 }

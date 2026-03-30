@@ -3,62 +3,154 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>chatroom — RasPIchat</title>
+  <title>chatroom — TalkBridge</title>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
   <div class="chat-layout">
+    <!-- ── 채팅 헤더 ── -->
     <div class="chat-header">
       <div>
         <div class="code-badge" id="header-code"></div>
-        <!-- 참여자 수: client.js의 applyI18n()이 언어에 맞게 텍스트 전체를 교체 -->
-        <div class="room-info" id="user-count-wrap">0 online</div>
+        <!-- 참여자 수: 클릭 시 참여자 목록 패널 열림 -->
+        <div class="room-info" id="user-count-wrap" title="참여자 목록 보기">0 online</div>
       </div>
-      <div class="translate-wrap">
-        <select id="lang-select" title="Choose language">
-          <!-- id="opt-translate-off": applyI18n()이 언어에 맞는 텍스트로 교체 -->
-          <option value="" id="opt-translate-off">Translate off</option>
-        </select>
+      <!-- 헤더 우측: 번역 선택 + 테마 버튼 -->
+      <div class="header-actions">
+        <div class="translate-wrap">
+          <select id="lang-select" title="Choose language">
+            <option value="" id="opt-translate-off">Translate off</option>
+          </select>
+        </div>
+        <!-- 🎨 테마 선택 버튼 -->
+        <button class="btn-theme" id="btn-theme" title="테마 변경">🎨</button>
       </div>
     </div>
 
     <div class="messages" id="messages"></div>
 
-    <!-- 드래그 앤 드롭 오버레이: 파일을 화면에 드래그하면 나타남 -->
+    <!-- 드래그 앤 드롭 오버레이 -->
     <div id="drag-overlay">📎 파일을 여기에 놓으세요</div>
 
-    <!-- 입력 중 표시: 다른 사람이 타이핑할 때 소켓 이벤트로 채움 -->
+    <!-- 입력 중 표시 -->
     <div id="typing-indicator"></div>
 
     <div class="chat-input-wrap">
-      <!-- 파일 첨부 버튼: 클릭 시 숨겨진 file input을 트리거 -->
       <button id="btn-file" title="파일 첨부">📎</button>
-      <!-- 실제 파일 선택 input — display:none으로 숨겨두고 btn-file 클릭 시 열림 -->
-      <!-- accept="*/*": 모든 파일 형식 허용 (특정 확장자만 지정하면 .hwp 등 못 보냄) -->
       <input type="file" id="file-input" accept="*/*" style="display:none">
-      <!-- placeholder·버튼 텍스트: client.js의 applyI18n()이 언어에 맞게 동적으로 변경 -->
-      <input type="text" id="msg-input" placeholder="Type a message..." maxlength="200" autocomplete="off">
+      <input type="text" id="msg-input" placeholder="Type a message..." autocomplete="off" maxlength="1000">
       <button id="btn-send">Send</button>
     </div>
   </div>
 
-  <!-- 파일 다운로드 보안 확인 모달 -->
-  <!-- client.js의 openDownloadConfirm()이 파일명·발신자를 채운 뒤 display:flex로 열고, 버튼 클릭 시 닫힘 -->
-  <div id="dl-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6);
-       z-index:1000; align-items:center; justify-content:center; padding:24px;">
-    <div style="background:#fff; border-radius:16px; padding:24px; max-width:340px; width:100%; box-shadow:0 8px 32px rgba(0,0,0,0.2);">
-      <div style="font-size:2rem; text-align:center; margin-bottom:8px;">⚠️</div>
-      <h3 style="font-size:1rem; font-weight:700; margin-bottom:8px; text-align:center;">파일 다운로드</h3>
-      <p id="dl-modal-desc" style="font-size:0.85rem; color:#555; text-align:center; margin-bottom:20px; line-height:1.5;"></p>
-      <div style="display:flex; gap:10px;">
-        <button id="dl-modal-cancel" style="flex:1; background:#f0f2f5; color:#333; border-radius:12px; padding:12px; font-size:0.9rem;">취소</button>
-        <button id="dl-modal-confirm" style="flex:1; background:#4f46e5; color:#fff; border-radius:12px; padding:12px; font-size:0.9rem;">다운로드</button>
+  <!-- ================================================================
+       참여자 목록 패널 (오른쪽에서 슬라이드인)
+       user-count-wrap 클릭 시 open 클래스가 토글됨
+       ================================================================ -->
+  <!-- 패널 배경 클릭 시 닫힘 -->
+  <div id="participants-backdrop"></div>
+  <div id="participants-panel">
+    <div class="panel-header">
+      <span id="panel-title">참여자</span>
+      <button class="panel-close" id="btn-close-panel">✕</button>
+    </div>
+    <!-- JS에서 participant-tag 요소들을 동적으로 추가 -->
+    <div id="participants-list"></div>
+  </div>
+
+  <!-- ================================================================
+       테마 선택 바텀시트
+       btn-theme 클릭 시 open 클래스가 토글됨
+       ================================================================ -->
+  <div id="theme-backdrop"></div>
+  <div id="theme-panel">
+    <div class="theme-panel-title" id="theme-panel-title">테마 선택</div>
+    <div class="theme-grid">
+      <!-- 각 테마 버튼: data-theme 속성으로 테마 이름 전달 -->
+      <button class="theme-btn active" data-theme="default">
+        <span class="theme-swatch" style="background:#4f46e5"></span>
+        Purple
+      </button>
+      <button class="theme-btn" data-theme="dark">
+        <span class="theme-swatch" style="background:#16161f; border-color:#444"></span>
+        Dark
+      </button>
+      <button class="theme-btn" data-theme="ocean">
+        <span class="theme-swatch" style="background:#0ea5e9"></span>
+        Ocean
+      </button>
+      <button class="theme-btn" data-theme="forest">
+        <span class="theme-swatch" style="background:#16a34a"></span>
+        Forest
+      </button>
+      <button class="theme-btn" data-theme="rose">
+        <span class="theme-swatch" style="background:#e11d48"></span>
+        Rose
+      </button>
+      <button class="theme-btn" data-theme="sunset">
+        <span class="theme-swatch" style="background:#f59e0b"></span>
+        Sunset
+      </button>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       긴 메시지 전체보기 오버레이
+       300자 이상 메시지의 "전체 보기" 버튼 클릭 시 표시
+       ================================================================ -->
+  <div id="text-overlay">
+    <div class="text-overlay-box">
+      <div id="text-overlay-content" class="text-overlay-content"></div>
+      <button class="text-overlay-close" id="btn-close-text-overlay">닫기</button>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       비밀방 — 입장 대기 화면
+       join-pending 소켓 이벤트 수신 시 표시
+       join-approved 시 숨김 / join-denied 시 메시지 표시 후 홈으로
+       ================================================================ -->
+  <div id="waiting-screen">
+    <div class="waiting-spinner"></div>
+    <div class="waiting-title" id="waiting-title">입장 승인 대기 중</div>
+    <div class="waiting-sub" id="waiting-sub">호스트가 입장을 승인할 때까지 기다려주세요.</div>
+  </div>
+
+  <!-- ================================================================
+       비밀방 — 호스트용 입장 요청 승인 모달
+       room-join-request 소켓 이벤트 수신 시 표시 (호스트에게만)
+       여러 요청이 순차적으로 쌓이면 큐(queue)로 처리
+       ================================================================ -->
+  <div id="join-request-modal">
+    <div class="join-request-box">
+      <div class="join-request-name" id="join-request-name"></div>
+      <div class="join-request-sub" id="join-request-sub">입장을 요청했습니다.</div>
+      <div class="join-request-actions">
+        <button class="btn-approve" id="btn-approve">승인</button>
+        <button class="btn-deny" id="btn-deny">거절</button>
       </div>
     </div>
   </div>
 
-  <!-- 이미지 전체화면 오버레이 (라이트박스) -->
-  <!-- 클릭 시 client.js에서 display:flex로 열고, 오버레이 또는 X 버튼 클릭 시 닫힘 -->
+  <!-- ================================================================
+       파일 다운로드 보안 확인 모달 (테마 CSS 변수 연동)
+       ================================================================ -->
+  <div id="dl-modal" style="display:none; position:fixed; inset:0; background:var(--overlay-bg);
+       z-index:1000; align-items:center; justify-content:center; padding:24px;">
+    <div id="dl-modal-inner">
+      <div style="font-size:2rem; text-align:center; margin-bottom:8px;">⚠️</div>
+      <h3 style="font-size:1rem; font-weight:700; margin-bottom:8px; text-align:center;">파일 다운로드</h3>
+      <p id="dl-modal-desc"></p>
+      <div class="dl-btn-wrap">
+        <button id="dl-modal-cancel" class="dl-btn-cancel">취소</button>
+        <button id="dl-modal-confirm" class="dl-btn-confirm">다운로드</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       이미지 전체화면 오버레이 (라이트박스)
+       ================================================================ -->
   <div id="img-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9);
        z-index:1000; align-items:center; justify-content:center; flex-direction:column;">
     <button id="img-overlay-close" style="position:absolute; top:16px; right:16px;
@@ -69,12 +161,10 @@
 
   <script>
     // dvh 미지원 구형 기기 대응: window.innerHeight로 실제 뷰포트 높이를 CSS 변수에 주입
-    // 100vh는 주소창 포함 높이라 입력창이 잘리는 기종이 있음 → innerHeight는 실제 보이는 높이
     function setRealVh() {
       document.documentElement.style.setProperty('--real-vh', (window.innerHeight * 0.01) + 'px');
     }
     setRealVh();
-    // 화면 회전, 키보드 열림/닫힘 시 재계산
     window.addEventListener('resize', setRealVh);
   </script>
   <script src="/socket.io.min.js"></script>

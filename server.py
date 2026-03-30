@@ -72,7 +72,7 @@ DEEPL_LANG_MAP = {
 }
 
 app = Flask(__name__, static_folder='public', static_url_path='')
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'raspichat-secret')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'talkbridge-secret')
 
 # max_http_buffer_size: 소켓 메시지 최대 크기를 10MB로 설정
 # 기본값은 1MB — Base64 파일 전송 시 이 한도를 초과할 수 있으므로 확장 필요
@@ -81,6 +81,8 @@ socketio = SocketIO(app, async_mode='eventlet', cors_allowed_origins='*', max_ht
 
 app.register_blueprint(room_blueprint, url_prefix='/api/room')
 
+# 소켓 세션 저장소: sid → {room_code, nickname, is_host}
+# Node.js에서는 Map 또는 객체로 동일하게 관리
 socket_sessions: dict = {}
 
 
@@ -147,44 +149,164 @@ def translate():
 
 @socketio.on('connect')
 def on_connect():
-    socket_sessions[request.sid] = {'room_code': None, 'nickname': None}
+    # 새 소켓 연결 시 세션 초기화
+    socket_sessions[request.sid] = {
+        'room_code': None,
+        'nickname':  None,
+        'is_host':   False,
+    }
 
 
 @socketio.on('join-room')
 def on_join_room(data):
-    code = data.get('code', '').upper()
+    code     = data.get('code', '').upper()
     nickname = data.get('nickname', '')
+    # isHost: host.html에서 sessionStorage.setItem('isHost','true') 설정 후 join-room 이벤트에 포함
+    is_host  = bool(data.get('isHost', False))
 
     if code not in rooms:
         return
 
+    room = rooms[code]
+
+    # 재연결(reconnect) 시 중복 추가 방지 — 같은 sid가 이미 users에 있으면 건너뜀
+    already_in = any(u['id'] == request.sid for u in room['users'])
+
+    if not already_in:
+        # ── 호스트 설정 ──
+        # isHost 플래그가 True이거나 방에 아직 호스트가 없으면 이 연결을 호스트로 지정
+        # Node.js에서는 rooms.get(code).hostId = socket.id 와 동일
+        if is_host or room['host_sid'] is None:
+            room['host_sid'] = request.sid
+
+        # ── 비밀방 처리 ──
+        # 비밀방이고 현재 연결이 호스트가 아닌 경우 → 대기열(wait_list)에 추가
+        # 호스트가 승인해야 실제 방에 들어올 수 있음
+        if room['secret'] and request.sid != room['host_sid']:
+            room['wait_list'].append({'id': request.sid, 'nickname': nickname})
+            # 세션에 방 코드·닉네임 저장 (disconnect 시 정리를 위해 필요)
+            socket_sessions[request.sid]['room_code'] = code
+            socket_sessions[request.sid]['nickname']  = nickname
+
+            # 호스트에게 입장 요청 이벤트 전송
+            # Node.js: io.to(room.hostId).emit('room-join-request', {...})
+            if room['host_sid']:
+                emit('room-join-request', {
+                    'sid':      request.sid,
+                    'nickname': nickname,
+                }, to=room['host_sid'])
+
+            # 요청자 본인에게 대기 중 상태 알림
+            emit('join-pending', {})
+            return  # 아직 방에 join_room 하지 않음
+
+    # ── 정식 입장 ──
     join_room(code)
 
     socket_sessions[request.sid]['room_code'] = code
-    socket_sessions[request.sid]['nickname'] = nickname
+    socket_sessions[request.sid]['nickname']  = nickname
+    socket_sessions[request.sid]['is_host']   = is_host or (room['host_sid'] == request.sid)
 
-    rooms[code]['users'].append({'id': request.sid, 'nickname': nickname})
+    if not already_in:
+        room['users'].append({'id': request.sid, 'nickname': nickname})
+        emit('user-joined', {'nickname': nickname}, to=code, skip_sid=request.sid)
 
-    emit('user-joined', {'nickname': nickname}, to=code, skip_sid=request.sid)
-    emit('room-users', {'count': len(rooms[code]['users'])}, to=code)
+    # 참여자 수 + 닉네임 목록을 함께 전송 (클라이언트의 참여자 패널에 표시)
+    users_list = [u['nickname'] for u in room['users']]
+    emit('room-users', {
+        'count': len(room['users']),
+        'users': users_list,
+    }, to=code)
+
+
+@socketio.on('approve-join')
+def on_approve_join(data):
+    """호스트가 대기 중인 사용자의 입장을 승인할 때 발생하는 이벤트
+    Node.js: socket.on('approve-join', ({sid}) => { ... })
+    """
+    session = socket_sessions.get(request.sid, {})
+    code    = session.get('room_code')
+    if not code or code not in rooms:
+        return
+
+    room = rooms[code]
+    # 승인 요청자가 실제 호스트인지 검증 (보안: 아무나 승인 못하도록)
+    if room['host_sid'] != request.sid:
+        return
+
+    target_sid = data.get('sid')
+    # 대기열에서 해당 sid 찾기
+    waiting = next((w for w in room['wait_list'] if w['id'] == target_sid), None)
+    if not waiting:
+        return
+
+    # 대기열에서 제거
+    room['wait_list'] = [w for w in room['wait_list'] if w['id'] != target_sid]
+    approved_nickname = waiting['nickname']
+
+    # 승인된 사용자를 Socket.io 방에 추가
+    # Flask-SocketIO에서 다른 클라이언트의 sid를 방에 넣는 방법:
+    # socketio.server.enter_room(sid, room_name, namespace)
+    # Node.js: socket.join(roomCode) — 상대방 소켓 객체를 직접 가져와 join 호출
+    socketio.server.enter_room(target_sid, code, namespace='/')
+    room['users'].append({'id': target_sid, 'nickname': approved_nickname})
+
+    # 세션 업데이트
+    if target_sid in socket_sessions:
+        socket_sessions[target_sid]['is_host'] = False
+
+    # 승인된 사용자 본인에게 알림 → 클라이언트가 페이지 진입 완료 처리
+    emit('join-approved', {}, to=target_sid)
+
+    # 방 전체에 입장 알림 (승인된 사람 제외)
+    emit('user-joined', {'nickname': approved_nickname}, to=code, skip_sid=target_sid)
+
+    # 최신 참여자 목록 브로드캐스트
+    users_list = [u['nickname'] for u in room['users']]
+    emit('room-users', {
+        'count': len(room['users']),
+        'users': users_list,
+    }, to=code)
+
+
+@socketio.on('deny-join')
+def on_deny_join(data):
+    """호스트가 대기 중인 사용자의 입장을 거절할 때 발생하는 이벤트
+    Node.js: socket.on('deny-join', ({sid}) => { ... })
+    """
+    session = socket_sessions.get(request.sid, {})
+    code    = session.get('room_code')
+    if not code or code not in rooms:
+        return
+
+    room = rooms[code]
+    if room['host_sid'] != request.sid:
+        return
+
+    target_sid = data.get('sid')
+    # 대기열에서 제거
+    room['wait_list'] = [w for w in room['wait_list'] if w['id'] != target_sid]
+
+    # 거절된 사용자에게 알림 → 클라이언트가 거절 화면 표시
+    emit('join-denied', {}, to=target_sid)
 
 
 @socketio.on('send-message')
 def on_send_message(data):
-    session = socket_sessions.get(request.sid, {})
-    code = session.get('room_code')
+    session  = socket_sessions.get(request.sid, {})
+    code     = session.get('room_code')
     nickname = session.get('nickname')
 
     if not code or code not in rooms:
         return
 
-    text = data.get('text', '')
+    text      = data.get('text', '')
     timestamp = datetime.now().strftime('%H:%M')
 
     emit('receive-message', {
-        'nickname': nickname,
-        'text': text,
-        'timestamp': timestamp
+        'nickname':  nickname,
+        'text':      text,
+        'timestamp': timestamp,
     }, to=code)
 
 
@@ -192,8 +314,8 @@ def on_send_message(data):
 def on_typing_start():
     # 클라이언트가 입력창에 타이핑 시작 시 발생 — 같은 방 사람들에게 브로드캐스트
     # Node.js에서는 socket.on('typing-start', () => socket.to(room).emit(...)) 와 동일
-    session = socket_sessions.get(request.sid, {})
-    code = session.get('room_code')
+    session  = socket_sessions.get(request.sid, {})
+    code     = session.get('room_code')
     nickname = session.get('nickname')
     if not code or code not in rooms:
         return
@@ -203,8 +325,8 @@ def on_typing_start():
 @socketio.on('typing-stop')
 def on_typing_stop():
     # 클라이언트가 타이핑 멈춤(전송, 2초 무입력, 창 이탈) 시 발생
-    session = socket_sessions.get(request.sid, {})
-    code = session.get('room_code')
+    session  = socket_sessions.get(request.sid, {})
+    code     = session.get('room_code')
     nickname = session.get('nickname')
     if not code or code not in rooms:
         return
@@ -216,45 +338,61 @@ def on_send_file(data):
     # 파일 전송 이벤트 핸들러
     # data = { filename: str, mimeType: str, dataUrl: str (base64) }
     # Node.js에서는 socket.on('send-file', (data) => { io.to(room).emit(...) }) 와 동일
-    session = socket_sessions.get(request.sid, {})
-    code = session.get('room_code')
+    session  = socket_sessions.get(request.sid, {})
+    code     = session.get('room_code')
     nickname = session.get('nickname')
 
     if not code or code not in rooms:
         return
 
-    filename = data.get('filename', 'file')
+    filename  = data.get('filename', 'file')
     mime_type = data.get('mimeType', 'application/octet-stream')
-    data_url = data.get('dataUrl', '')
+    data_url  = data.get('dataUrl', '')
     timestamp = datetime.now().strftime('%H:%M')
 
     # 같은 방의 모든 클라이언트에게 파일 데이터 브로드캐스트
     # Base64 dataUrl을 그대로 전달 — 서버는 저장하지 않음 (메모리에도 남지 않음)
     emit('receive-file', {
-        'nickname': nickname,
-        'filename': filename,
-        'mimeType': mime_type,
-        'dataUrl': data_url,
-        'timestamp': timestamp
+        'nickname':  nickname,
+        'filename':  filename,
+        'mimeType':  mime_type,
+        'dataUrl':   data_url,
+        'timestamp': timestamp,
     }, to=code)
 
 
 @socketio.on('disconnect')
 def on_disconnect():
-    session = socket_sessions.pop(request.sid, {})
-    code = session.get('room_code')
+    session  = socket_sessions.pop(request.sid, {})
+    code     = session.get('room_code')
     nickname = session.get('nickname')
 
     if not code or code not in rooms:
+        # 대기열에만 있던 사용자가 끊긴 경우: 모든 방의 대기열에서 제거
+        # (code가 None이어도 wait_list에 들어갈 수 있음 — join-room 직후 disconnect 엣지케이스)
+        for room in rooms.values():
+            room['wait_list'] = [w for w in room['wait_list'] if w['id'] != request.sid]
         return
 
-    rooms[code]['users'] = [u for u in rooms[code]['users'] if u['id'] != request.sid]
+    room = rooms[code]
+
+    # 대기열에서 제거 (승인 대기 중에 끊긴 경우)
+    room['wait_list'] = [w for w in room['wait_list'] if w['id'] != request.sid]
+
+    # 참여자 목록에서 제거
+    room['users'] = [u for u in room['users'] if u['id'] != request.sid]
 
     emit('user-left', {'nickname': nickname}, to=code, skip_sid=request.sid)
-    emit('room-users', {'count': len(rooms[code]['users'])}, to=code)
+
+    # 최신 참여자 수 + 목록 브로드캐스트
+    users_list = [u['nickname'] for u in room['users']]
+    emit('room-users', {
+        'count': len(room['users']),
+        'users': users_list,
+    }, to=code)
 
 
 if __name__ == '__main__':
     debug = os.environ.get('FLASK_DEBUG', '0') == '1'
-    print(f'서버 실행 중: http://localhost:{PORT}')
+    print(f'TalkBridge 서버 실행 중: http://localhost:{PORT}')
     socketio.run(app, host='0.0.0.0', port=PORT, debug=debug)

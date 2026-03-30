@@ -1,5 +1,5 @@
 // =====================================================
-// RasPIchat 채팅 클라이언트 — client.js
+// TalkBridge 채팅 클라이언트 — client.js
 // =====================================================
 // Node.js 백엔드에서는 socket.io-client npm 패키지를 직접 import하지만,
 // 여기서는 Flask 서버가 제공하는 /socket.io.min.js를 <script>로 로드합니다.
@@ -10,6 +10,8 @@
 // Node.js + Express에서는 req.session 또는 JWT를 사용하는 방식과 유사
 const nickname = sessionStorage.getItem('nickname');
 const roomCode = sessionStorage.getItem('roomCode');
+// host.html에서 sessionStorage.setItem('isHost', 'true')로 설정됨
+const isHost   = sessionStorage.getItem('isHost') === 'true';
 
 if (!nickname || !roomCode) {
   location.href = '/';
@@ -17,31 +19,25 @@ if (!nickname || !roomCode) {
 }
 
 // ----- 다국어 UI 문자열 딕셔너리 (i18n) -----
-// ★ [변경 1 — 알림메시지 번역 + UI 공통어]
-//   이전: 시스템 알림("누가 입장/퇴장") 문자열이 영어 하드코딩이었음
-//         ※ 하드코딩 = 변할 수 있는 값(여기선 언어별 텍스트)을 코드에 직접 고정해 넣는 것
-//         ※ 하드코딩을 피해야 하는 이유: 언어 추가/변경 시 코드 전체를 일일이 찾아 수정해야 함
-//         참고: https://velog.io/@rlaclghks123/Clean-Code-하드코딩을-피하자
-//         예) socket.on('user-joined', ...) 안에서 그냥 `${who} joined the chat` 고정
-//         또한 버튼·플레이스홀더·드롭다운 텍스트도 HTML에 영어로 고정
-//   변경: 이 딕셔너리(I18N)에 모든 언어별로 userJoined, userLeft, translateOff,
-//         placeholder, send, usersOnline 키를 추가함
-//         ※ 딕셔너리 = "키(이름) → 값" 쌍으로 데이터를 저장하는 자료구조 (국어사전과 같은 원리)
-//         ※ 배열은 번호(0,1,2)로 찾지만 딕셔너리는 이름(키)으로 찾음: I18N['ko']['send'] → '전송'
-//         참고: https://velog.io/@wlldone/자료구조-딕셔너리Dictionary-JS로-구현해-보기
-//   방법: 순수 JavaScript 객체(딕셔너리)로 i18n 구현 — Node.js+React에서는 i18next 라이브러리를
-//         쓰지만, 여기서는 외부 의존성 없이 정적 객체로 구현 (i18n이란: internationalization 약어)
-//         ※ i18n 딕셔너리로 언어 텍스트를 한 곳에 모아두면 언어 추가 시 딕셔너리 항목만 추가하면 됨
-//         참고: https://velog.io/@hyeseong0914/i18n-다국어-처리
-//         t(lang, key) 함수로 현재 선택 언어에 맞는 문자열을 동적으로 꺼내 씀
 // 키 목록:
-//   usersOnline  : 참여자 수 표시 (예: "3 online" / "3명 참여 중")
-//   translateOff : 번역 끄기 옵션 텍스트  ← UI 공통어 변경에서 추가
-//   placeholder  : 메시지 입력창 힌트      ← UI 공통어 변경에서 추가
-//   send         : 전송 버튼 텍스트        ← UI 공통어 변경에서 추가
-//   translating  : 번역 중 표시
-//   userJoined   : 입장 시스템 메시지      ← 알림메시지 번역에서 추가
-//   userLeft     : 퇴장 시스템 메시지      ← 알림메시지 번역에서 추가
+//   usersOnline    : 참여자 수 표시 텍스트
+//   translateOff   : 번역 끄기 옵션 텍스트
+//   placeholder    : 메시지 입력창 힌트
+//   send           : 전송 버튼 텍스트
+//   translating    : 번역 중 표시
+//   userJoined     : 입장 시스템 메시지
+//   userLeft       : 퇴장 시스템 메시지
+//   participants   : 참여자 패널 제목
+//   showMore       : 긴 메시지 전체보기 버튼 텍스트
+//   closeOverlay   : 전체보기 닫기 버튼 텍스트
+//   themeLabel     : 테마 패널 제목
+//   approve        : 승인 버튼
+//   deny           : 거절 버튼
+//   joinRequest    : 입장 요청 안내 문구 (호스트용)
+//   joinDenied     : 거절 알림 텍스트
+//   waitingTitle   : 대기 화면 제목
+//   waitingSub     : 대기 화면 설명
+//   msgTooLong     : 1000자 초과 알림
 const I18N = {
   'en': {
     usersOnline:  n   => `${n} online`,
@@ -51,6 +47,17 @@ const I18N = {
     translating:  'Translating...',
     userJoined:   who => `${who} joined the chat`,
     userLeft:     who => `${who} left the chat`,
+    participants: 'Participants',
+    showMore:     'Show full',
+    closeOverlay: 'Close',
+    themeLabel:   'Choose Theme',
+    approve:      'Approve',
+    deny:         'Deny',
+    joinRequest:  who => `${who} wants to join`,
+    joinDenied:   'Your request was denied.',
+    waitingTitle: 'Waiting for approval',
+    waitingSub:   'Please wait until the host approves your entry.',
+    msgTooLong:   'Message is too long (max 1,000 characters).',
   },
   'ko': {
     usersOnline:  n   => `${n}명 참여 중`,
@@ -60,6 +67,17 @@ const I18N = {
     translating:  '번역 중...',
     userJoined:   who => `${who}님이 입장했습니다`,
     userLeft:     who => `${who}님이 퇴장했습니다`,
+    participants: '참여자',
+    showMore:     '전체 보기',
+    closeOverlay: '닫기',
+    themeLabel:   '테마 선택',
+    approve:      '승인',
+    deny:         '거절',
+    joinRequest:  who => `${who}님이 입장을 요청합니다`,
+    joinDenied:   '입장이 거절되었습니다.',
+    waitingTitle: '입장 승인 대기 중',
+    waitingSub:   '호스트가 입장을 승인할 때까지 기다려주세요.',
+    msgTooLong:   '메시지는 최대 1,000자까지 입력할 수 있습니다.',
   },
   'ja': {
     usersOnline:  n   => `${n}人参加中`,
@@ -69,6 +87,17 @@ const I18N = {
     translating:  '翻訳中...',
     userJoined:   who => `${who}が参加しました`,
     userLeft:     who => `${who}が退出しました`,
+    participants: '参加者',
+    showMore:     '全文を見る',
+    closeOverlay: '閉じる',
+    themeLabel:   'テーマ選択',
+    approve:      '承認',
+    deny:         '拒否',
+    joinRequest:  who => `${who}が参加リクエストを送りました`,
+    joinDenied:   '入室が拒否されました。',
+    waitingTitle: '承認待ち',
+    waitingSub:   'ホストが承認するまでお待ちください。',
+    msgTooLong:   'メッセージは最大1,000文字です。',
   },
   'zh-CN': {
     usersOnline:  n   => `${n}人在线`,
@@ -78,6 +107,17 @@ const I18N = {
     translating:  '翻译中...',
     userJoined:   who => `${who} 加入了聊天`,
     userLeft:     who => `${who} 离开了聊天`,
+    participants: '参与者',
+    showMore:     '查看全文',
+    closeOverlay: '关闭',
+    themeLabel:   '选择主题',
+    approve:      '批准',
+    deny:         '拒绝',
+    joinRequest:  who => `${who} 请求加入`,
+    joinDenied:   '您的请求被拒绝。',
+    waitingTitle: '等待批准',
+    waitingSub:   '请等待主持人批准您的入场。',
+    msgTooLong:   '消息最多1,000个字符。',
   },
   'zh-TW': {
     usersOnline:  n   => `${n}人在線`,
@@ -87,6 +127,17 @@ const I18N = {
     translating:  '翻譯中...',
     userJoined:   who => `${who} 加入了聊天`,
     userLeft:     who => `${who} 離開了聊天`,
+    participants: '參與者',
+    showMore:     '查看全文',
+    closeOverlay: '關閉',
+    themeLabel:   '選擇主題',
+    approve:      '批准',
+    deny:         '拒絕',
+    joinRequest:  who => `${who} 請求加入`,
+    joinDenied:   '您的請求被拒絕。',
+    waitingTitle: '等待批准',
+    waitingSub:   '請等待主持人批准。',
+    msgTooLong:   '訊息最多1,000個字元。',
   },
   'es': {
     usersOnline:  n   => `${n} en línea`,
@@ -96,6 +147,17 @@ const I18N = {
     translating:  'Traduciendo...',
     userJoined:   who => `${who} se unió al chat`,
     userLeft:     who => `${who} salió del chat`,
+    participants: 'Participantes',
+    showMore:     'Ver completo',
+    closeOverlay: 'Cerrar',
+    themeLabel:   'Elegir tema',
+    approve:      'Aprobar',
+    deny:         'Rechazar',
+    joinRequest:  who => `${who} solicita unirse`,
+    joinDenied:   'Tu solicitud fue rechazada.',
+    waitingTitle: 'Esperando aprobación',
+    waitingSub:   'Espera a que el anfitrión apruebe tu entrada.',
+    msgTooLong:   'El mensaje tiene máximo 1.000 caracteres.',
   },
   'fr': {
     usersOnline:  n   => `${n} en ligne`,
@@ -105,6 +167,17 @@ const I18N = {
     translating:  'Traduction...',
     userJoined:   who => `${who} a rejoint le chat`,
     userLeft:     who => `${who} a quitté le chat`,
+    participants: 'Participants',
+    showMore:     'Voir tout',
+    closeOverlay: 'Fermer',
+    themeLabel:   'Choisir un thème',
+    approve:      'Approuver',
+    deny:         'Refuser',
+    joinRequest:  who => `${who} demande à rejoindre`,
+    joinDenied:   'Votre demande a été refusée.',
+    waitingTitle: "En attente d'approbation",
+    waitingSub:   "Attendez que l'hôte approuve votre entrée.",
+    msgTooLong:   'Le message ne peut pas dépasser 1 000 caractères.',
   },
   'de': {
     usersOnline:  n   => `${n} online`,
@@ -114,6 +187,17 @@ const I18N = {
     translating:  'Übersetze...',
     userJoined:   who => `${who} ist beigetreten`,
     userLeft:     who => `${who} hat den Chat verlassen`,
+    participants: 'Teilnehmer',
+    showMore:     'Vollständig anzeigen',
+    closeOverlay: 'Schließen',
+    themeLabel:   'Thema wählen',
+    approve:      'Genehmigen',
+    deny:         'Ablehnen',
+    joinRequest:  who => `${who} möchte beitreten`,
+    joinDenied:   'Ihre Anfrage wurde abgelehnt.',
+    waitingTitle: 'Warte auf Genehmigung',
+    waitingSub:   'Bitte warten Sie, bis der Gastgeber Sie einlässt.',
+    msgTooLong:   'Nachricht maximal 1.000 Zeichen.',
   },
   'ru': {
     usersOnline:  n   => `${n} онлайн`,
@@ -123,6 +207,17 @@ const I18N = {
     translating:  'Перевод...',
     userJoined:   who => `${who} присоединился`,
     userLeft:     who => `${who} покинул чат`,
+    participants: 'Участники',
+    showMore:     'Показать всё',
+    closeOverlay: 'Закрыть',
+    themeLabel:   'Выбрать тему',
+    approve:      'Одобрить',
+    deny:         'Отклонить',
+    joinRequest:  who => `${who} хочет войти`,
+    joinDenied:   'Ваш запрос был отклонён.',
+    waitingTitle: 'Ожидание одобрения',
+    waitingSub:   'Пожалуйста, дождитесь одобрения хоста.',
+    msgTooLong:   'Сообщение не может превышать 1 000 символов.',
   },
   'ar': {
     usersOnline:  n   => `${n} متصل`,
@@ -132,6 +227,17 @@ const I18N = {
     translating:  'جارٍ الترجمة...',
     userJoined:   who => `انضم ${who} إلى المحادثة`,
     userLeft:     who => `غادر ${who} المحادثة`,
+    participants: 'المشاركون',
+    showMore:     'عرض الكامل',
+    closeOverlay: 'إغلاق',
+    themeLabel:   'اختر السمة',
+    approve:      'موافقة',
+    deny:         'رفض',
+    joinRequest:  who => `${who} يريد الانضمام`,
+    joinDenied:   'تم رفض طلبك.',
+    waitingTitle: 'في انتظار الموافقة',
+    waitingSub:   'يرجى الانتظار حتى يوافق المضيف.',
+    msgTooLong:   'الحد الأقصى للرسالة 1,000 حرف.',
   },
   'pt': {
     usersOnline:  n   => `${n} online`,
@@ -141,6 +247,17 @@ const I18N = {
     translating:  'Traduzindo...',
     userJoined:   who => `${who} entrou no chat`,
     userLeft:     who => `${who} saiu do chat`,
+    participants: 'Participantes',
+    showMore:     'Ver tudo',
+    closeOverlay: 'Fechar',
+    themeLabel:   'Escolher tema',
+    approve:      'Aprovar',
+    deny:         'Recusar',
+    joinRequest:  who => `${who} quer entrar`,
+    joinDenied:   'Seu pedido foi recusado.',
+    waitingTitle: 'Aguardando aprovação',
+    waitingSub:   'Aguarde o anfitrião aprovar sua entrada.',
+    msgTooLong:   'A mensagem tem no máximo 1.000 caracteres.',
   },
   'it': {
     usersOnline:  n   => `${n} online`,
@@ -150,33 +267,17 @@ const I18N = {
     translating:  'Traduzione...',
     userJoined:   who => `${who} è entrato nella chat`,
     userLeft:     who => `${who} ha lasciato la chat`,
-  },
-  'hi': {
-    usersOnline:  n   => `${n} ऑनलाइन`,
-    translateOff: 'अनुवाद नहीं',
-    placeholder:  'संदेश लिखें...',
-    send:         'भेजें',
-    translating:  'अनुवाद हो रहा है...',
-    userJoined:   who => `${who} चैट में शामिल हुए`,
-    userLeft:     who => `${who} चैट छोड़ गए`,
-  },
-  'th': {
-    usersOnline:  n   => `${n} ออนไลน์`,
-    translateOff: 'ไม่แปล',
-    placeholder:  'พิมพ์ข้อความ...',
-    send:         'ส่ง',
-    translating:  'กำลังแปล...',
-    userJoined:   who => `${who} เข้าร่วมแชท`,
-    userLeft:     who => `${who} ออกจากแชท`,
-  },
-  'vi': {
-    usersOnline:  n   => `${n} trực tuyến`,
-    translateOff: 'Không dịch',
-    placeholder:  'Nhập tin nhắn...',
-    send:         'Gửi',
-    translating:  'Đang dịch...',
-    userJoined:   who => `${who} đã tham gia chat`,
-    userLeft:     who => `${who} đã rời chat`,
+    participants: 'Partecipanti',
+    showMore:     'Vedi tutto',
+    closeOverlay: 'Chiudi',
+    themeLabel:   'Scegli tema',
+    approve:      'Approva',
+    deny:         'Rifiuta',
+    joinRequest:  who => `${who} vuole entrare`,
+    joinDenied:   'La tua richiesta è stata rifiutata.',
+    waitingTitle: 'In attesa di approvazione',
+    waitingSub:   "Attendi che l'host approvi.",
+    msgTooLong:   'Il messaggio può avere al massimo 1.000 caratteri.',
   },
   'id': {
     usersOnline:  n   => `${n} online`,
@@ -186,6 +287,17 @@ const I18N = {
     translating:  'Menerjemahkan...',
     userJoined:   who => `${who} bergabung`,
     userLeft:     who => `${who} keluar`,
+    participants: 'Peserta',
+    showMore:     'Lihat semua',
+    closeOverlay: 'Tutup',
+    themeLabel:   'Pilih tema',
+    approve:      'Setujui',
+    deny:         'Tolak',
+    joinRequest:  who => `${who} ingin bergabung`,
+    joinDenied:   'Permintaan Anda ditolak.',
+    waitingTitle: 'Menunggu persetujuan',
+    waitingSub:   'Tunggu hingga host menyetujui masuk Anda.',
+    msgTooLong:   'Pesan maksimal 1.000 karakter.',
   },
   'tr': {
     usersOnline:  n   => `${n} çevrimiçi`,
@@ -195,6 +307,17 @@ const I18N = {
     translating:  'Çeviriliyor...',
     userJoined:   who => `${who} katıldı`,
     userLeft:     who => `${who} ayrıldı`,
+    participants: 'Katılımcılar',
+    showMore:     'Tamamını gör',
+    closeOverlay: 'Kapat',
+    themeLabel:   'Tema seç',
+    approve:      'Onayla',
+    deny:         'Reddet',
+    joinRequest:  who => `${who} katılmak istiyor`,
+    joinDenied:   'İsteğiniz reddedildi.',
+    waitingTitle: 'Onay bekleniyor',
+    waitingSub:   'Ev sahibinin onaylamasını bekleyin.',
+    msgTooLong:   'Mesaj en fazla 1.000 karakter olabilir.',
   },
   'pl': {
     usersOnline:  n   => `${n} online`,
@@ -204,6 +327,17 @@ const I18N = {
     translating:  'Tłumaczenie...',
     userJoined:   who => `${who} dołączył`,
     userLeft:     who => `${who} wyszedł`,
+    participants: 'Uczestnicy',
+    showMore:     'Pokaż całość',
+    closeOverlay: 'Zamknij',
+    themeLabel:   'Wybierz motyw',
+    approve:      'Zatwierdź',
+    deny:         'Odrzuć',
+    joinRequest:  who => `${who} chce dołączyć`,
+    joinDenied:   'Twoje żądanie zostało odrzucone.',
+    waitingTitle: 'Oczekiwanie na zatwierdzenie',
+    waitingSub:   'Poczekaj, aż gospodarz zatwierdzi wejście.',
+    msgTooLong:   'Wiadomość może mieć maksymalnie 1 000 znaków.',
   },
   'nl': {
     usersOnline:  n   => `${n} online`,
@@ -213,6 +347,17 @@ const I18N = {
     translating:  'Vertalen...',
     userJoined:   who => `${who} is toegetreden`,
     userLeft:     who => `${who} heeft verlaten`,
+    participants: 'Deelnemers',
+    showMore:     'Volledig weergeven',
+    closeOverlay: 'Sluiten',
+    themeLabel:   'Thema kiezen',
+    approve:      'Goedkeuren',
+    deny:         'Afwijzen',
+    joinRequest:  who => `${who} wil deelnemen`,
+    joinDenied:   'Uw verzoek is afgewezen.',
+    waitingTitle: 'Wachten op goedkeuring',
+    waitingSub:   'Wacht tot de host uw deelname goedkeurt.',
+    msgTooLong:   'Bericht mag maximaal 1.000 tekens bevatten.',
   },
   'sv': {
     usersOnline:  n   => `${n} online`,
@@ -222,6 +367,17 @@ const I18N = {
     translating:  'Översätter...',
     userJoined:   who => `${who} gick med`,
     userLeft:     who => `${who} lämnade`,
+    participants: 'Deltagare',
+    showMore:     'Visa allt',
+    closeOverlay: 'Stäng',
+    themeLabel:   'Välj tema',
+    approve:      'Godkänn',
+    deny:         'Neka',
+    joinRequest:  who => `${who} vill gå med`,
+    joinDenied:   'Din begäran nekades.',
+    waitingTitle: 'Väntar på godkännande',
+    waitingSub:   'Vänta tills värden godkänner din entré.',
+    msgTooLong:   'Meddelandet får innehålla max 1 000 tecken.',
   },
   'uk': {
     usersOnline:  n   => `${n} онлайн`,
@@ -231,116 +387,236 @@ const I18N = {
     translating:  'Перекладаю...',
     userJoined:   who => `${who} приєднався`,
     userLeft:     who => `${who} пішов`,
+    participants: 'Учасники',
+    showMore:     'Показати все',
+    closeOverlay: 'Закрити',
+    themeLabel:   'Вибрати тему',
+    approve:      'Схвалити',
+    deny:         'Відхилити',
+    joinRequest:  who => `${who} хоче приєднатися`,
+    joinDenied:   'Ваш запит відхилено.',
+    waitingTitle: 'Очікування схвалення',
+    waitingSub:   'Будь ласка, зачекайте, поки хост схвалить ваш вхід.',
+    msgTooLong:   'Повідомлення не може перевищувати 1 000 символів.',
   },
 };
 
 // i18n 번역 함수: 언어 코드 + 키 → 번역 문자열 반환
-// 지원하지 않는 언어 코드는 영어(en)로 폴백 (Node.js i18next의 fallbackLng와 동일 개념)
+// 지원하지 않는 언어는 영어(en)로 폴백 (Node.js i18next의 fallbackLng와 동일 개념)
 function t(lang, key, ...args) {
   const dict = I18N[lang] || I18N['en'];
-  const val = (dict[key] !== undefined) ? dict[key] : (I18N['en'][key] || key);
+  const val  = (dict[key] !== undefined) ? dict[key] : (I18N['en'][key] || key);
   return typeof val === 'function' ? val(...args) : val;
 }
 
 // ----- DOM 요소 참조 -----
 document.getElementById('header-code').textContent = roomCode;
 
-const socket        = io(); // Socket.io 연결 (Node.js socket.io-client와 동일 API)
-const messagesEl    = document.getElementById('messages');
-const msgInput      = document.getElementById('msg-input');
-const langSelect    = document.getElementById('lang-select');
-const userCountWrap = document.getElementById('user-count-wrap');
-const btnSend       = document.getElementById('btn-send');
-const btnFile        = document.getElementById('btn-file');
-const fileInput      = document.getElementById('file-input');
-const typingEl       = document.getElementById('typing-indicator');
-const dragOverlay    = document.getElementById('drag-overlay');
+const socket          = io(); // Socket.io 연결
+const messagesEl      = document.getElementById('messages');
+const msgInput        = document.getElementById('msg-input');
+const langSelect      = document.getElementById('lang-select');
+const userCountWrap   = document.getElementById('user-count-wrap');
+const btnSend         = document.getElementById('btn-send');
+const btnFile         = document.getElementById('btn-file');
+const fileInput       = document.getElementById('file-input');
+const typingEl        = document.getElementById('typing-indicator');
+const dragOverlay     = document.getElementById('drag-overlay');
+// 참여자 패널
+const participantsPanel    = document.getElementById('participants-panel');
+const participantsBackdrop = document.getElementById('participants-backdrop');
+const participantsList     = document.getElementById('participants-list');
+const panelTitle           = document.getElementById('panel-title');
+const btnClosePanel        = document.getElementById('btn-close-panel');
+// 테마 패널
+const themePanel     = document.getElementById('theme-panel');
+const themeBackdrop  = document.getElementById('theme-backdrop');
+const btnTheme       = document.getElementById('btn-theme');
+const themePanelTitle = document.getElementById('theme-panel-title');
+// 전체보기 오버레이
+const textOverlay        = document.getElementById('text-overlay');
+const textOverlayContent = document.getElementById('text-overlay-content');
+const btnCloseTextOverlay = document.getElementById('btn-close-text-overlay');
+// 비밀방 대기 화면
+const waitingScreen = document.getElementById('waiting-screen');
+const waitingTitle  = document.getElementById('waiting-title');
+const waitingSub    = document.getElementById('waiting-sub');
+// 비밀방 승인 모달 (호스트용)
+const joinRequestModal = document.getElementById('join-request-modal');
+const joinRequestName  = document.getElementById('join-request-name');
+const joinRequestSub   = document.getElementById('join-request-sub');
+const btnApprove       = document.getElementById('btn-approve');
+const btnDeny          = document.getElementById('btn-deny');
 
 // 파일 크기 제한: 5MB
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_FILE_SIZE  = 5 * 1024 * 1024;
+// 미리보기 글자수 — 이 이상이면 말풍선에서 잘라서 표시
+const MAX_PREVIEW    = 300;
+// 메시지 최대 글자수 (전송 차단)
+const MAX_MSG_LENGTH = 1000;
 
-// ----- 메시지 그룹핑 상태 -----
-// 직전 메시지의 발신자·분(minute)을 기억 — 같으면 닉네임·타임스탬프 숨겨 묶음 표시
-let lastMsgSender = null;
-let lastMsgMinute = null;  // "HH:MM" 형식의 timestamp와 동일
+// ----- 상태 변수 -----
+let lastMsgSender    = null; // 메시지 그룹핑: 직전 발신자
+let lastMsgMinute    = null; // 메시지 그룹핑: 직전 메시지의 분(HH:MM)
+const typingUsers    = new Set(); // 현재 타이핑 중인 사람 닉네임 집합
+let typingTimer      = null;  // 디바운스 타이머 ID
+let isTyping         = false; // 타이핑 이벤트를 이미 서버에 보냈는지 여부
+let currentUserCount = 0;     // 현재 참여자 수 (언어 변경 시 재렌더링용)
+let currentUsers     = [];    // 현재 참여자 닉네임 배열 (목록 패널 표시용)
 
-// ----- 입력 중 표시 상태 -----
-// 현재 타이핑 중인 사람 목록 (Set — 중복 없는 닉네임 집합)
-// Node.js+React에서는 useState([])로 관리하지만 여기서는 Set + DOM 직접 업데이트
-const typingUsers = new Set();
+// 비밀방 승인 요청 큐: 여러 사람이 동시에 요청할 경우 순서대로 처리
+// Node.js에서는 배열로 동일하게 구현
+let joinRequestQueue = [];   // [{sid, nickname}] 큐
+let processingRequest = false; // 현재 모달이 열려 있는지 여부
 
-// 타이핑 디바운스 타이머 ID — 2초 무입력 시 typing-stop 자동 전송
-// ※ 디바운스: 연속 이벤트에서 마지막 이벤트로부터 일정 시간 후에만 실행하는 패턴
-//   예) 타이핑 중 매 키마다 이벤트를 보내면 서버 부하가 크므로, "멈춘 뒤 2초" 후에만 stop 전송
-let typingTimer = null;
-let isTyping = false; // 현재 typing-start를 이미 서버에 보냈는지 여부
+// =====================================================
+// 테마 관리
+// =====================================================
 
-// 참여자 수 상태 변수: 언어 변경 시 UI 재렌더링을 위해 보관
-let currentUserCount = 0;
+// 저장된 테마 복원 (sessionStorage/localStorage에서)
+// localStorage: 브라우저를 닫아도 유지 (세션과 다름)
+function applyTheme(theme) {
+  const validThemes = ['default', 'dark', 'ocean', 'forest', 'rose', 'sunset'];
+  const safeTheme   = validThemes.includes(theme) ? theme : 'default';
 
-// ----- 언어 목록 로드 -----
-// /api/languages 에서 지원 언어를 가져와 드롭다운에 추가
-// Node.js에서는 axios.get() 또는 동일한 fetch()로 처리
+  // <html> 태그의 data-theme 속성 변경 → CSS 변수 자동 전환
+  if (safeTheme === 'default') {
+    document.documentElement.removeAttribute('data-theme');
+  } else {
+    document.documentElement.setAttribute('data-theme', safeTheme);
+  }
+
+  // 테마 버튼 active 상태 업데이트
+  document.querySelectorAll('.theme-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.theme === safeTheme);
+  });
+
+  localStorage.setItem('chatTheme', safeTheme);
+}
+
+// 페이지 로드 시 저장된 테마 적용
+applyTheme(localStorage.getItem('chatTheme') || 'default');
+
+// 테마 버튼 클릭 이벤트
+document.querySelectorAll('.theme-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    applyTheme(btn.dataset.theme);
+    closeThemePanel();
+  });
+});
+
+// 테마 패널 열기/닫기
+function openThemePanel() {
+  themePanel.classList.add('open');
+  themeBackdrop.classList.add('open');
+}
+
+function closeThemePanel() {
+  themePanel.classList.remove('open');
+  themeBackdrop.classList.remove('open');
+}
+
+btnTheme.addEventListener('click', () => {
+  if (themePanel.classList.contains('open')) {
+    closeThemePanel();
+  } else {
+    openThemePanel();
+  }
+});
+
+themeBackdrop.addEventListener('click', closeThemePanel);
+
+// =====================================================
+// 참여자 목록 패널
+// =====================================================
+
+// 패널 열기: 현재 users 배열로 목록 렌더링
+function openParticipantsPanel() {
+  renderParticipantsList(currentUsers);
+  participantsPanel.classList.add('open');
+  participantsBackdrop.classList.add('open');
+}
+
+function closeParticipantsPanel() {
+  participantsPanel.classList.remove('open');
+  participantsBackdrop.classList.remove('open');
+}
+
+// 참여자 목록 DOM 렌더링
+// users: string[] (닉네임 배열)
+function renderParticipantsList(users) {
+  participantsList.innerHTML = ''; // 이전 목록 초기화
+  users.forEach(name => {
+    const tag = document.createElement('div');
+    tag.className = 'participant-tag';
+    // 내 닉네임이면 👤 아이콘, 다른 사람은 💬 아이콘
+    tag.textContent = (name === nickname ? '👤 ' : '💬 ') + escHtml(name);
+    participantsList.appendChild(tag);
+  });
+}
+
+// 헤더 참여자 수 클릭 시 패널 열기
+userCountWrap.addEventListener('click', openParticipantsPanel);
+btnClosePanel.addEventListener('click', closeParticipantsPanel);
+participantsBackdrop.addEventListener('click', closeParticipantsPanel);
+
+// =====================================================
+// 전체보기 오버레이
+// =====================================================
+
+function openTextOverlay(text) {
+  textOverlayContent.textContent = text; // XSS 안전: textContent 사용
+  textOverlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeTextOverlay() {
+  textOverlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+btnCloseTextOverlay.addEventListener('click', closeTextOverlay);
+textOverlay.addEventListener('click', (e) => {
+  if (e.target === textOverlay) closeTextOverlay();
+});
+
+// =====================================================
+// 언어 목록 로드
+// =====================================================
+
 fetch('/api/languages')
   .then(r => r.json())
   .then(langs => {
     if (!Array.isArray(langs)) return;
-
     langs.forEach(({ code, name }) => {
       const opt = document.createElement('option');
       opt.value = code;
       opt.textContent = name;
       langSelect.appendChild(opt);
     });
-
-    // join.html에서 선택한 번역 언어 복원
     const saved = sessionStorage.getItem('translateLang');
     if (saved) langSelect.value = saved;
-
-    // 초기 UI 번역 적용 (언어에 맞게 버튼·플레이스홀더 등 변경)
     applyI18n(langSelect.value);
   })
-  .catch(() => {
-    // 언어 목록 로드 실패 시: 영어 UI 유지, 번역 기능만 비활성
-  });
+  .catch(() => { /* 언어 로드 실패 시 영어 UI 유지 */ });
 
-// ----- 번역 언어 변경 이벤트 -----
-// ★ [변경 2 — UI 공통어] applyI18n(lang) 호출 추가
-//   이전: 언어 드롭다운을 바꿔도 버튼·플레이스홀더 텍스트가 변하지 않았음
-//   변경: applyI18n()을 호출하여 UI 전체를 선택 언어로 즉시 교체
-//   방법: DOM 요소의 textContent / placeholder 속성을 I18N 딕셔너리 값으로 덮어씀
-//
-// ★ [변경 3 — 언어 변경 시 재번역] retranslateAll(lang) 호출 추가
-//   이전: 언어를 바꾸면 이후 새 메시지만 새 언어로 번역되고, 기존 말풍선은 그대로였음
-//   변경: retranslateAll()을 호출하여 화면에 이미 있는 모든 메시지를 새 언어로 다시 번역
-//   방법: querySelectorAll('.msg[data-text]')로 같은 조건의 DOM 요소 전체를 한 번에 가져와 순회
-//         ※ querySelectorAll: CSS 선택자와 일치하는 모든 요소를 NodeList로 반환하는 DOM API
-//         ※ 이 방법을 쓰는 이유: 메시지마다 변수를 따로 저장하지 않아도 되고,
-//           DOM 자체가 데이터 저장소가 되어 언제든 전체 재번역 가능
-//         참고: https://velog.io/@chloedev/자바스크립트-Document.querySelectorAll-forEach
-//         각각 /api/translate 번역 API를 재호출
+// =====================================================
+// 번역 언어 변경
+// =====================================================
+
 langSelect.addEventListener('change', () => {
   const lang = langSelect.value;
   sessionStorage.setItem('translateLang', lang);
-  applyI18n(lang);       // ← [변경 2] UI 공통어: 버튼·플레이스홀더 등 전체 교체
-  retranslateAll(lang);  // ← [변경 3] 기존 메시지 전체 재번역
+  applyI18n(lang);      // UI 전체 언어 교체
+  retranslateAll(lang); // 기존 메시지 전체 재번역
 });
 
-// ----- UI 번역 적용 함수 -----
-// ★ [변경 2 — UI 공통어] 이 함수 자체가 새로 추가됨
-//   이전: 이 함수가 없었고, UI 텍스트(버튼·플레이스홀더·드롭다운)가 HTML에 영어로 고정
-//         예) <button>Send</button>, placeholder="Type a message..." — 하드코딩
-//         ※ 하드코딩 문제: 한국어로 바꾸려면 HTML 파일을 열어 텍스트를 일일이 수정해야 함
-//         참고(하드코딩 피해야 하는 이유): https://velog.io/@gustlr7374/하드코딩-VS-소프트코딩
-//   변경: applyI18n(lang)을 신규 작성하여, 호출 시 현재 선택 언어에 맞게 전체 교체
-//         ※ i18n(Internationalization) 패턴: 텍스트를 딕셔너리에 모아두고 언어 코드로 꺼내 쓰는 방식
-//         참고(i18n 다국어 처리 개념): https://velog.io/@hyeseong0914/i18n-다국어-처리
-//   방법: document.getElementById()로 DOM 요소를 직접 찾아 textContent / placeholder 값을
-//         I18N[lang] 딕셔너리에서 꺼낸 번역 문자열로 덮어씀
-//         Node.js+React에서는 useTranslation() 훅 + t() 함수로 처리하는 역할과 동일
-//         참고(i18next 라이브러리와 비교): https://velog.io/@favorcho/i18next-다국어-지원-기능-구현하기
+// =====================================================
+// UI 번역 적용 (applyI18n)
+// =====================================================
+// 선택 언어에 맞게 버튼·플레이스홀더·패널 제목 등 교체
 function applyI18n(lang) {
-  const uiLang = lang || 'en'; // 번역 off(lang='')이면 영어로 UI 표시
+  const uiLang = lang || 'en';
 
   // 참여자 수 표시
   userCountWrap.textContent = t(uiLang, 'usersOnline', currentUserCount);
@@ -348,54 +624,148 @@ function applyI18n(lang) {
   // 입력창 플레이스홀더
   msgInput.placeholder = t(uiLang, 'placeholder');
 
-  // 전송 버튼 텍스트
+  // 전송 버튼
   btnSend.textContent = t(uiLang, 'send');
 
-  // "번역 끄기" 드롭다운 첫 번째 옵션 텍스트
+  // "번역 끄기" 옵션 텍스트
   const optOff = document.getElementById('opt-translate-off');
   if (optOff) optOff.textContent = t(uiLang, 'translateOff');
+
+  // 참여자 패널 제목
+  panelTitle.textContent = t(uiLang, 'participants');
+
+  // 테마 패널 제목
+  themePanelTitle.textContent = t(uiLang, 'themeLabel');
+
+  // 전체보기 오버레이 닫기 버튼
+  btnCloseTextOverlay.textContent = t(uiLang, 'closeOverlay');
+
+  // 비밀방 대기 화면 텍스트
+  waitingTitle.textContent = t(uiLang, 'waitingTitle');
+  waitingSub.textContent   = t(uiLang, 'waitingSub');
+
+  // 비밀방 승인 모달 버튼
+  btnApprove.textContent = t(uiLang, 'approve');
+  btnDeny.textContent    = t(uiLang, 'deny');
+
+  // ★ 시스템 메시지 재번역 (언어 변경 시 기존 입장/퇴장 메시지도 갱신)
+  // data-sys-key / data-sys-who 속성으로 원본 키·닉네임을 보존해 두었다가
+  // 언어 변경 시 다시 꺼내서 번역함
+  messagesEl.querySelectorAll('.sys-msg[data-sys-key]').forEach(el => {
+    const key = el.dataset.sysKey;
+    const who = el.dataset.sysWho;
+    el.textContent = t(uiLang, key, who);
+  });
 }
 
-// ----- Socket.io: 방 입장 -----
-socket.emit('join-room', { code: roomCode, nickname });
+// =====================================================
+// Socket.io: 방 입장
+// =====================================================
+socket.emit('join-room', { code: roomCode, nickname, isHost });
 
-// ----- Socket.io 이벤트 수신 -----
-// Node.js의 socket.on()과 동일한 방식 (이벤트 이름이 서버와 1:1 대응)
+// 재연결 시 join-room 재emit (모바일 백그라운드 복귀 등)
+socket.on('reconnect', () => {
+  socket.emit('join-room', { code: roomCode, nickname, isHost });
+});
+
+// =====================================================
+// Socket.io 이벤트 수신
+// =====================================================
 
 // 다른 사용자의 채팅 메시지 수신
 socket.on('receive-message', ({ nickname: sender, text, timestamp }) => {
-  const isMine = sender === nickname;
-  appendMessage({ sender, text, timestamp, isMine });
+  appendMessage({ sender, text, timestamp, isMine: sender === nickname });
 });
 
 // 사용자 입장 알림
-// ★ [변경 1 — 알림메시지 번역]
-//   이전: appendSystem(`${who} joined the chat`) — 영어 문자열 하드코딩
-//   변경: t(lang, 'userJoined', who) 호출로 현재 선택 언어에 맞는 문자열 표시
-//   방법: langSelect.value로 현재 언어 코드를 읽고, t() 함수로 I18N 딕셔너리에서
-//         userJoined 키의 값을 꺼냄 (함수형 값이므로 who를 인자로 전달)
 socket.on('user-joined', ({ nickname: who }) => {
-  const lang = langSelect.value || 'en'; // 선택 언어 없으면 영어 폴백
-  appendSystem(t(lang, 'userJoined', who)); // ← 이전: 영어 하드코딩 → 이제: 현재 언어로 출력
+  appendSystem('userJoined', who);
 });
 
 // 사용자 퇴장 알림
-// ★ [변경 1 — 알림메시지 번역] user-joined와 동일한 방식으로 변경
-//   이전: appendSystem(`${who} left the chat`) — 영어 하드코딩
-//   변경: t(lang, 'userLeft', who) 로 현재 선택 언어에 맞게 표시
 socket.on('user-left', ({ nickname: who }) => {
-  const lang = langSelect.value || 'en'; // 선택 언어 없으면 영어 폴백
-  appendSystem(t(lang, 'userLeft', who)); // ← 이전: 영어 하드코딩 → 이제: 현재 언어로 출력
+  appendSystem('userLeft', who);
 });
 
-// 참여자 수 업데이트
-socket.on('room-users', ({ count }) => {
+// 참여자 수 + 목록 업데이트
+// server.py가 room-users 이벤트에 count(숫자)와 users(닉네임 배열)를 함께 전송
+socket.on('room-users', ({ count, users }) => {
   currentUserCount = count;
-  const lang = langSelect.value || 'en';
+  currentUsers     = Array.isArray(users) ? users : [];
+  const lang       = langSelect.value || 'en';
   userCountWrap.textContent = t(lang, 'usersOnline', count);
+  // 패널이 열려 있으면 목록 즉시 갱신
+  if (participantsPanel.classList.contains('open')) {
+    renderParticipantsList(currentUsers);
+  }
 });
 
-// ----- 메시지 전송 -----
+// ── 비밀방 관련 이벤트 ──
+
+// 대기 상태: 입장 요청이 접수되어 호스트 승인을 기다리는 중
+socket.on('join-pending', () => {
+  const lang = langSelect.value || 'en';
+  waitingTitle.textContent = t(lang, 'waitingTitle');
+  waitingSub.textContent   = t(lang, 'waitingSub');
+  waitingScreen.classList.add('open');
+});
+
+// 승인됨: 호스트가 입장을 허락함 → 대기 화면 닫고 채팅 시작
+socket.on('join-approved', () => {
+  waitingScreen.classList.remove('open');
+});
+
+// 거절됨: 호스트가 입장을 거부함 → 알림 후 메인으로 이동
+socket.on('join-denied', () => {
+  const lang = langSelect.value || 'en';
+  waitingScreen.classList.remove('open');
+  alert(t(lang, 'joinDenied'));
+  location.href = '/';
+});
+
+// 입장 요청(호스트에게만 수신): 승인 요청 큐에 추가 후 모달 처리
+socket.on('room-join-request', ({ sid, nickname: requesterName }) => {
+  joinRequestQueue.push({ sid, nickname: requesterName });
+  // 현재 모달이 닫혀 있을 때만 다음 요청을 꺼내서 표시
+  if (!processingRequest) {
+    showNextJoinRequest();
+  }
+});
+
+// 다음 입장 요청 모달 표시
+// 큐(배열) 방식으로 여러 요청을 순서대로 처리
+function showNextJoinRequest() {
+  if (joinRequestQueue.length === 0) {
+    processingRequest = false;
+    return;
+  }
+  processingRequest = true;
+  const { sid, nickname: requesterName } = joinRequestQueue.shift(); // 큐에서 첫 번째 항목 꺼내기
+
+  const lang = langSelect.value || 'en';
+  joinRequestName.textContent = t(lang, 'joinRequest', requesterName);
+  joinRequestSub.textContent  = ''; // 서브 텍스트는 비워둠
+
+  joinRequestModal.classList.add('open');
+
+  // 승인 버튼: 서버에 approve-join 이벤트 전송
+  btnApprove.onclick = () => {
+    socket.emit('approve-join', { sid });
+    joinRequestModal.classList.remove('open');
+    showNextJoinRequest(); // 다음 요청 처리
+  };
+
+  // 거절 버튼: 서버에 deny-join 이벤트 전송
+  btnDeny.onclick = () => {
+    socket.emit('deny-join', { sid });
+    joinRequestModal.classList.remove('open');
+    showNextJoinRequest();
+  };
+}
+
+// =====================================================
+// 메시지 전송
+// =====================================================
 btnSend.addEventListener('click', sendMessage);
 msgInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') sendMessage();
@@ -404,22 +774,27 @@ msgInput.addEventListener('keydown', (e) => {
 function sendMessage() {
   const text = msgInput.value.trim();
   if (!text) return;
+
+  // 1000자 초과 차단 — maxlength 속성과 이중으로 방어
+  if (text.length > MAX_MSG_LENGTH) {
+    const lang = langSelect.value || 'en';
+    alert(t(lang, 'msgTooLong'));
+    return;
+  }
+
   socket.emit('send-message', { text });
   msgInput.value = '';
-  // 전송 즉시 타이핑 중 상태 해제
   stopTyping();
 }
 
-// ----- 타이핑 감지 -----
-// 입력창에 글자를 치면 typing-start, 2초 무입력 또는 전송 시 typing-stop 전송
-// Node.js socket.io에서 흔히 쓰는 패턴과 동일 (socket.emit('typing') / socket.emit('stop typing'))
+// =====================================================
+// 타이핑 감지
+// =====================================================
 msgInput.addEventListener('input', () => {
   if (!isTyping) {
-    // 처음 타이핑 시작 시에만 이벤트 전송 (매 키마다 보내지 않음)
     isTyping = true;
     socket.emit('typing-start');
   }
-  // 이전 타이머 취소 후 2초 후 stop 전송 (디바운스)
   clearTimeout(typingTimer);
   typingTimer = setTimeout(stopTyping, 2000);
 });
@@ -431,19 +806,17 @@ function stopTyping() {
   socket.emit('typing-stop');
 }
 
-// 입력창 포커스 잃으면 타이핑 중 해제
 msgInput.addEventListener('blur', stopTyping);
 
-// ----- 타이핑 중인 사람 목록 UI 업데이트 -----
+// =====================================================
+// 타이핑 중 표시 UI
+// =====================================================
 function updateTypingIndicator() {
   const users = [...typingUsers];
   if (users.length === 0) {
     typingEl.textContent = '';
     return;
   }
-  // 1명: "홍길동님이 입력 중이에요."
-  // 2명: "홍길동, 김철수님이 입력 중이에요."
-  // 4명 이상: "홍길동 외 3명이 입력 중이에요."
   let text;
   if (users.length <= 3) {
     text = `${users.join(', ')}님이 입력 중이에요.`;
@@ -453,21 +826,12 @@ function updateTypingIndicator() {
   typingEl.textContent = text;
 }
 
-// 다른 사람이 타이핑 시작
-socket.on('user-typing', ({ nickname: who }) => {
-  typingUsers.add(who);
-  updateTypingIndicator();
-});
+socket.on('user-typing',      ({ nickname: who }) => { typingUsers.add(who);    updateTypingIndicator(); });
+socket.on('user-stop-typing', ({ nickname: who }) => { typingUsers.delete(who); updateTypingIndicator(); });
 
-// 다른 사람이 타이핑 멈춤
-socket.on('user-stop-typing', ({ nickname: who }) => {
-  typingUsers.delete(who);
-  updateTypingIndicator();
-});
-
-// ----- 파일 전송 공통 함수 (input change + 드래그앤드롭 공용) -----
-// 이전: 파일 읽기 로직이 fileInput change 이벤트 안에만 있어 드래그앤드롭에서 재사용 불가
-// 변경: sendFile(file)로 분리 — 호출하는 쪽(input / drop)만 다르게 처리
+// =====================================================
+// 파일 전송
+// =====================================================
 function sendFile(file) {
   if (file.size > MAX_FILE_SIZE) {
     alert(`파일 크기가 너무 큽니다. 최대 5MB까지 전송 가능합니다.\n(현재: ${(file.size / 1024 / 1024).toFixed(1)}MB)`);
@@ -478,152 +842,141 @@ function sendFile(file) {
     socket.emit('send-file', {
       filename: file.name,
       mimeType: file.type || 'application/octet-stream',
-      dataUrl: e.target.result,
+      dataUrl:  e.target.result,
     });
   };
   reader.onerror = () => alert('파일을 읽는 중 오류가 발생했습니다.');
   reader.readAsDataURL(file);
 }
 
-// ----- 파일 첨부 버튼 클릭 → 숨겨진 file input 트리거 -----
-// Node.js + React에서는 useRef()로 input을 참조하여 ref.current.click()으로 처리
 btnFile.addEventListener('click', () => fileInput.click());
 
-// ----- 파일 input 선택 이벤트 -----
 fileInput.addEventListener('change', () => {
   const file = fileInput.files[0];
   if (!file) return;
-  fileInput.value = ''; // 같은 파일 재선택 가능하도록 리셋
+  fileInput.value = '';
   sendFile(file);
 });
 
-// ----- 드래그 앤 드롭 -----
-// dragenter/dragover: 오버레이 표시 + 기본 동작(브라우저가 파일을 직접 여는 것) 방지
-// dragleave: 화면 밖으로 나가면 오버레이 숨김
-// drop: 드롭된 파일을 sendFile()로 전송
+// 드래그 앤 드롭
 document.addEventListener('dragenter', (e) => {
-  // 드래그 중인 항목에 파일이 포함된 경우에만 오버레이 활성화
-  if ([...e.dataTransfer.types].includes('Files')) {
-    dragOverlay.classList.add('active');
-  }
+  if ([...e.dataTransfer.types].includes('Files')) dragOverlay.classList.add('active');
 });
-
-document.addEventListener('dragover', (e) => {
-  e.preventDefault(); // 브라우저 기본 동작(파일 열기) 차단
-});
-
-document.addEventListener('dragleave', (e) => {
-  // relatedTarget이 null = 마우스가 브라우저 창 밖으로 나간 것
-  if (!e.relatedTarget) dragOverlay.classList.remove('active');
-});
-
+document.addEventListener('dragover',  (e) => { e.preventDefault(); });
+document.addEventListener('dragleave', (e) => { if (!e.relatedTarget) dragOverlay.classList.remove('active'); });
 document.addEventListener('drop', (e) => {
   e.preventDefault();
   dragOverlay.classList.remove('active');
-  const file = e.dataTransfer.files[0]; // 여러 파일 드롭 시 첫 번째만 처리
+  const file = e.dataTransfer.files[0];
   if (file) sendFile(file);
 });
 
-// ----- 파일 수신 이벤트 -----
-// 같은 방의 다른 사람이 send-file 했을 때 서버가 broadcast한 receive-file 이벤트 수신
+// 파일 수신
 socket.on('receive-file', ({ nickname: sender, filename, mimeType, dataUrl, timestamp }) => {
-  const isMine = sender === nickname;
-  appendFile({ sender, filename, mimeType, dataUrl, timestamp, isMine });
+  appendFile({ sender, filename, mimeType, dataUrl, timestamp, isMine: sender === nickname });
 });
 
-// ----- 메시지 말풍선 생성 -----
-// ★ [변경 3 — 언어 변경 시 재번역] data-text 속성 추가
-//   이전: 원문 텍스트를 DOM에 보존하는 방법이 없어, 언어 변경 시 원문을 다시 찾을 수 없었음
-//   변경: div.dataset.text = text 로 원문을 HTML5 data-* 속성에 저장
-//         ※ data-* 속성: HTML 요소에 개발자가 원하는 커스텀 데이터를 붙여두는 HTML5 표준 방법
-//           예) <div data-text="Hello"> → JS에서 el.dataset.text 로 "Hello" 읽기 가능
-//           이렇게 하면 원문이 DOM 안에 같이 저장되어, 나중에 JS가 다시 꺼내 쓸 수 있음
-//         참고: https://velog.io/@h12j21/HTML-Dataset이용하여-데이터-저장하기
-//   방법: retranslateAll()이 querySelectorAll('.msg[data-text]')로 전체 메시지 순회 시
-//         msgEl.dataset.text 로 원문을 꺼내 재번역 API에 전달
-//
-// ★ [변경 4 — 말풍선 내부 번역] appendMessage() 내부 구조 변경
-//   이전: 번역 결과를 말풍선(bubble) 바깥/아래에 별도 <div>로 표시했거나, 아예 없었음
-//         예) <div class="bubble">원문</div><div class="translation">번역</div>
-//   변경: bubble 내부에 원문→구분선→번역 3단 구조로 재설계
-//         예) <div class="bubble">
-//               <div class="bubble-original">원문</div>
-//               <div class="bubble-divider"></div>      ← 번역 있을 때만 보임
-//               <div class="bubble-translation">번역</div>
-//             </div>
-//   방법: document.createElement()로 3개 자식 요소를 만들어 bubble에 appendChild()
-//         CSS .bubble-divider { display: none } 기본값으로 숨기고,
-//         번역 완료 시 translateText() 안에서 dividerEl.style.display = 'block'으로 표시
-//   Node.js + React에서는 state에 메시지 배열을 저장하고 리렌더링하는 방식
+// =====================================================
+// 메시지 말풍선 생성 (appendMessage)
+// =====================================================
+// 새 기능: MAX_PREVIEW(300)자 초과 시 말풍선 잘라서 표시 + "전체 보기" 버튼 추가
 function appendMessage({ sender, text, timestamp, isMine }) {
-  // 직전 메시지와 발신자·분(minute)이 같으면 그룹핑 — 닉네임·간격 숨김
-  // timestamp는 "HH:MM" 형식이므로 그대로 분(minute) 비교에 사용 가능
   const isGrouped = sender === lastMsgSender && timestamp === lastMsgMinute;
-  lastMsgSender = sender;
-  lastMsgMinute = timestamp;
+  lastMsgSender   = sender;
+  lastMsgMinute   = timestamp;
 
   const div = document.createElement('div');
-  // msg-grouped: 같은 발신자·분의 연속 메시지 — CSS에서 상단 간격과 닉네임을 숨김
-  div.className = `msg ${isMine ? 'mine' : 'other'}${isGrouped ? ' msg-grouped' : ''}`;
-  div.dataset.text = text; // ← [변경 3] 재번역용 원문 보존 (HTML5 data 속성)
+  div.className  = `msg ${isMine ? 'mine' : 'other'}${isGrouped ? ' msg-grouped' : ''}`;
+  div.dataset.text = text; // 재번역용 원문 보존 (data-text 속성)
 
-  // 그룹핑된 메시지는 닉네임 생략 (첫 메시지에만 표시)
+  // 그룹핑된 메시지는 닉네임 생략
   if (!isMine && !isGrouped) {
     const nickEl = document.createElement('span');
-    nickEl.className = 'nickname';
+    nickEl.className   = 'nickname';
     nickEl.textContent = escHtml(sender);
     div.appendChild(nickEl);
   }
 
-  // 말풍선 생성
-  // ★ [변경 4 — 말풍선 내부 번역] 아래 3개 자식 요소가 새로 추가됨
+  // ── 말풍선 ──
   const bubbleEl = document.createElement('div');
   bubbleEl.className = 'bubble';
-  bubbleEl.dir = 'auto'; // LTR/RTL 자동 감지 (아랍어 등 지원)
+  bubbleEl.dir       = 'auto'; // LTR/RTL 자동 감지 (아랍어 등)
 
-  // [변경 4] 원문 텍스트 영역 — 이전에는 bubble 자체에 text를 직접 넣었음
+  // 원문 영역
   const originalEl = document.createElement('div');
-  originalEl.className = 'bubble-original'; // style.css: 기존 bubble 텍스트 스타일 그대로
-  originalEl.textContent = text;
+  originalEl.className = 'bubble-original';
+
+  // ★ 글자수 제한 접기: MAX_PREVIEW(300)자 이상이면 일부만 표시
+  const isLong = text.length > MAX_PREVIEW;
+  originalEl.textContent = isLong ? text.slice(0, MAX_PREVIEW) + '…' : text;
   bubbleEl.appendChild(originalEl);
 
-  // [변경 4] 원문/번역 구분선 — 새로 추가된 요소
-  //   CSS: display:none 기본값 → 번역 완료 시 translateText()에서 block으로 변경
+  // 구분선 (번역 완료 시 보임)
   const dividerEl = document.createElement('div');
-  dividerEl.className = 'bubble-divider'; // style.css: .bubble-divider { display: none }
+  dividerEl.className = 'bubble-divider';
   bubbleEl.appendChild(dividerEl);
 
-  // [변경 4] 번역 텍스트 영역 — 새로 추가된 요소, 말풍선 내부 하단에 위치
-  //   CSS: .bubble-translation { font-size:0.8rem; font-style:italic; opacity:0.82 }
+  // 번역 텍스트 영역
   const translationEl = document.createElement('div');
   translationEl.className = 'bubble-translation';
   bubbleEl.appendChild(translationEl);
 
   div.appendChild(bubbleEl);
 
-  // 타임스탬프 — 그룹핑된 메시지는 숨김 (같은 분이므로 중복 표시 불필요)
+  // ★ "전체 보기" 버튼: 말풍선 바로 아래, 긴 메시지에만 표시
+  if (isLong) {
+    const showMoreBtn = document.createElement('button');
+    showMoreBtn.className   = 'btn-show-more';
+    const uiLang            = langSelect.value || 'en';
+    showMoreBtn.textContent = t(uiLang, 'showMore');
+    // 클릭 시 전체 원문을 오버레이로 표시
+    showMoreBtn.addEventListener('click', () => openTextOverlay(text));
+    div.appendChild(showMoreBtn);
+  }
+
+  // 타임스탬프
   const timeEl = document.createElement('span');
-  timeEl.className = `time${isGrouped ? ' time-hidden' : ''}`;
+  timeEl.className   = `time${isGrouped ? ' time-hidden' : ''}`;
   timeEl.textContent = timestamp;
   div.appendChild(timeEl);
 
   messagesEl.appendChild(div);
   scrollToBottom();
 
-  // 번역 언어가 선택된 경우 즉시 번역 실행
+  // 번역 언어가 선택된 경우 번역 실행
   const target = langSelect.value;
   if (target) {
     translateText(text, target, translationEl, dividerEl);
   }
 }
 
-// ----- 번역 요청 함수 -----
-// /api/translate(POST)에 원문과 대상 언어를 전송하여 번역 결과를 말풍선 내부에 표시
-// Node.js에서는 axios.post() 또는 동일한 fetch()로 처리
+// =====================================================
+// 시스템 메시지 표시 (입장/퇴장)
+// =====================================================
+// key: I18N 키 ('userJoined' / 'userLeft'), who: 닉네임
+// data-sys-key / data-sys-who 속성 저장 → 언어 변경 시 applyI18n()이 재번역
+function appendSystem(key, who) {
+  // 시스템 메시지 사이에 끼면 그룹핑 리셋
+  lastMsgSender = null;
+  lastMsgMinute = null;
+
+  const lang = langSelect.value || 'en';
+
+  const div = document.createElement('div');
+  div.className        = 'sys-msg';
+  div.dataset.sysKey   = key;    // 재번역을 위해 키 보존
+  div.dataset.sysWho   = who;    // 재번역을 위해 닉네임 보존
+  div.textContent      = t(lang, key, who);
+
+  messagesEl.appendChild(div);
+  scrollToBottom();
+}
+
+// =====================================================
+// 번역 요청 함수
+// =====================================================
 function translateText(text, target, el, dividerEl) {
   const uiLang = langSelect.value || 'en';
-
-  // 번역 중 상태 표시 (선택 언어에 맞는 "번역 중..." 문자열 사용)
   el.textContent = t(uiLang, 'translating');
   if (dividerEl) dividerEl.style.display = 'block';
 
@@ -638,73 +991,57 @@ function translateText(text, target, el, dividerEl) {
         el.textContent = data.translatedText;
         if (dividerEl) dividerEl.style.display = 'block';
       } else {
-        // 번역 결과 없음: 번역 영역 숨기기
         el.textContent = '';
         if (dividerEl) dividerEl.style.display = 'none';
       }
     })
     .catch(() => {
-      // 번역 API 오류 시: 조용히 실패 (사용자 경험 유지)
       el.textContent = '';
       if (dividerEl) dividerEl.style.display = 'none';
     });
 }
 
-// ----- 기존 메시지 전체 재번역 -----
-// ★ [변경 3 — 언어 변경 시 재번역] 이 함수 자체가 새로 추가됨
-//   이전: 이 함수가 없었음. 언어를 바꿔도 화면에 있는 기존 말풍선 번역은 변하지 않았음
-//   변경: retranslateAll(target)을 신규 작성하여, langSelect 변경 시 모든 메시지를 재번역
-//   방법: querySelectorAll('.msg[data-text]') — [변경 3]에서 추가한 data-text 속성을 이용해
-//         DOM에서 모든 기존 메시지를 찾고, 각각 translateText()를 재호출하여 번역 API 요청
-//         Node.js+React에서는 메시지 state 배열을 업데이트하면 자동 리렌더링되지만,
-//         여기서는 Vanilla JS이므로 DOM을 직접 순회하여 번역 요소를 교체
+// =====================================================
+// 기존 메시지 전체 재번역 (언어 변경 시)
+// =====================================================
 function retranslateAll(target) {
-  const msgs = messagesEl.querySelectorAll('.msg[data-text]');
-
-  msgs.forEach(msgEl => {
+  messagesEl.querySelectorAll('.msg[data-text]').forEach(msgEl => {
     const text          = msgEl.dataset.text;
     const translationEl = msgEl.querySelector('.bubble-translation');
     const dividerEl     = msgEl.querySelector('.bubble-divider');
-
     if (!translationEl) return;
 
     if (target) {
-      // 새 언어로 번역 요청
       translateText(text, target, translationEl, dividerEl);
     } else {
-      // 번역 끄기: 번역 텍스트와 구분선 모두 숨김
       translationEl.textContent = '';
       if (dividerEl) dividerEl.style.display = 'none';
     }
   });
 }
 
-// ----- DataURL → Blob 변환 유틸 -----
-// Base64 DataURL을 Blob 객체로 변환 — Blob URL(blob:https://...)은 모바일 브라우저에서도 동작
-// window.open(dataUrl) 방식은 브라우저 보안 정책(CSP)에 막혀 흰 화면이 뜨는 경우가 있어
-// Blob URL로 우회해야 안정적으로 열림
-// Node.js에서는 Buffer.from(base64, 'base64')로 동일한 변환 수행
+// =====================================================
+// DataURL → Blob 변환 유틸
+// =====================================================
 function dataUrlToBlob(dataUrl) {
   const [header, base64] = dataUrl.split(',');
-  const mime = header.match(/:(.*?);/)[1];          // "data:image/png;base64," → "image/png"
-  const binary = atob(base64);                       // Base64 디코딩 → 바이너리 문자열
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
+  const mime             = header.match(/:(.*?);/)[1];
+  const binary           = atob(base64);
+  const bytes            = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
   return new Blob([bytes], { type: mime });
 }
 
-// ----- 파일 말풍선 생성 -----
-// appendMessage()와 동일한 말풍선 구조 — 내용만 이미지 또는 파일 다운로드 링크로 다름
+// =====================================================
+// 파일 말풍선 생성 (appendFile)
+// =====================================================
 function appendFile({ sender, filename, mimeType, dataUrl, timestamp, isMine }) {
   const div = document.createElement('div');
   div.className = `msg ${isMine ? 'mine' : 'other'}`;
 
-  // 상대방 메시지에만 닉네임 표시
   if (!isMine) {
     const nickEl = document.createElement('span');
-    nickEl.className = 'nickname';
+    nickEl.className   = 'nickname';
     nickEl.textContent = escHtml(sender);
     div.appendChild(nickEl);
   }
@@ -712,44 +1049,28 @@ function appendFile({ sender, filename, mimeType, dataUrl, timestamp, isMine }) 
   const bubbleEl = document.createElement('div');
   bubbleEl.className = 'bubble bubble-file';
 
-  // mimeType이 image/*이면 인라인 이미지로 표시, 그 외는 다운로드 링크
-  // Node.js+React에서는 조건부 렌더링(<img> vs <a>)으로 처리하는 것과 동일 개념
   if (mimeType.startsWith('image/')) {
-    // 이미지 파일: <img> 태그로 인라인 미리보기
     const img = document.createElement('img');
-    img.src = dataUrl;
-    img.alt = escHtml(filename);
+    img.src       = dataUrl;
+    img.alt       = escHtml(filename);
     img.className = 'file-image';
     img.style.cursor = 'pointer';
-
-    // [버그1 수정] 이미지 클릭 시 Blob URL로 변환 후 새 탭에서 열기
-    // 이전: window.open(dataUrl) → 모바일에서 보안 정책에 막혀 흰 화면
-    // 변경: dataUrl → Blob → URL.createObjectURL() → 안정적으로 열림
-    // [버그1 재수정] 모바일에서 window.open()은 팝업 차단에 막힘
-    // → 새 탭 대신 페이지 내 오버레이(라이트박스)로 이미지를 전체화면 표시
     img.addEventListener('click', () => openImageOverlay(dataUrl));
     bubbleEl.appendChild(img);
-
   } else {
-    // 이미지 외 파일: 클릭 시 보안 확인 모달을 먼저 표시한 뒤 다운로드
-    // 이전: <a href="blob:..."> 직접 클릭 → 확인 없이 즉시 다운로드
-    // 변경: 버튼 클릭 → openDownloadConfirm() → 사용자가 "다운로드" 눌러야 저장
-    const blob = dataUrlToBlob(dataUrl);
+    const blob    = dataUrlToBlob(dataUrl);
     const blobUrl = URL.createObjectURL(blob);
-
-    const link = document.createElement('button');
-    link.className = 'file-link';
+    const link    = document.createElement('button');
+    link.className   = 'file-link';
     link.textContent = `📄 ${filename}`;
-    link.addEventListener('click', () => {
-      openDownloadConfirm({ filename, sender, blobUrl });
-    });
+    link.addEventListener('click', () => openDownloadConfirm({ filename, sender, blobUrl }));
     bubbleEl.appendChild(link);
   }
 
   div.appendChild(bubbleEl);
 
   const timeEl = document.createElement('span');
-  timeEl.className = 'time';
+  timeEl.className   = 'time';
   timeEl.textContent = timestamp;
   div.appendChild(timeEl);
 
@@ -757,48 +1078,30 @@ function appendFile({ sender, filename, mimeType, dataUrl, timestamp, isMine }) 
   scrollToBottom();
 }
 
-// ----- 시스템 메시지 표시 (입장/퇴장) -----
-function appendSystem(msg) {
-  // 시스템 메시지가 끼어들면 그룹핑 리셋 — 다음 메시지는 새 그룹으로 시작
-  lastMsgSender = null;
-  lastMsgMinute = null;
-
-  const div = document.createElement('div');
-  div.className = 'sys-msg';
-  div.textContent = msg;
-  messagesEl.appendChild(div);
-  scrollToBottom();
-}
-
+// =====================================================
+// 스크롤
+// =====================================================
 function scrollToBottom() {
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
-// ----- 파일 다운로드 보안 확인 모달 -----
-// 파일 다운로드 전 보안 경고를 표시하여 악성 파일 실수 다운로드를 방지
-// Node.js+React에서는 useState로 모달 상태를 관리하지만,
-// 여기서는 DOM 직접 조작 + 클로저(pendingDownload 변수)로 동일한 흐름 구현
+// =====================================================
+// 파일 다운로드 보안 확인 모달
+// =====================================================
 const dlModal        = document.getElementById('dl-modal');
 const dlModalDesc    = document.getElementById('dl-modal-desc');
 const dlModalCancel  = document.getElementById('dl-modal-cancel');
 const dlModalConfirm = document.getElementById('dl-modal-confirm');
-
-// 확인 버튼 클릭 시 실행할 다운로드 함수를 임시 보관
-// 클로저 패턴: openDownloadConfirm()이 호출될 때마다 새 함수를 이 변수에 할당
-let pendingDownload = null;
+let pendingDownload  = null;
 
 function openDownloadConfirm({ filename, sender, blobUrl }) {
-  // 모달 설명 텍스트 업데이트
   dlModalDesc.textContent =
-    `"${sender}"님이 보낸 파일입니다.\n` +
-    `파일명: ${filename}\n\n` +
+    `"${sender}"님이 보낸 파일입니다.\n파일명: ${filename}\n\n` +
     `출처를 알 수 없는 파일은 악성 소프트웨어를 포함할 수 있습니다. 신뢰하는 경우에만 다운로드하세요.`;
 
-  // 확인 시 실행할 다운로드 동작을 클로저로 저장
   pendingDownload = () => {
-    // <a> 태그를 임시 생성해 프로그래밍 방식으로 클릭 — 사용자에게 파일 저장 다이얼로그 표시
     const a = document.createElement('a');
-    a.href = blobUrl;
+    a.href     = blobUrl;
     a.download = filename;
     document.body.appendChild(a);
     a.click();
@@ -820,14 +1123,11 @@ dlModalConfirm.addEventListener('click', () => {
   if (pendingDownload) pendingDownload();
   closeDownloadModal();
 });
-// 배경 클릭 시 취소
-dlModal.addEventListener('click', (e) => {
-  if (e.target === dlModal) closeDownloadModal();
-});
+dlModal.addEventListener('click', (e) => { if (e.target === dlModal) closeDownloadModal(); });
 
-// ----- 이미지 오버레이 (라이트박스) -----
-// window.open()은 모바일 팝업 차단에 막히므로,
-// 페이지 안에 고정 오버레이를 띄워 이미지를 전체화면으로 보여줌
+// =====================================================
+// 이미지 라이트박스 오버레이
+// =====================================================
 const imgOverlay      = document.getElementById('img-overlay');
 const imgOverlayImg   = document.getElementById('img-overlay-img');
 const imgOverlayClose = document.getElementById('img-overlay-close');
@@ -835,7 +1135,6 @@ const imgOverlayClose = document.getElementById('img-overlay-close');
 function openImageOverlay(src) {
   imgOverlayImg.src = src;
   imgOverlay.style.display = 'flex';
-  // 오버레이 열린 동안 body 스크롤 막기
   document.body.style.overflow = 'hidden';
 }
 
@@ -845,15 +1144,12 @@ function closeImageOverlay() {
   document.body.style.overflow = '';
 }
 
-// X 버튼 또는 어두운 배경 클릭 시 닫기
 imgOverlayClose.addEventListener('click', closeImageOverlay);
-imgOverlay.addEventListener('click', (e) => {
-  // 이미지 자체 클릭은 무시, 배경(오버레이)만 닫기
-  if (e.target === imgOverlay) closeImageOverlay();
-});
+imgOverlay.addEventListener('click', (e) => { if (e.target === imgOverlay) closeImageOverlay(); });
 
-// XSS 방지용 HTML 이스케이프 (보안: < > & 문자 치환)
-// Node.js에서는 DOMPurify 또는 escape-html 패키지 사용
+// =====================================================
+// XSS 방지 HTML 이스케이프
+// =====================================================
 function escHtml(str) {
   return str
     .replace(/&/g, '&amp;')

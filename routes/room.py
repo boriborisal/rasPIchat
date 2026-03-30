@@ -38,17 +38,41 @@ def generate_code() -> str:
 @blueprint.route('', methods=['POST'])
 @blueprint.route('/', methods=['POST'])
 def create_room():
+    # 요청 본문에서 비밀방 여부를 읽음 (secret: true/false)
+    # Node.js에서는 req.body.secret으로 동일하게 처리
+    body = request.get_json(silent=True) or {}
+    is_secret = bool(body.get('secret', False))
+
     code = generate_code()
     while code in rooms:
         code = generate_code()
 
     rooms[code] = {
-        'code': code,
+        'code':       code,
         'created_at': datetime.now(),
-        'users': []
+        'users':      [],
+        'secret':     is_secret,  # 비밀방 여부 — True면 호스트 승인 후 입장 가능
+        'host_sid':   None,       # 방장(호스트) 소켓 ID — join-room 시 첫 번째 또는 isHost=True인 사람
+        'wait_list':  [],         # 승인 대기 중인 사용자 목록 [{id: sid, nickname: str}]
     }
 
-    return jsonify({'code': code})
+    return jsonify({'code': code, 'secret': is_secret})
+
+
+@blueprint.route('/<code>/secret', methods=['PATCH'])
+def set_room_secret(code):
+    """비밀방 여부를 토글할 때 host.html에서 PATCH로 호출
+    Node.js에서는 router.patch('/:code/secret', ...) 와 동일
+    """
+    code = code.upper()
+    if code not in rooms:
+        return jsonify({'error': '방을 찾을 수 없습니다'}), 404
+
+    body   = request.get_json(silent=True) or {}
+    secret = bool(body.get('secret', False))
+    rooms[code]['secret'] = secret
+
+    return jsonify({'code': code, 'secret': secret})
 
 
 @blueprint.route('/<code>')
