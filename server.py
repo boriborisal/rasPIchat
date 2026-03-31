@@ -278,19 +278,27 @@ def on_join_room(data):
 
     if not already_in:
         # ── 호스트 설정 ──
-        if is_host or room['host_sid'] is None:
+        # isHost=True 인 경우에만 host_sid 설정
+        # 비밀방에서 게스트가 먼저 입장해도 host_sid를 빼앗지 않도록 수정
+        # (이전 코드: room['host_sid'] is None이면 첫 입장자가 자동으로 호스트 → 비밀방 우회 버그)
+        if is_host:
+            room['host_sid'] = request.sid
+        elif room['host_sid'] is None and not room['secret']:
+            # 비밀방이 아닌 경우에만 첫 입장자를 호스트로 자동 배정
             room['host_sid'] = request.sid
 
         # ── 비밀방 처리 ──
-        # BUG-03: already_waiting 이면 wait_list에 중복 추가하지 않고 join-pending만 재전송
-        if room['secret'] and request.sid != room['host_sid']:
+        # 호스트가 아직 없어도 게스트는 wait_list에 추가 (호스트 입장 전이면 대기)
+        # BUG: 이전 코드는 host_sid is None이면 게스트가 호스트로 승격되어 비밀방 체크 우회
+        if room['secret'] and not is_host:
             if not already_waiting:
                 room['wait_list'].append({'id': request.sid, 'nickname': nickname})
             # 세션에 방 코드·닉네임 저장 (disconnect 시 정리를 위해 필요)
             socket_sessions[request.sid]['room_code'] = code
             socket_sessions[request.sid]['nickname']  = nickname
 
-            # 호스트에게 입장 요청 이벤트 전송
+            # 호스트가 이미 있으면 입장 요청 이벤트 전송
+            # 호스트가 없으면 host 입장 후 on_join_room에서 일괄 전송
             # Node.js: io.to(room.hostId).emit('room-join-request', {...})
             if room['host_sid']:
                 emit('room-join-request', {
@@ -324,6 +332,16 @@ def on_join_room(data):
     # 재연결·신규 입장 모두 동일하게 처리
     if room.get('messages'):
         emit('room-history', room['messages'])
+
+    # ── 호스트 뒤늦게 입장 시 대기 중인 게스트 일괄 알림 ──
+    # 게스트들이 먼저 wait_list에 쌓인 상태에서 호스트가 입장하면
+    # 각 대기 게스트에 대한 room-join-request를 한 번에 전송
+    if is_host and room.get('wait_list'):
+        for waiting in room['wait_list']:
+            emit('room-join-request', {
+                'sid':      waiting['id'],
+                'nickname': waiting['nickname'],
+            })  # 현재 소켓(호스트)에게만 전송
 
 
 @socketio.on('approve-join')
