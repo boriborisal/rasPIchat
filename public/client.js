@@ -273,7 +273,7 @@ const I18N = {
     dragDrop:     '📎 Déposez le fichier ici',
     leaveBtn:     'Quitter',
     leaveTitle:   'Quitter le salon?',
-    leaveDesc:    'Tout l'historique et les fichiers seront supprimés.',
+    leaveDesc:    "Tout l'historique et les fichiers seront supprimés.",
     leaveStay:    'Rester',
     leaveConfirm: 'Quitter',
   },
