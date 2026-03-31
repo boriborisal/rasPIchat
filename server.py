@@ -272,10 +272,26 @@ def on_join_room(data):
         }, to=code)
         return
 
-    # 재연결(reconnect) 시 중복 추가 방지 — users와 wait_list 모두 확인
-    # BUG-03: wait_list 포함하지 않으면 대기 중 재연결 시 중복 요청 발생
-    already_in      = any(u['id'] == request.sid for u in room['users'])
-    already_waiting = any(w['id'] == request.sid for w in room['wait_list'])
+    # 재연결(reconnect) 시 중복 추가 방지
+    # SID뿐 아니라 닉네임으로도 검색 — on_disconnect보다 on_join_room이 먼저 실행되는
+    # race condition 에서 새 SID로는 못 찾지만 닉네임은 동일하기 때문
+    existing_user = next((u for u in room['users'] if u['nickname'] == nickname), None)
+    if existing_user:
+        if existing_user['id'] != request.sid:
+            # SID가 바뀐 재연결 → SID만 교체 (중복 추가 방지)
+            old_sid = existing_user['id']
+            existing_user['id'] = request.sid
+            if room['host_sid'] == old_sid:
+                room['host_sid'] = request.sid
+            pending_leaves.pop((nickname, code), None)
+        already_in = True
+    else:
+        already_in = False
+
+    existing_waiter = next((w for w in room['wait_list'] if w['nickname'] == nickname), None)
+    if existing_waiter and existing_waiter['id'] != request.sid:
+        existing_waiter['id'] = request.sid
+    already_waiting = existing_waiter is not None
 
     if not already_in:
         # ── 호스트 설정 ──
