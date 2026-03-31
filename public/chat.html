@@ -142,6 +142,22 @@
     </div>
   </div>
 
+  <!-- ================================================================
+       강퇴 확인 모달
+       참여자 패널의 강퇴 버튼 클릭 시 표시
+       ================================================================ -->
+  <div id="kick-modal" style="display:none; position:fixed; inset:0; background:var(--overlay-bg);
+       z-index:2100; align-items:center; justify-content:center; padding:24px;">
+    <div id="kick-modal-inner">
+      <div style="font-size:2rem; text-align:center; margin-bottom:8px;">🚫</div>
+      <h3 id="kick-modal-title" style="font-size:1rem; font-weight:700; margin-bottom:8px; text-align:center;"></h3>
+      <div class="dl-btn-wrap">
+        <button id="kick-modal-cancel" class="dl-btn-cancel"></button>
+        <button id="kick-modal-confirm" class="dl-btn-confirm" style="background:var(--danger, #ef4444);"></button>
+      </div>
+    </div>
+  </div>
+
   <!-- BUG-08: 소켓 연결 실패 배너 (기본 hidden) -->
   <div id="connect-error-banner" style="display:none; position:fixed; top:0; left:0; right:0;
        background:#ef4444; color:#fff; text-align:center; padding:10px 16px; font-size:0.88rem;

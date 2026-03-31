@@ -968,7 +968,8 @@ input[type="text"]:focus {
  * 파일 다운로드 확인 모달 / 이미지 라이트박스 — 테마 변수 연동
  * ================================================================ */
 /* 퇴장 확인 모달 — dl-modal-inner와 동일한 스타일 공유 */
-#leave-modal-inner {
+#leave-modal-inner,
+#kick-modal-inner {
   background: var(--modal-bg);
   color: var(--modal-text);
   border-radius: 16px;

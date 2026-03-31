@@ -72,6 +72,9 @@ const I18N = {
     leaveConfirm: 'Leave',
     kickBtn:      'Kick',
     kickedMsg:    'You have been removed from the room.',
+    kickTitle:    name => `Kick ${name}?`,
+    kickCancel:   'Cancel',
+    kickConfirm:  'Kick',
   },
   'ko': {
     usersOnline:  n   => `${n}명 참여 중`,
@@ -107,6 +110,9 @@ const I18N = {
     leaveConfirm: '나가기',
     kickBtn:      '강퇴',
     kickedMsg:    '방에서 강퇴되었습니다.',
+    kickTitle:    name => `${name}님을 강퇴하시겠습니까?`,
+    kickCancel:   '취소',
+    kickConfirm:  '강퇴',
   },
   'ja': {
     usersOnline:  n   => `${n}人参加中`,
@@ -142,6 +148,9 @@ const I18N = {
     leaveConfirm: '退出',
     kickBtn:      '追放',
     kickedMsg:    '部屋から追放されました。',
+    kickTitle:    name => `${name}を追放しますか？`,
+    kickCancel:   'キャンセル',
+    kickConfirm:  '追放',
   },
   'zh-CN': {
     usersOnline:  n   => `${n}人在线`,
@@ -177,6 +186,9 @@ const I18N = {
     leaveConfirm: '退出',
     kickBtn:      '踢出',
     kickedMsg:    '您已被移出房间。',
+    kickTitle:    name => `确定踢出 ${name}？`,
+    kickCancel:   '取消',
+    kickConfirm:  '踢出',
   },
   'zh-TW': {
     usersOnline:  n   => `${n}人在線`,
@@ -212,6 +224,9 @@ const I18N = {
     leaveConfirm: '退出',
     kickBtn:      '踢出',
     kickedMsg:    '您已被移出房間。',
+    kickTitle:    name => `確定踢出 ${name}？`,
+    kickCancel:   '取消',
+    kickConfirm:  '踢出',
   },
   'es': {
     usersOnline:  n   => `${n} en línea`,
@@ -247,6 +262,9 @@ const I18N = {
     leaveConfirm: 'Salir',
     kickBtn:      'Expulsar',
     kickedMsg:    'Has sido expulsado de la sala.',
+    kickTitle:    name => `¿Expulsar a ${name}?`,
+    kickCancel:   'Cancelar',
+    kickConfirm:  'Expulsar',
   },
   'fr': {
     usersOnline:  n   => `${n} en ligne`,
@@ -282,6 +300,9 @@ const I18N = {
     leaveConfirm: 'Quitter',
     kickBtn:      'Exclure',
     kickedMsg:    'Vous avez été exclu du salon.',
+    kickTitle:    name => `Exclure ${name} ?`,
+    kickCancel:   'Annuler',
+    kickConfirm:  'Exclure',
   },
   'de': {
     usersOnline:  n   => `${n} online`,
@@ -317,6 +338,9 @@ const I18N = {
     leaveConfirm: 'Verlassen',
     kickBtn:      'Rauswurf',
     kickedMsg:    'Du wurdest aus dem Raum entfernt.',
+    kickTitle:    name => `${name} rauswerfen?`,
+    kickCancel:   'Abbrechen',
+    kickConfirm:  'Rauswerfen',
   },
   'ru': {
     usersOnline:  n   => `${n} онлайн`,
@@ -352,6 +376,9 @@ const I18N = {
     leaveConfirm: 'Выйти',
     kickBtn:      'Выгнать',
     kickedMsg:    'Вас удалили из комнаты.',
+    kickTitle:    name => `Выгнать ${name}?`,
+    kickCancel:   'Отмена',
+    kickConfirm:  'Выгнать',
   },
   'ar': {
     usersOnline:  n   => `${n} متصل`,
@@ -387,6 +414,9 @@ const I18N = {
     leaveConfirm: 'خروج',
     kickBtn:      'طرد',
     kickedMsg:    'تمت إزالتك من الغرفة.',
+    kickTitle:    name => `طرد ${name}؟`,
+    kickCancel:   'إلغاء',
+    kickConfirm:  'طرد',
   },
   'pt': {
     usersOnline:  n   => `${n} online`,
@@ -422,6 +452,9 @@ const I18N = {
     leaveConfirm: 'Sair',
     kickBtn:      'Expulsar',
     kickedMsg:    'Você foi removido da sala.',
+    kickTitle:    name => `Expulsar ${name}?`,
+    kickCancel:   'Cancelar',
+    kickConfirm:  'Expulsar',
   },
   'it': {
     usersOnline:  n   => `${n} online`,
@@ -457,6 +490,9 @@ const I18N = {
     leaveConfirm: 'Esci',
     kickBtn:      'Espelli',
     kickedMsg:    'Sei stato rimosso dalla stanza.',
+    kickTitle:    name => `Espellere ${name}?`,
+    kickCancel:   'Annulla',
+    kickConfirm:  'Espelli',
   },
   'id': {
     usersOnline:  n   => `${n} online`,
@@ -492,6 +528,9 @@ const I18N = {
     leaveConfirm: 'Keluar',
     kickBtn:      'Keluarkan',
     kickedMsg:    'Anda telah dikeluarkan dari ruangan.',
+    kickTitle:    name => `Keluarkan ${name}?`,
+    kickCancel:   'Batal',
+    kickConfirm:  'Keluarkan',
   },
   'tr': {
     usersOnline:  n   => `${n} çevrimiçi`,
@@ -527,6 +566,9 @@ const I18N = {
     leaveConfirm: 'Çık',
     kickBtn:      'At',
     kickedMsg:    'Odadan çıkarıldınız.',
+    kickTitle:    name => `${name} atılsın mı?`,
+    kickCancel:   'İptal',
+    kickConfirm:  'At',
   },
   'pl': {
     usersOnline:  n   => `${n} online`,
@@ -562,6 +604,9 @@ const I18N = {
     leaveConfirm: 'Wyjdź',
     kickBtn:      'Wyrzuć',
     kickedMsg:    'Zostałeś usunięty z pokoju.',
+    kickTitle:    name => `Wyrzucić ${name}?`,
+    kickCancel:   'Anuluj',
+    kickConfirm:  'Wyrzuć',
   },
   'nl': {
     usersOnline:  n   => `${n} online`,
@@ -597,6 +642,9 @@ const I18N = {
     leaveConfirm: 'Verlaten',
     kickBtn:      'Verwijderen',
     kickedMsg:    'Je bent uit de kamer verwijderd.',
+    kickTitle:    name => `${name} verwijderen?`,
+    kickCancel:   'Annuleren',
+    kickConfirm:  'Verwijderen',
   },
   'sv': {
     usersOnline:  n   => `${n} online`,
@@ -632,6 +680,9 @@ const I18N = {
     leaveConfirm: 'Lämna',
     kickBtn:      'Kasta ut',
     kickedMsg:    'Du har tagits bort från rummet.',
+    kickTitle:    name => `Kasta ut ${name}?`,
+    kickCancel:   'Avbryt',
+    kickConfirm:  'Kasta ut',
   },
   'uk': {
     usersOnline:  n   => `${n} онлайн`,
@@ -667,6 +718,9 @@ const I18N = {
     leaveConfirm: 'Вийти',
     kickBtn:      'Вигнати',
     kickedMsg:    'Вас видалено з кімнати.',
+    kickTitle:    name => `Вигнати ${name}?`,
+    kickCancel:   'Скасувати',
+    kickConfirm:  'Вигнати',
   },
 };
 
@@ -785,9 +839,7 @@ function renderParticipantsList(users) {
       const kickBtn = document.createElement('button');
       kickBtn.className = 'btn-kick';
       kickBtn.textContent = t(lang, 'kickBtn');
-      kickBtn.addEventListener('click', () => {
-        socket.emit('kick-user', { nickname: name });
-      });
+      kickBtn.addEventListener('click', () => openKickModal(name));
       tag.appendChild(kickBtn);
     }
 
@@ -799,6 +851,45 @@ function renderParticipantsList(users) {
 userCountWrap.addEventListener('click', openParticipantsPanel);
 btnClosePanel.addEventListener('click', closeParticipantsPanel);
 participantsBackdrop.addEventListener('click', closeParticipantsPanel);
+
+// =====================================================
+// 강퇴 확인 모달
+// =====================================================
+
+const kickModal        = document.getElementById('kick-modal');
+const kickModalTitle   = document.getElementById('kick-modal-title');
+const kickModalCancel  = document.getElementById('kick-modal-cancel');
+const kickModalConfirm = document.getElementById('kick-modal-confirm');
+
+let _kickTargetNick = null; // 강퇴 대상 닉네임 임시 저장
+
+function openKickModal(name) {
+  const lang = langSelect.value || 'en';
+  _kickTargetNick = name;
+  kickModalTitle.textContent   = t(lang, 'kickTitle', name);
+  kickModalCancel.textContent  = t(lang, 'kickCancel');
+  kickModalConfirm.textContent = t(lang, 'kickConfirm');
+  kickModal.style.display = 'flex';
+  lockScroll();
+}
+
+function closeKickModal() {
+  kickModal.style.display = 'none';
+  _kickTargetNick = null;
+  unlockScroll();
+}
+
+kickModalCancel.addEventListener('click', closeKickModal);
+kickModalConfirm.addEventListener('click', () => {
+  if (_kickTargetNick) {
+    socket.emit('kick-user', { nickname: _kickTargetNick });
+  }
+  closeKickModal();
+});
+// 배경 클릭 시 닫기
+kickModal.addEventListener('click', (e) => {
+  if (e.target === kickModal) closeKickModal();
+});
 
 // =====================================================
 // 전체보기 오버레이
