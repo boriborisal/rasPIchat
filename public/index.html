@@ -129,6 +129,18 @@
       </p>
     </div>
 
+    <!-- 비밀방 설정 — 방 생성 전에 미리 선택 -->
+    <label class="secret-toggle-wrap card" style="margin-bottom:0; cursor:pointer;">
+      <div class="secret-toggle-label">
+        <span data-i18n="secretLabel">🔒 Secret Room</span>
+        <div class="secret-toggle-sub" data-i18n="secretDesc">New members need your approval to join</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="toggle-secret-home">
+        <span class="toggle-slider"></span>
+      </label>
+    </label>
+
     <div class="card">
       <button class="btn btn-primary gap-12" id="btn-create" data-i18n="createRoom">Create Room</button>
     </div>
@@ -211,7 +223,12 @@
 
     // ── 방 만들기 ───────────────────────────────────────────────
     document.getElementById('btn-create').addEventListener('click', async () => {
-      const res = await fetch('/api/room', { method: 'POST' });
+      const isSecret = document.getElementById('toggle-secret-home').checked;
+      const res = await fetch('/api/room', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ secret: isSecret }),
+      });
       if (!res.ok) {
         const dict = PAGE_I18N[sel.value] || PAGE_I18N['en'];
         showError(dict.errCreate);
