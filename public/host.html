@@ -21,18 +21,6 @@
       <p style="color:#aaa; font-size:0.8rem;" data-i18n="qrHint">Scan QR code to join instantly</p>
     </div>
 
-    <!-- 비밀방 토글 -->
-    <label class="secret-toggle-wrap card" style="margin-bottom:16px; cursor:pointer;">
-      <div class="secret-toggle-label">
-        <span data-i18n="secretLabel">🔒 Secret Room</span>
-        <div class="secret-toggle-sub" data-i18n="secretDesc">New members need your approval to join</div>
-      </div>
-      <label class="toggle-switch">
-        <input type="checkbox" id="toggle-secret">
-        <span class="toggle-slider"></span>
-      </label>
-    </label>
-
     <button class="btn btn-primary" id="btn-start" data-i18n="startChat">Start Chat</button>
   </div>
 
@@ -55,26 +43,6 @@
       err.style.cssText = 'color:#ef4444; font-size:0.85rem; margin-top:8px;';
       qrImg.parentNode.insertBefore(err, qrImg.nextSibling);
     };
-
-    const toggleSecret = document.getElementById('toggle-secret');
-
-    // BUG-14: 서버의 현재 secret 상태 가져와 토글에 반영
-    fetch(`/api/room/${code}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data && data.secret) toggleSecret.checked = true; })
-      .catch(() => {});
-
-    // 비밀방 토글 변경 → 서버 PATCH
-    toggleSecret.addEventListener('change', () => {
-      const isSecret = toggleSecret.checked;
-      fetch(`/api/room/${code}/secret`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ secret: isSecret }),
-      }).catch(() => {
-        toggleSecret.checked = !isSecret;
-      });
-    });
 
     // Start Chat: 호스트 플래그 저장 후 join으로 이동
     document.getElementById('btn-start').addEventListener('click', () => {
