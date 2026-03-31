@@ -70,6 +70,8 @@ const I18N = {
     leaveDesc:    'All chat history and files will be lost.',
     leaveStay:    'Stay',
     leaveConfirm: 'Leave',
+    kickBtn:      'Kick',
+    kickedMsg:    'You have been removed from the room.',
   },
   'ko': {
     usersOnline:  n   => `${n}명 참여 중`,
@@ -103,6 +105,8 @@ const I18N = {
     leaveDesc:    '채팅 내역과 파일이 모두 삭제됩니다.',
     leaveStay:    '계속 채팅',
     leaveConfirm: '나가기',
+    kickBtn:      '강퇴',
+    kickedMsg:    '방에서 강퇴되었습니다.',
   },
   'ja': {
     usersOnline:  n   => `${n}人参加中`,
@@ -136,6 +140,8 @@ const I18N = {
     leaveDesc:    'チャット履歴とファイルがすべて削除されます。',
     leaveStay:    '続ける',
     leaveConfirm: '退出',
+    kickBtn:      '追放',
+    kickedMsg:    '部屋から追放されました。',
   },
   'zh-CN': {
     usersOnline:  n   => `${n}人在线`,
@@ -169,6 +175,8 @@ const I18N = {
     leaveDesc:    '所有聊天记录和文件将会丢失。',
     leaveStay:    '继续聊天',
     leaveConfirm: '退出',
+    kickBtn:      '踢出',
+    kickedMsg:    '您已被移出房间。',
   },
   'zh-TW': {
     usersOnline:  n   => `${n}人在線`,
@@ -202,6 +210,8 @@ const I18N = {
     leaveDesc:    '所有聊天記錄和檔案將會遺失。',
     leaveStay:    '繼續聊天',
     leaveConfirm: '退出',
+    kickBtn:      '踢出',
+    kickedMsg:    '您已被移出房間。',
   },
   'es': {
     usersOnline:  n   => `${n} en línea`,
@@ -235,6 +245,8 @@ const I18N = {
     leaveDesc:    'Se perderá todo el historial de chat y los archivos.',
     leaveStay:    'Quedarme',
     leaveConfirm: 'Salir',
+    kickBtn:      'Expulsar',
+    kickedMsg:    'Has sido expulsado de la sala.',
   },
   'fr': {
     usersOnline:  n   => `${n} en ligne`,
@@ -268,6 +280,8 @@ const I18N = {
     leaveDesc:    "Tout l'historique et les fichiers seront supprimés.",
     leaveStay:    'Rester',
     leaveConfirm: 'Quitter',
+    kickBtn:      'Exclure',
+    kickedMsg:    'Vous avez été exclu du salon.',
   },
   'de': {
     usersOnline:  n   => `${n} online`,
@@ -301,6 +315,8 @@ const I18N = {
     leaveDesc:    'Der gesamte Chatverlauf und alle Dateien gehen verloren.',
     leaveStay:    'Bleiben',
     leaveConfirm: 'Verlassen',
+    kickBtn:      'Rauswurf',
+    kickedMsg:    'Du wurdest aus dem Raum entfernt.',
   },
   'ru': {
     usersOnline:  n   => `${n} онлайн`,
@@ -334,6 +350,8 @@ const I18N = {
     leaveDesc:    'Весь чат и файлы будут удалены.',
     leaveStay:    'Остаться',
     leaveConfirm: 'Выйти',
+    kickBtn:      'Выгнать',
+    kickedMsg:    'Вас удалили из комнаты.',
   },
   'ar': {
     usersOnline:  n   => `${n} متصل`,
@@ -367,6 +385,8 @@ const I18N = {
     leaveDesc:    'سيتم حذف جميع سجلات الدردشة والملفات.',
     leaveStay:    'البقاء',
     leaveConfirm: 'خروج',
+    kickBtn:      'طرد',
+    kickedMsg:    'تمت إزالتك من الغرفة.',
   },
   'pt': {
     usersOnline:  n   => `${n} online`,
@@ -400,6 +420,8 @@ const I18N = {
     leaveDesc:    'Todo o histórico de chat e os arquivos serão perdidos.',
     leaveStay:    'Ficar',
     leaveConfirm: 'Sair',
+    kickBtn:      'Expulsar',
+    kickedMsg:    'Você foi removido da sala.',
   },
   'it': {
     usersOnline:  n   => `${n} online`,
@@ -433,6 +455,8 @@ const I18N = {
     leaveDesc:    'Tutta la cronologia e i file verranno eliminati.',
     leaveStay:    'Rimani',
     leaveConfirm: 'Esci',
+    kickBtn:      'Espelli',
+    kickedMsg:    'Sei stato rimosso dalla stanza.',
   },
   'id': {
     usersOnline:  n   => `${n} online`,
@@ -466,6 +490,8 @@ const I18N = {
     leaveDesc:    'Semua riwayat chat dan file akan hilang.',
     leaveStay:    'Tetap',
     leaveConfirm: 'Keluar',
+    kickBtn:      'Keluarkan',
+    kickedMsg:    'Anda telah dikeluarkan dari ruangan.',
   },
   'tr': {
     usersOnline:  n   => `${n} çevrimiçi`,
@@ -499,6 +525,8 @@ const I18N = {
     leaveDesc:    'Tüm sohbet geçmişi ve dosyalar silinecek.',
     leaveStay:    'Kal',
     leaveConfirm: 'Çık',
+    kickBtn:      'At',
+    kickedMsg:    'Odadan çıkarıldınız.',
   },
   'pl': {
     usersOnline:  n   => `${n} online`,
@@ -532,6 +560,8 @@ const I18N = {
     leaveDesc:    'Cała historia czatu i pliki zostaną utracone.',
     leaveStay:    'Zostań',
     leaveConfirm: 'Wyjdź',
+    kickBtn:      'Wyrzuć',
+    kickedMsg:    'Zostałeś usunięty z pokoju.',
   },
   'nl': {
     usersOnline:  n   => `${n} online`,
@@ -565,6 +595,8 @@ const I18N = {
     leaveDesc:    'Alle chatgeschiedenis en bestanden gaan verloren.',
     leaveStay:    'Blijven',
     leaveConfirm: 'Verlaten',
+    kickBtn:      'Verwijderen',
+    kickedMsg:    'Je bent uit de kamer verwijderd.',
   },
   'sv': {
     usersOnline:  n   => `${n} online`,
@@ -598,6 +630,8 @@ const I18N = {
     leaveDesc:    'All chatthistorik och filer kommer att raderas.',
     leaveStay:    'Stanna',
     leaveConfirm: 'Lämna',
+    kickBtn:      'Kasta ut',
+    kickedMsg:    'Du har tagits bort från rummet.',
   },
   'uk': {
     usersOnline:  n   => `${n} онлайн`,
@@ -631,6 +665,8 @@ const I18N = {
     leaveDesc:    'Весь чат і файли будуть видалені.',
     leaveStay:    'Залишитись',
     leaveConfirm: 'Вийти',
+    kickBtn:      'Вигнати',
+    kickedMsg:    'Вас видалено з кімнати.',
   },
 };
 
@@ -730,13 +766,31 @@ function closeParticipantsPanel() {
 
 // 참여자 목록 DOM 렌더링
 // users: string[] (닉네임 배열)
+// 호스트에게는 본인 외 각 참여자 옆에 강퇴 버튼 표시
 function renderParticipantsList(users) {
-  participantsList.innerHTML = ''; // 이전 목록 초기화
+  participantsList.innerHTML = '';
+  const lang = langSelect.value || 'en';
   users.forEach(name => {
     const tag = document.createElement('div');
     tag.className = 'participant-tag';
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'participant-name';
     // 내 닉네임이면 👤 아이콘, 다른 사람은 💬 아이콘
-    tag.textContent = (name === nickname ? '👤 ' : '💬 ') + escHtml(name);
+    nameSpan.textContent = (name === nickname ? '👤 ' : '💬 ') + name;
+    tag.appendChild(nameSpan);
+
+    // 호스트에게만 자신 외 참여자에 강퇴 버튼 표시
+    if (isHost && name !== nickname) {
+      const kickBtn = document.createElement('button');
+      kickBtn.className = 'btn-kick';
+      kickBtn.textContent = t(lang, 'kickBtn');
+      kickBtn.addEventListener('click', () => {
+        socket.emit('kick-user', { nickname: name });
+      });
+      tag.appendChild(kickBtn);
+    }
+
     participantsList.appendChild(tag);
   });
 }
@@ -918,6 +972,13 @@ socket.on('join-denied', () => {
   const lang = langSelect.value || 'en';
   waitingScreen.classList.remove('open');
   alert(t(lang, 'joinDenied'));
+  location.href = '/';
+});
+
+// 강퇴됨: 호스트가 이 사용자를 강퇴함 → 알림 후 메인으로 이동
+socket.on('kicked', () => {
+  const lang = langSelect.value || 'en';
+  alert(t(lang, 'kickedMsg'));
   location.href = '/';
 });
 

@@ -742,7 +742,26 @@ input[type="text"]:focus {
   color: var(--tag-text);
   font-size: 0.9rem;
   font-weight: 500;
+  justify-content: space-between;
 }
+
+.participant-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 호스트용 강퇴 버튼 */
+.btn-kick {
+  width: auto;
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: 6px;
+  border: none;
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-kick:hover { background: rgba(239, 68, 68, 0.3); }
 
 /* 참여자 패널 열릴 때 배경 어둡게 */
 #participants-backdrop {

@@ -420,6 +420,58 @@ def on_deny_join(data):
     emit('join-denied', {}, to=target_sid)
 
 
+@socketio.on('kick-user')
+def on_kick_user(data):
+    """호스트가 특정 사용자를 강퇴할 때 발생하는 이벤트
+    Node.js: socket.on('kick-user', ({nickname}) => { ... })
+    """
+    session = socket_sessions.get(request.sid, {})
+    code    = session.get('room_code')
+    if not code or code not in rooms:
+        return
+
+    room = rooms[code]
+    # 호스트만 강퇴 가능
+    if room['host_sid'] != request.sid:
+        return
+
+    target_nick = data.get('nickname', '')
+    # 호스트 본인은 강퇴 불가
+    host_nick = session.get('nickname')
+    if host_nick == target_nick:
+        return
+
+    target = next((u for u in room['users'] if u['nickname'] == target_nick), None)
+    if not target:
+        return
+
+    target_sid = target['id']
+
+    # 참여자 목록에서 제거
+    room['users'] = [u for u in room['users'] if u['id'] != target_sid]
+
+    # pending_leaves 유예 대기 중이면 취소
+    pending_leaves.pop((target_nick, code), None)
+
+    # 강퇴된 사용자에게 알림 → 클라이언트가 홈으로 이동
+    emit('kicked', {}, to=target_sid)
+
+    # 소켓 방에서 퇴장
+    socketio.server.leave_room(target_sid, code, namespace='/')
+
+    # 방 전체에 퇴장 알림 및 최신 참여자 목록 브로드캐스트
+    socketio.emit('user-left', {'nickname': target_nick}, to=code)
+    users_list = [u['nickname'] for u in room['users']]
+    socketio.emit('room-users', {
+        'count': len(room['users']),
+        'users': users_list,
+    }, to=code)
+
+    # 방이 비면 삭제
+    if not room['users']:
+        del rooms[code]
+
+
 @socketio.on('send-message')
 def on_send_message(data):
     session  = socket_sessions.get(request.sid, {})

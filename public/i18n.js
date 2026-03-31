@@ -586,8 +586,10 @@ const PAGE_I18N = {
 
 // data-i18n="key" 속성을 가진 요소에 번역 적용
 // data-i18n-ph="key" 속성은 placeholder에 적용
+// <html lang> 속성도 현재 언어로 갱신 → 구글 자동 번역 트리거 방지
 function applyPageI18n(lang) {
   const dict = PAGE_I18N[lang] || PAGE_I18N['en'];
+  document.documentElement.lang = lang || 'en';
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.dataset.i18n;
     if (key in dict) el.textContent = dict[key];
