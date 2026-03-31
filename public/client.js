@@ -30,7 +30,6 @@ if (!nickname || !roomCode) {
 //   participants   : 참여자 패널 제목
 //   showMore       : 긴 메시지 전체보기 버튼 텍스트
 //   closeOverlay   : 전체보기 닫기 버튼 텍스트
-//   themeLabel     : 테마 패널 제목
 //   approve        : 승인 버튼
 //   deny           : 거절 버튼
 //   joinRequest    : 입장 요청 안내 문구 (호스트용)
@@ -50,7 +49,6 @@ const I18N = {
     participants: 'Participants',
     showMore:     'Show full',
     closeOverlay: 'Close',
-    themeLabel:   'Choose Theme',
     approve:      'Approve',
     deny:         'Deny',
     joinRequest:  who => `${who} wants to join`,
@@ -84,7 +82,6 @@ const I18N = {
     participants: '참여자',
     showMore:     '전체 보기',
     closeOverlay: '닫기',
-    themeLabel:   '테마 선택',
     approve:      '승인',
     deny:         '거절',
     joinRequest:  who => `${who}님이 입장을 요청합니다`,
@@ -118,7 +115,6 @@ const I18N = {
     participants: '参加者',
     showMore:     '全文を見る',
     closeOverlay: '閉じる',
-    themeLabel:   'テーマ選択',
     approve:      '承認',
     deny:         '拒否',
     joinRequest:  who => `${who}が参加リクエストを送りました`,
@@ -152,7 +148,6 @@ const I18N = {
     participants: '参与者',
     showMore:     '查看全文',
     closeOverlay: '关闭',
-    themeLabel:   '选择主题',
     approve:      '批准',
     deny:         '拒绝',
     joinRequest:  who => `${who} 请求加入`,
@@ -186,7 +181,6 @@ const I18N = {
     participants: '參與者',
     showMore:     '查看全文',
     closeOverlay: '關閉',
-    themeLabel:   '選擇主題',
     approve:      '批准',
     deny:         '拒絕',
     joinRequest:  who => `${who} 請求加入`,
@@ -220,7 +214,6 @@ const I18N = {
     participants: 'Participantes',
     showMore:     'Ver completo',
     closeOverlay: 'Cerrar',
-    themeLabel:   'Elegir tema',
     approve:      'Aprobar',
     deny:         'Rechazar',
     joinRequest:  who => `${who} solicita unirse`,
@@ -254,7 +247,6 @@ const I18N = {
     participants: 'Participants',
     showMore:     'Voir tout',
     closeOverlay: 'Fermer',
-    themeLabel:   'Choisir un thème',
     approve:      'Approuver',
     deny:         'Refuser',
     joinRequest:  who => `${who} demande à rejoindre`,
@@ -288,7 +280,6 @@ const I18N = {
     participants: 'Teilnehmer',
     showMore:     'Vollständig anzeigen',
     closeOverlay: 'Schließen',
-    themeLabel:   'Thema wählen',
     approve:      'Genehmigen',
     deny:         'Ablehnen',
     joinRequest:  who => `${who} möchte beitreten`,
@@ -322,7 +313,6 @@ const I18N = {
     participants: 'Участники',
     showMore:     'Показать всё',
     closeOverlay: 'Закрыть',
-    themeLabel:   'Выбрать тему',
     approve:      'Одобрить',
     deny:         'Отклонить',
     joinRequest:  who => `${who} хочет войти`,
@@ -356,7 +346,6 @@ const I18N = {
     participants: 'المشاركون',
     showMore:     'عرض الكامل',
     closeOverlay: 'إغلاق',
-    themeLabel:   'اختر السمة',
     approve:      'موافقة',
     deny:         'رفض',
     joinRequest:  who => `${who} يريد الانضمام`,
@@ -390,7 +379,6 @@ const I18N = {
     participants: 'Participantes',
     showMore:     'Ver tudo',
     closeOverlay: 'Fechar',
-    themeLabel:   'Escolher tema',
     approve:      'Aprovar',
     deny:         'Recusar',
     joinRequest:  who => `${who} quer entrar`,
@@ -424,7 +412,6 @@ const I18N = {
     participants: 'Partecipanti',
     showMore:     'Vedi tutto',
     closeOverlay: 'Chiudi',
-    themeLabel:   'Scegli tema',
     approve:      'Approva',
     deny:         'Rifiuta',
     joinRequest:  who => `${who} vuole entrare`,
@@ -458,7 +445,6 @@ const I18N = {
     participants: 'Peserta',
     showMore:     'Lihat semua',
     closeOverlay: 'Tutup',
-    themeLabel:   'Pilih tema',
     approve:      'Setujui',
     deny:         'Tolak',
     joinRequest:  who => `${who} ingin bergabung`,
@@ -492,7 +478,6 @@ const I18N = {
     participants: 'Katılımcılar',
     showMore:     'Tamamını gör',
     closeOverlay: 'Kapat',
-    themeLabel:   'Tema seç',
     approve:      'Onayla',
     deny:         'Reddet',
     joinRequest:  who => `${who} katılmak istiyor`,
@@ -526,7 +511,6 @@ const I18N = {
     participants: 'Uczestnicy',
     showMore:     'Pokaż całość',
     closeOverlay: 'Zamknij',
-    themeLabel:   'Wybierz motyw',
     approve:      'Zatwierdź',
     deny:         'Odrzuć',
     joinRequest:  who => `${who} chce dołączyć`,
@@ -560,7 +544,6 @@ const I18N = {
     participants: 'Deelnemers',
     showMore:     'Volledig weergeven',
     closeOverlay: 'Sluiten',
-    themeLabel:   'Thema kiezen',
     approve:      'Goedkeuren',
     deny:         'Afwijzen',
     joinRequest:  who => `${who} wil deelnemen`,
@@ -594,7 +577,6 @@ const I18N = {
     participants: 'Deltagare',
     showMore:     'Visa allt',
     closeOverlay: 'Stäng',
-    themeLabel:   'Välj tema',
     approve:      'Godkänn',
     deny:         'Neka',
     joinRequest:  who => `${who} vill gå med`,
@@ -628,7 +610,6 @@ const I18N = {
     participants: 'Учасники',
     showMore:     'Показати все',
     closeOverlay: 'Закрити',
-    themeLabel:   'Вибрати тему',
     approve:      'Схвалити',
     deny:         'Відхилити',
     joinRequest:  who => `${who} хоче приєднатися`,
@@ -690,11 +671,6 @@ const participantsBackdrop = document.getElementById('participants-backdrop');
 const participantsList     = document.getElementById('participants-list');
 const panelTitle           = document.getElementById('panel-title');
 const btnClosePanel        = document.getElementById('btn-close-panel');
-// 테마 패널
-const themePanel     = document.getElementById('theme-panel');
-const themeBackdrop  = document.getElementById('theme-backdrop');
-const btnTheme       = document.getElementById('btn-theme');
-const themePanelTitle = document.getElementById('theme-panel-title');
 // 전체보기 오버레이
 const textOverlay        = document.getElementById('text-overlay');
 const textOverlayContent = document.getElementById('text-overlay-content');
@@ -735,63 +711,6 @@ let processingRequest = false;
 let overflowLockCount = 0;
 function lockScroll()   { overflowLockCount++; document.body.style.overflow = 'hidden'; }
 function unlockScroll() { overflowLockCount = Math.max(0, overflowLockCount - 1); if (overflowLockCount === 0) document.body.style.overflow = ''; }
-
-// =====================================================
-// 테마 관리
-// =====================================================
-
-// 저장된 테마 복원 (sessionStorage/localStorage에서)
-// localStorage: 브라우저를 닫아도 유지 (세션과 다름)
-function applyTheme(theme) {
-  const validThemes = ['default', 'dark', 'ocean', 'forest', 'rose', 'sunset'];
-  const safeTheme   = validThemes.includes(theme) ? theme : 'default';
-
-  // <html> 태그의 data-theme 속성 변경 → CSS 변수 자동 전환
-  if (safeTheme === 'default') {
-    document.documentElement.removeAttribute('data-theme');
-  } else {
-    document.documentElement.setAttribute('data-theme', safeTheme);
-  }
-
-  // 테마 버튼 active 상태 업데이트
-  document.querySelectorAll('.theme-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.theme === safeTheme);
-  });
-
-  localStorage.setItem('chatTheme', safeTheme);
-}
-
-// 페이지 로드 시 저장된 테마 적용
-applyTheme(localStorage.getItem('chatTheme') || 'default');
-
-// 테마 버튼 클릭 이벤트
-document.querySelectorAll('.theme-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    applyTheme(btn.dataset.theme);
-    closeThemePanel();
-  });
-});
-
-// 테마 패널 열기/닫기
-function openThemePanel() {
-  themePanel.classList.add('open');
-  themeBackdrop.classList.add('open');
-}
-
-function closeThemePanel() {
-  themePanel.classList.remove('open');
-  themeBackdrop.classList.remove('open');
-}
-
-btnTheme.addEventListener('click', () => {
-  if (themePanel.classList.contains('open')) {
-    closeThemePanel();
-  } else {
-    openThemePanel();
-  }
-});
-
-themeBackdrop.addEventListener('click', closeThemePanel);
 
 // =====================================================
 // 참여자 목록 패널
@@ -901,9 +820,6 @@ function applyI18n(lang) {
 
   // 참여자 패널 제목
   panelTitle.textContent = t(uiLang, 'participants');
-
-  // 테마 패널 제목
-  themePanelTitle.textContent = t(uiLang, 'themeLabel');
 
   // 전체보기 오버레이 닫기 버튼
   btnCloseTextOverlay.textContent = t(uiLang, 'closeOverlay');

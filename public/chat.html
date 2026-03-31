@@ -22,8 +22,6 @@
             <option value="" id="opt-translate-off">Translate off</option>
           </select>
         </div>
-        <!-- 🎨 테마 선택 버튼 -->
-        <button class="btn-theme" id="btn-theme" title="테마 변경">🎨</button>
         <!-- 🚪 나가기 버튼 — 퇴장 확인 모달 트리거 -->
         <button class="btn-leave" id="btn-leave" title="Leave">🚪</button>
       </div>
@@ -58,42 +56,6 @@
     </div>
     <!-- JS에서 participant-tag 요소들을 동적으로 추가 -->
     <div id="participants-list"></div>
-  </div>
-
-  <!-- ================================================================
-       테마 선택 바텀시트
-       btn-theme 클릭 시 open 클래스가 토글됨
-       ================================================================ -->
-  <div id="theme-backdrop"></div>
-  <div id="theme-panel">
-    <div class="theme-panel-title" id="theme-panel-title">테마 선택</div>
-    <div class="theme-grid">
-      <!-- 각 테마 버튼: data-theme 속성으로 테마 이름 전달 -->
-      <button class="theme-btn active" data-theme="default">
-        <span class="theme-swatch" style="background:#4f46e5"></span>
-        Purple
-      </button>
-      <button class="theme-btn" data-theme="dark">
-        <span class="theme-swatch" style="background:#16161f; border-color:#444"></span>
-        Dark
-      </button>
-      <button class="theme-btn" data-theme="ocean">
-        <span class="theme-swatch" style="background:#0ea5e9"></span>
-        Ocean
-      </button>
-      <button class="theme-btn" data-theme="forest">
-        <span class="theme-swatch" style="background:#16a34a"></span>
-        Forest
-      </button>
-      <button class="theme-btn" data-theme="rose">
-        <span class="theme-swatch" style="background:#e11d48"></span>
-        Rose
-      </button>
-      <button class="theme-btn" data-theme="sunset">
-        <span class="theme-swatch" style="background:#f59e0b"></span>
-        Sunset
-      </button>
-    </div>
   </div>
 
   <!-- ================================================================
