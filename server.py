@@ -102,8 +102,9 @@ app.register_blueprint(room_blueprint, url_prefix='/api/room')
 # Node.js에서는 express.static의 etag/maxAge 옵션으로 동일하게 설정
 @app.after_request
 def add_no_cache_for_static(response):
-    if request.path.endswith(('.js', '.css')):
+    if request.path.endswith(('.js', '.css', '.html')):
         response.cache_control.no_cache = True
+        response.cache_control.no_store = True
         response.cache_control.must_revalidate = True
     return response
 
