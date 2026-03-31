@@ -592,13 +592,21 @@ input[type="text"]:focus {
 
 /* ── 입력 중 표시 ── */
 #typing-indicator {
-  min-height: 18px;
-  padding: 2px 16px 4px;
+  /* min-height 제거: 빈 상태일 때 공간을 차지하지 않음 */
+  /* 텍스트가 있을 때만 padding이 보이도록 :not(:empty) 사용 */
   font-size: 0.75rem;
   color: var(--text-muted);
   font-style: italic;
   background: var(--surface);
   flex-shrink: 0;
+  overflow: hidden;
+  transition: padding 0.15s;
+}
+#typing-indicator:empty {
+  padding: 0;
+}
+#typing-indicator:not(:empty) {
+  padding: 2px 16px 4px;
 }
 
 /* ── 드래그 앤 드롭 오버레이 ── */

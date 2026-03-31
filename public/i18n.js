@@ -599,8 +599,29 @@ function applyPageI18n(lang) {
 }
 
 // 현재 저장된 언어로 즉시 적용 (페이지 로드 시 호출)
+// QR 코드로 첫 입장하는 사용자처럼 localStorage에 언어가 없는 경우:
+//   navigator.languages[0]로 기기 기본 언어를 감지해 적용
+// Node.js에서는 Accept-Language 헤더 파싱으로 동일하게 구현
 function applyStoredLang() {
-  const lang = localStorage.getItem('translateLang') || '';
-  if (lang) applyPageI18n(lang);
+  let lang = localStorage.getItem('translateLang') || '';
+
+  if (!lang) {
+    // 기기 언어 자동 감지 (예: 'ko-KR' → 'ko', 'zh-CN' → 'zh-CN')
+    const raw = (navigator.languages && navigator.languages[0]) || navigator.language || '';
+    // 지원 언어 목록 (PAGE_I18N 키)
+    const supported = Object.keys(PAGE_I18N);
+    // 정확한 매칭 시도 (예: 'zh-CN')
+    if (supported.includes(raw)) {
+      lang = raw;
+    } else {
+      // 기본 언어 코드만 추출 (예: 'ko-KR' → 'ko')
+      const base = raw.split('-')[0].toLowerCase();
+      lang = supported.find(k => k === base) || 'en';
+    }
+    // 감지된 언어를 저장해두어 다음 페이지에서도 유지
+    localStorage.setItem('translateLang', lang);
+  }
+
+  applyPageI18n(lang);
   return lang;
 }

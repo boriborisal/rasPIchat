@@ -1566,10 +1566,7 @@ langSelect.addEventListener('change', () => {
   }
 }, { passive: true });
 
-// 브라우저 기본 종료/이탈 경고 (탭 닫기·새로고침·URL 이동 등)
-// 사용자가 퇴장 확인 버튼을 눌러 이동하는 경우에는 표시하지 않음
-window.addEventListener('beforeunload', (e) => {
-  if (_leavingConfirmed) return;
-  e.preventDefault();
-  e.returnValue = ''; // Chrome 계열은 returnValue 설정 필요
-});
+// ※ beforeunload 경고는 제거함
+// 새로고침(F5)과 탭 닫기를 구분할 수 없어 새로고침마다 "사이트 떠나기?" 팝업이 떠
+// 오히려 방에서 나가는 느낌을 주는 UX 문제 발생
+// → 헤더의 🚪 나가기 버튼 모달이 명시적 퇴장 확인의 유일한 진입점

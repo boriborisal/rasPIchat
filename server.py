@@ -185,6 +185,14 @@ def _do_leave(nickname, code, sid):
 
     room = rooms[code]
 
+    # 재연결 감지: 해당 old_sid가 더 이상 방에 없으면 이미 새 sid로 재입장한 것
+    # (새로고침 등으로 on_join_room이 pending_leaves 취소 전에 먼저 실행된 경우)
+    # 이 경우 user-left를 보내지 않고 조용히 종료
+    user_still_with_old_sid = any(u['id'] == sid for u in room['users'])
+    if not user_still_with_old_sid:
+        room['wait_list'] = [w for w in room['wait_list'] if w['id'] != sid]
+        return
+
     # 대기열·참여자 목록에서 해당 sid 제거
     room['wait_list'] = [w for w in room['wait_list'] if w['id'] != sid]
     room['users']     = [u for u in room['users']     if u['id'] != sid]
