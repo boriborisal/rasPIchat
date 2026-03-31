@@ -80,7 +80,12 @@ def get_room(code):
     code = code.upper()
 
     if code in rooms:
-        return jsonify({'exists': True, 'users': len(rooms[code]['users'])})
+        room = rooms[code]
+        return jsonify({
+            'exists': True,
+            'users':  len(room['users']),
+            'secret': room.get('secret', False),  # BUG-14: host.html 토글 동기화용
+        })
     else:
         return jsonify({'exists': False}), 404
 

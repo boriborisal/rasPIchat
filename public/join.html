@@ -3,40 +3,42 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- 공통 언어(영어)로 타이틀 표기 — 언어 선택 전 페이지이므로 영어 고정 -->
   <title>Join Room — TalkBridge</title>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
   <div class="container">
-    <h1>Join Room</h1>
-    <p class="subtitle">Room Code: <strong id="room-code-display"></strong></p>
+    <h1 data-i18n="joinTitle">Join Room</h1>
+    <p class="subtitle">
+      <span data-i18n="roomCodeText">Room Code</span>:
+      <strong id="room-code-display"></strong>
+    </p>
 
     <!-- 1단계: 닉네임 입력 -->
     <div id="step-nickname" class="card">
-      <input type="text" id="input-nickname" placeholder="Nickname (max 10 chars)" maxlength="10" class="gap-12">
-      <button class="btn btn-primary" id="btn-next">Next</button>
+      <input type="text" id="input-nickname" maxlength="10" class="gap-12"
+             data-i18n-ph="nickPlaceholder" placeholder="Nickname (max 10 chars)">
+      <button class="btn btn-primary" id="btn-next" data-i18n="nextBtn">Next</button>
       <p class="error-msg" id="error-nickname" style="display:none"></p>
     </div>
 
     <!-- 2단계: 번역 언어 선택 -->
     <div id="step-lang" class="card" style="display:none">
-      <p style="font-weight:600; margin-bottom:12px;">Select translation language</p>
-      <p style="color:#888; font-size:0.85rem; margin-bottom:16px;">
+      <p style="font-weight:600; margin-bottom:12px;" data-i18n="selectLangTitle">Select language</p>
+      <p style="color:#888; font-size:0.85rem; margin-bottom:16px;" data-i18n="selectLangHint">
         Messages will be automatically translated. You can change this in the chat room.
       </p>
       <select id="lang-select-join" class="lang-select-join gap-12">
-        <option value="">No translation</option>
+        <option value="" data-i18n="noTranslation">No translation</option>
       </select>
-      <p class="error-msg" id="error-lang" style="display:none">
+      <p class="error-msg" id="error-lang" style="display:none" data-i18n="errLangLoad">
         Failed to load language list. You can still join without translation.
       </p>
-      <button class="btn btn-primary" id="btn-enter">Enter Chat</button>
+      <button class="btn btn-primary" id="btn-enter" data-i18n="enterChat">Enter Chat</button>
     </div>
   </div>
 
   <style>
-    /* 언어 선택 드롭다운 스타일 — 커스텀 화살표 아이콘 포함 */
     .lang-select-join {
       display: block;
       width: 100%;
@@ -56,23 +58,29 @@
     .lang-select-join:focus { border-color: #4f46e5; }
   </style>
 
+  <script src="/i18n.js"></script>
   <script>
-    // URL에서 방 코드 추출 (예: /room/ABC123/join → "ABC123")
+    // URL에서 방 코드 추출
     const code = location.pathname.split('/')[2];
     document.getElementById('room-code-display').textContent = code;
 
-    // 방 존재 여부 확인 — 없으면 오류 메시지 표시
+    // 저장된 언어로 UI 즉시 적용
+    applyStoredLang();
+
+    // 방 존재 여부 확인
     fetch(`/api/room/${code}`).then(res => {
       if (!res.ok) {
-        document.body.innerHTML = '<div class="container"><p>Room not found.</p></div>';
+        const dict = PAGE_I18N[localStorage.getItem('translateLang')] || PAGE_I18N['en'];
+        document.body.innerHTML = `<div class="container"><p>${dict.roomNotFound}</p></div>`;
       }
     });
 
-    // 닉네임 확인 후 언어 선택 단계로 이동
+    // 닉네임 → 언어 선택 단계로 이동
     function goToLangStep() {
       const nickname = document.getElementById('input-nickname').value.trim();
+      const dict = PAGE_I18N[localStorage.getItem('translateLang')] || PAGE_I18N['en'];
       if (!nickname) {
-        showError('error-nickname', 'Please enter a nickname.');
+        showError('error-nickname', dict.errNick);
         return;
       }
       sessionStorage.setItem('nickname', nickname);
@@ -86,34 +94,42 @@
       if (e.key === 'Enter') goToLangStep();
     });
 
-    // /api/languages 에서 지원 언어 목록 로드 후 드롭다운에 추가
     function loadLanguages() {
+      const btnEnter = document.getElementById('btn-enter');
       fetch('/api/languages')
         .then(r => r.json())
         .then(langs => {
           if (!Array.isArray(langs)) throw new Error();
           const sel = document.getElementById('lang-select-join');
+
+          // "No translation" 옵션 텍스트 i18n 적용
+          const dict = PAGE_I18N[localStorage.getItem('translateLang')] || PAGE_I18N['en'];
+          sel.options[0].textContent = dict.noTranslation;
+
           langs.forEach(({ code, name }) => {
             const opt = document.createElement('option');
             opt.value = code;
             opt.textContent = name;
             sel.appendChild(opt);
           });
-          // 이전에 선택한 언어 복원
-          const saved = sessionStorage.getItem('translateLang');
+
+          // BUG-19: || 연산자 사용 (구형 브라우저 호환)
+          // BUG-13: localStorage(홈에서 설정) 우선, 없으면 sessionStorage 폴백
+          const saved = localStorage.getItem('translateLang') || sessionStorage.getItem('translateLang') || '';
           if (saved) sel.value = saved;
         })
         .catch(() => {
-          // 언어 목록 로드 실패 시 오류 메시지 표시
           document.getElementById('error-lang').style.display = 'block';
+          if (btnEnter) btnEnter.disabled = false;
         });
     }
 
-    // "Enter Chat" 버튼: 선택 언어 저장 후 채팅방으로 이동
+    // "Enter Chat": 선택 언어 저장 후 채팅방으로 이동
     document.getElementById('btn-enter').addEventListener('click', () => {
       const lang = document.getElementById('lang-select-join').value;
       sessionStorage.setItem('translateLang', lang);
       sessionStorage.setItem('roomCode', code);
+      localStorage.setItem('translateLang', lang);
       location.href = `/room/${code}/chat`;
     });
 

@@ -6,7 +6,6 @@
   <title>TalkBridge</title>
   <link rel="stylesheet" href="/style.css">
   <style>
-    /* 홈화면 전용 스타일 — 피처 아이콘 목록 */
     .feature-list {
       display: flex;
       flex-direction: column;
@@ -32,9 +31,7 @@
       gap: 8px;
       margin-bottom: 6px;
     }
-    .app-brand h1 {
-      margin-bottom: 0;
-    }
+    .app-brand h1 { margin-bottom: 0; }
     .app-brand .brand-tag {
       font-size: 0.72rem;
       font-weight: 600;
@@ -44,89 +41,198 @@
       padding: 2px 7px;
       letter-spacing: 0.03em;
     }
+    .lang-setting-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .lang-setting-label {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .lang-select-home {
+      flex: 1;
+      padding: 10px 14px;
+      border: 2px solid var(--border, #ddd);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      outline: none;
+      background: var(--surface, #fff);
+      color: var(--text, #111);
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23888' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      cursor: pointer;
+    }
+    .lang-select-home:focus { border-color: var(--primary, #4f46e5); }
+    .lang-auto-badge {
+      font-size: 0.72rem;
+      color: var(--primary, #4f46e5);
+      background: var(--primary-light, #ede9fe);
+      border-radius: 5px;
+      padding: 1px 6px;
+      margin-left: 2px;
+      display: none;
+    }
   </style>
 </head>
 <body>
   <div class="container">
 
-    <!-- 앱 이름 + 태그 -->
     <div class="app-brand">
       <h1>TalkBridge</h1>
       <span class="brand-tag">BETA</span>
     </div>
 
-    <!-- 한 줄 소개 -->
-    <p class="subtitle">Instant rooms. Live translation. No account needed.</p>
+    <p class="subtitle" data-i18n="subtitle">Instant rooms. Live translation. No account needed.</p>
 
-    <!-- 기능 하이라이트 -->
     <div class="card feature-list">
       <div class="feature-item">
         <span class="feature-icon">🌐</span>
-        Real-time translation in 17 languages
+        <span data-i18n="feat_translate">Real-time translation in 17 languages</span>
       </div>
       <div class="feature-item">
         <span class="feature-icon">⚡</span>
-        Join instantly with a 6-digit room code or QR
+        <span data-i18n="feat_join">Join instantly with a 6-digit room code or QR</span>
       </div>
       <div class="feature-item">
         <span class="feature-icon">🔒</span>
-        Secret rooms with host approval
+        <span data-i18n="feat_secret">Secret rooms with host approval</span>
       </div>
       <div class="feature-item">
         <span class="feature-icon">📎</span>
-        File & image sharing up to 5 MB
+        <span data-i18n="feat_file">File &amp; image sharing up to 5 MB</span>
       </div>
       <div class="feature-item">
         <span class="feature-icon">🎨</span>
-        6 color themes, works on any device
+        <span data-i18n="feat_theme">6 color themes, works on any device</span>
       </div>
     </div>
 
-    <!-- 방 만들기 -->
+    <!-- 언어 선택 — 앱 UI 언어 및 채팅 번역 언어 동시 설정 -->
     <div class="card">
-      <button class="btn btn-primary gap-12" id="btn-create">Create Room</button>
+      <div class="lang-setting-row">
+        <span class="lang-setting-label" id="lang-label" data-i18n="langLabel">🌐 Language</span>
+        <select id="lang-select-home" class="lang-select-home">
+          <!-- No translation 옵션 제거: 홈화면에서는 반드시 언어를 선택해야 함 -->
+          <!-- 채팅방 내에서 별도로 번역 끄기 가능 -->
+        </select>
+      </div>
+      <p style="font-size:0.75rem; color:var(--text-secondary); margin-top:8px; margin-bottom:0;">
+        <span data-i18n="langHint">Auto-detected from your device</span>
+        <span class="lang-auto-badge" id="auto-badge">auto</span>
+      </p>
+    </div>
+
+    <div class="card">
+      <button class="btn btn-primary gap-12" id="btn-create" data-i18n="createRoom">Create Room</button>
     </div>
 
     <div class="divider">or</div>
 
-    <!-- 방 참가 -->
     <div class="card">
-      <input type="text" id="input-code" placeholder="Enter 6-digit room code" maxlength="6"
-             style="text-transform:uppercase" class="gap-12">
-      <button class="btn btn-secondary" id="btn-join">Join</button>
+      <input type="text" id="input-code" maxlength="6"
+             style="text-transform:uppercase" class="gap-12"
+             data-i18n-ph="codePlaceholder"
+             placeholder="Enter 6-digit room code">
+      <button class="btn btn-secondary" id="btn-join" data-i18n="joinBtn">Join</button>
       <p class="error-msg" id="error-msg" style="display:none"></p>
     </div>
 
   </div>
 
+  <script src="/i18n.js"></script>
   <script>
-    // 방 생성 버튼 — POST /api/room 호출 후 host 페이지로 이동
+    function detectBestLang(langs) {
+      // BUG-18: navigator.languages 배열 우선, 없으면 navigator.language 폴백
+      const nav = ((navigator.languages && navigator.languages[0]) || navigator.language || '').toLowerCase();
+
+      const exact = langs.find(l => l.code.toLowerCase() === nav);
+      if (exact) return { code: exact.code, auto: true };
+
+      const prefix = nav.split('-')[0];
+      if (prefix === 'zh') {
+        const zh = langs.find(l => l.code.toLowerCase().startsWith('zh'));
+        if (zh) return { code: zh.code, auto: true };
+      }
+      const prefMatch = langs.find(l => l.code.toLowerCase() === prefix);
+      if (prefMatch) return { code: prefMatch.code, auto: true };
+
+      return { code: 'en', auto: false };  // 폴백: English
+    }
+
+    const sel = document.getElementById('lang-select-home');
+
+    fetch('/api/languages')
+      .then(r => r.json())
+      .then(langs => {
+        if (!Array.isArray(langs)) return;
+
+        langs.forEach(({ code, name }) => {
+          const opt = document.createElement('option');
+          opt.value = code;
+          opt.textContent = name;
+          sel.appendChild(opt);
+        });
+
+        // localStorage 저장값 우선 → 없으면 기기 언어 자동 감지
+        const saved = localStorage.getItem('translateLang');
+        if (saved) {
+          sel.value = saved;
+        } else {
+          const { code, auto } = detectBestLang(langs);
+          sel.value = code || langs[0].code;
+          if (auto) document.getElementById('auto-badge').style.display = 'inline';
+          localStorage.setItem('translateLang', sel.value);
+        }
+
+        // 현재 선택된 언어로 UI 적용
+        applyPageI18n(sel.value);
+      })
+      .catch(() => {
+        // API 실패 시 기본 언어 적용
+        applyStoredLang();
+      });
+
+    // 언어 변경 시 저장 + UI 즉시 갱신
+    sel.addEventListener('change', () => {
+      localStorage.setItem('translateLang', sel.value);
+      document.getElementById('auto-badge').style.display = 'none';
+      applyPageI18n(sel.value);
+    });
+
+    // ── 방 만들기 ───────────────────────────────────────────────
     document.getElementById('btn-create').addEventListener('click', async () => {
       const res = await fetch('/api/room', { method: 'POST' });
       if (!res.ok) {
-        showError('Failed to create room. Please try again.');
+        const dict = PAGE_I18N[sel.value] || PAGE_I18N['en'];
+        showError(dict.errCreate);
         return;
       }
       const data = await res.json();
       location.href = `/room/${data.code}/host`;
     });
 
-    // 방 입장 버튼 — GET /api/room/:code 로 방 존재 확인 후 join 페이지로 이동
+    // ── 방 입장 ─────────────────────────────────────────────────
     document.getElementById('btn-join').addEventListener('click', async () => {
+      const dict = PAGE_I18N[sel.value] || PAGE_I18N['en'];
       const code = document.getElementById('input-code').value.trim().toUpperCase();
       if (code.length !== 6) {
-        showError('Please enter a 6-digit code.');
+        showError(dict.errShortCode);
         return;
       }
       const res = await fetch(`/api/room/${code}`);
       if (res.ok) {
         location.href = `/room/${code}/join`;
       } else {
-        showError('Room not found.');
+        showError(dict.errNotFound);
       }
     });
 
-    // Enter 키로 입장 버튼 동작
     document.getElementById('input-code').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') document.getElementById('btn-join').click();
     });

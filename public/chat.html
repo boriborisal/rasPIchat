@@ -30,7 +30,7 @@
     <div class="messages" id="messages"></div>
 
     <!-- 드래그 앤 드롭 오버레이 -->
-    <div id="drag-overlay">📎 파일을 여기에 놓으세요</div>
+    <div id="drag-overlay"></div>
 
     <!-- 입력 중 표시 -->
     <div id="typing-indicator"></div>
@@ -139,11 +139,11 @@
        z-index:1000; align-items:center; justify-content:center; padding:24px;">
     <div id="dl-modal-inner">
       <div style="font-size:2rem; text-align:center; margin-bottom:8px;">⚠️</div>
-      <h3 style="font-size:1rem; font-weight:700; margin-bottom:8px; text-align:center;">파일 다운로드</h3>
+      <h3 id="dl-modal-title" style="font-size:1rem; font-weight:700; margin-bottom:8px; text-align:center;"></h3>
       <p id="dl-modal-desc"></p>
       <div class="dl-btn-wrap">
-        <button id="dl-modal-cancel" class="dl-btn-cancel">취소</button>
-        <button id="dl-modal-confirm" class="dl-btn-confirm">다운로드</button>
+        <button id="dl-modal-cancel" class="dl-btn-cancel"></button>
+        <button id="dl-modal-confirm" class="dl-btn-confirm"></button>
       </div>
     </div>
   </div>
@@ -157,6 +157,13 @@
             background:none; border:none; color:#fff; font-size:2rem; cursor:pointer;
             width:auto; padding:4px 12px;">✕</button>
     <img id="img-overlay-img" src="" alt="" style="max-width:95vw; max-height:90vh; object-fit:contain; border-radius:8px;">
+  </div>
+
+  <!-- BUG-08: 소켓 연결 실패 배너 (기본 hidden) -->
+  <div id="connect-error-banner" style="display:none; position:fixed; top:0; left:0; right:0;
+       background:#ef4444; color:#fff; text-align:center; padding:10px 16px; font-size:0.88rem;
+       z-index:2000; font-weight:600;">
+    ⚠ Connection lost. Trying to reconnect…
   </div>
 
   <script>

@@ -169,21 +169,21 @@ def on_join_room(data):
 
     room = rooms[code]
 
-    # 재연결(reconnect) 시 중복 추가 방지 — 같은 sid가 이미 users에 있으면 건너뜀
-    already_in = any(u['id'] == request.sid for u in room['users'])
+    # 재연결(reconnect) 시 중복 추가 방지 — users와 wait_list 모두 확인
+    # BUG-03: wait_list 포함하지 않으면 대기 중 재연결 시 중복 요청 발생
+    already_in      = any(u['id'] == request.sid for u in room['users'])
+    already_waiting = any(w['id'] == request.sid for w in room['wait_list'])
 
     if not already_in:
         # ── 호스트 설정 ──
-        # isHost 플래그가 True이거나 방에 아직 호스트가 없으면 이 연결을 호스트로 지정
-        # Node.js에서는 rooms.get(code).hostId = socket.id 와 동일
         if is_host or room['host_sid'] is None:
             room['host_sid'] = request.sid
 
         # ── 비밀방 처리 ──
-        # 비밀방이고 현재 연결이 호스트가 아닌 경우 → 대기열(wait_list)에 추가
-        # 호스트가 승인해야 실제 방에 들어올 수 있음
+        # BUG-03: already_waiting 이면 wait_list에 중복 추가하지 않고 join-pending만 재전송
         if room['secret'] and request.sid != room['host_sid']:
-            room['wait_list'].append({'id': request.sid, 'nickname': nickname})
+            if not already_waiting:
+                room['wait_list'].append({'id': request.sid, 'nickname': nickname})
             # 세션에 방 코드·닉네임 저장 (disconnect 시 정리를 위해 필요)
             socket_sessions[request.sid]['room_code'] = code
             socket_sessions[request.sid]['nickname']  = nickname
@@ -301,6 +301,11 @@ def on_send_message(data):
         return
 
     text      = data.get('text', '')
+
+    # BUG-02: 서버 측 메시지 길이 검증 — 클라이언트 우회 방지
+    if len(text) > 1000:
+        return
+
     timestamp = datetime.now().strftime('%H:%M')
 
     emit('receive-message', {
@@ -369,7 +374,6 @@ def on_disconnect():
 
     if not code or code not in rooms:
         # 대기열에만 있던 사용자가 끊긴 경우: 모든 방의 대기열에서 제거
-        # (code가 None이어도 wait_list에 들어갈 수 있음 — join-room 직후 disconnect 엣지케이스)
         for room in rooms.values():
             room['wait_list'] = [w for w in room['wait_list'] if w['id'] != request.sid]
         return
@@ -381,6 +385,19 @@ def on_disconnect():
 
     # 참여자 목록에서 제거
     room['users'] = [u for u in room['users'] if u['id'] != request.sid]
+
+    # BUG-04: 방에 아무도 없으면 방 자체를 메모리에서 삭제
+    if not room['users']:
+        del rooms[code]
+        return
+
+    # BUG-01: 퇴장한 사람이 호스트이면 남은 참여자 중 첫 번째를 새 호스트로 승격
+    # host_sid가 없으면 비밀방 입장 요청이 영원히 처리되지 않는 문제 방지
+    if room['host_sid'] == request.sid:
+        new_host = room['users'][0]
+        room['host_sid'] = new_host['id']
+        if new_host['id'] in socket_sessions:
+            socket_sessions[new_host['id']]['is_host'] = True
 
     emit('user-left', {'nickname': nickname}, to=code, skip_sid=request.sid)
 

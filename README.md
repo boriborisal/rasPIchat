@@ -1,50 +1,42 @@
-# RasPIchat
+# TalkBridge
 
-인터넷 없이 동작하는 실시간 채팅 웹앱.
-라즈베리파이를 서버로 사용하며, QR코드나 방 코드로 누구나 즉시 입장 가능.
-회원가입 없이 닉네임만 입력하면 채팅 시작.
+라즈베리파이 기반 실시간 번역 채팅 웹앱.
+방 코드 또는 QR코드로 즉시 입장, 회원가입 없이 닉네임만 입력하면 채팅 시작.
+로컬 네트워크(오프라인)와 Cloudflare Tunnel(외부 접속) 모두 지원.
 
 ---
 
-## 특징
+## 주요 기능
 
-- **완전 오프라인 동작** — 인터넷 불필요, 외부 CDN 없음
-- **QR코드 입장** — 스마트폰으로 스캔하면 바로 입장
+- **실시간 번역** — DeepL API, 21개 언어 지원. 말풍선 안에 원문 + 번역 함께 표시
+- **언어 변경 시 전체 재번역** — 기존 메시지 포함 전부 즉시 재번역
+- **QR코드 / 방 코드 입장** — 스마트폰 스캔 또는 6자리 코드로 입장
+- **비밀방** — 호스트가 입장 요청을 승인/거절. 호스트 화면에서 토글로 설정
+- **참여자 목록** — 헤더 클릭 → 오른쪽 슬라이드 패널로 현재 참여자 확인
+- **디자인 테마 6종** — Purple · Dark · Ocean · Forest · Rose · Sunset (localStorage 저장)
+- **메시지 글자수 제한** — 1,000자 전송 차단 / 300자 초과 시 접기 + 전체보기 오버레이
+- **파일 전송** — 📎 버튼 또는 드래그앤드롭 (최대 5MB, 서버 저장 없음)
+- **이미지 인라인 미리보기** + 라이트박스
+- **입력 중 표시** — 타이핑 중 실시간 표시 (디바운스 2초)
+- **메시지 그룹핑** — 같은 발신자·분(minute)의 연속 메시지 묶음
+- **Cloudflare Tunnel** — 외부에서도 접속 가능한 임시 URL 자동 발급 (trycloudflare.com)
 - **회원가입 불필요** — 닉네임만 입력하면 OK
-- **모바일 친화적 UI** — 스마트폰 브라우저 최적화
-- **파일/이미지 전송** — 📎 버튼 또는 드래그앤드롭으로 공유 (최대 5MB, 서버 저장 없음)
-- **입력 중 표시** — 디스코드처럼 상대방이 타이핑 중일 때 실시간 표시
-- **메시지 그룹핑** — 같은 분(minute)에 연속된 메시지를 묶어서 표시
-- **실시간 번역** — 21개 언어 지원, 메시지 아래 번역 표시
-- **핫스팟 모드** — 라즈베리파이 자체가 WiFi AP 역할 (`RasPIchat` 네트워크)
-- **백엔드 선택 가능** — Node.js 또는 Python 중 선택해서 실행
 
 ---
 
 ## 기술 스택
 
-### 현재 기본: Python 백엔드
-
 | 구분 | 기술 |
 |------|------|
 | 런타임 | Python 3.10+ |
 | HTTP 서버 | Flask |
-| 비동기 서버 | eventlet (그린스레드) |
-| 실시간 통신 | flask-socketio (Socket.io 호환) |
-| 프론트엔드 | Vanilla HTML / CSS / JS |
+| 비동기 서버 | eventlet |
+| 실시간 통신 | Flask-SocketIO (Socket.IO 호환) |
+| 번역 | DeepL API (`.env`에 `DEEPL_API_KEY` 설정) |
 | QR 생성 | qrcode[pil] |
-| 배포 | Raspberry Pi 4 |
-| 핫스팟 | hostapd + dnsmasq |
-
-### 대안: Node.js 백엔드 (`js/` 폴더)
-
-| 구분 | 기술 |
-|------|------|
-| 런타임 | Node.js v18+ |
-| HTTP 서버 | Express.js |
-| 실시간 통신 | Socket.io |
-| QR 생성 | qrcode (npm) |
-| 배포 | pm2 |
+| 프론트엔드 | Vanilla HTML / CSS / JS |
+| 배포 | Raspberry Pi + systemd |
+| 외부 접속 | Cloudflare Tunnel (cloudflared) |
 
 ---
 
@@ -53,144 +45,120 @@
 ```
 rasPIchat/
 │
-├── server.py              # [Python] FastAPI + python-socketio 메인 서버
-├── store.py               # [Python] 방 데이터 메모리 저장소
-├── requirements.txt       # [Python] pip 의존성 목록
+├── server.py              # Flask + SocketIO 메인 서버 (소켓 이벤트 처리)
+├── requirements.txt       # pip 의존성
+├── .env                   # 환경 변수 (DEEPL_API_KEY 등, git 미포함)
 │
 ├── routes/
-│   └── room.py            # [Python] 방 생성/조회 API
+│   └── room.py            # 방 생성/조회/비밀방 토글 REST API
 │
-├── js/                    # [Node.js] 백엔드 원본 보관 폴더
-│   ├── server.js          #   Express + Socket.io 메인 서버
-│   ├── store.js           #   방 데이터 메모리 저장소
-│   ├── package.json       #   npm 의존성 목록
-│   ├── package-lock.json
-│   ├── test_chat.js       #   채팅 테스트 스크립트
-│   └── routes/
-│       └── room.js        #   방 생성/조회 API
+├── public/                # 프론트엔드
+│   ├── index.html         # 홈화면 (방 만들기 / 코드 입력)
+│   ├── host.html          # 방 생성 후 QR 표시 (비밀방 토글 포함)
+│   ├── join.html          # 닉네임 + 번역 언어 선택 입장 화면
+│   ├── chat.html          # 채팅방
+│   ├── client.js          # Socket.IO 클라이언트 + i18n + 테마 + 번역 로직
+│   └── style.css          # CSS 변수 기반 테마 시스템 + 반응형 UI
 │
-├── public/                # 프론트엔드 (Python/Node.js 공통, 수정 불필요)
-│   ├── index.html         #   메인 페이지 (방 만들기 / 코드 입력)
-│   ├── host.html          #   방 생성 후 QR 표시 화면
-│   ├── join.html          #   닉네임 입력 페이지
-│   ├── chat.html          #   채팅방
-│   ├── client.js          #   Socket.io 클라이언트 로직
-│   └── style.css          #   모바일 친화적 스타일
-│
-└── node_modules/          # npm 패키지 (Node.js 실행 시 사용)
+├── start.sh               # Python 서버 실행 스크립트
+├── install-tunnel.sh      # cloudflared 설치 + systemd 서비스 자동 등록
+└── show-url.sh            # 현재 Cloudflare Tunnel URL 출력
 ```
-
-> **`public/` 폴더는 어떤 백엔드를 쓰든 공통으로 사용**한다.
-> `python-socketio`가 Socket.io 프로토콜을 완전히 구현하므로 프론트엔드 코드를 수정할 필요가 없다.
 
 ---
 
-## 백엔드 선택 및 전환 방법
+## 설치 및 실행
 
-### Python으로 실행하기 (현재 기본)
+### 1. 의존성 설치
 
 ```bash
-# 1. Python 의존성 설치 (최초 1회)
 pip install -r requirements.txt
+```
 
-# 2-A. 일반 실행
+### 2. DeepL API 키 설정 (번역 기능 사용 시)
+
+```bash
+cp .env.example .env   # 없으면 직접 생성
+# .env 에 아래 추가:
+# DEEPL_API_KEY=your_deepl_api_key_here
+```
+
+> DeepL 무료 키는 [deepl.com/pro-api](https://www.deepl.com/pro-api) 에서 발급 가능.
+> 키 없이도 채팅은 동작하지만 번역 기능이 비활성화됨.
+
+### 3. 서버 실행
+
+```bash
+# 일반 실행
+./start.sh
+
+# 또는 직접
 python server.py
-
-# 2-B. 개발 모드 — 파일 변경 시 자동 재시작 (Node.js nodemon과 동일)
-FLASK_DEBUG=1 python server.py
 ```
 
-### Node.js로 전환하기
-
-Node.js로 실행하려면 `js/` 폴더의 파일들을 프로젝트 루트로 복사해야 한다.
-
-```bash
-# js/ 폴더의 파일을 루트로 복사
-cp js/server.js .
-cp js/store.js .
-cp js/package.json .
-cp js/package-lock.json .
-cp js/routes/room.js routes/
-
-# Node.js 의존성 설치 (최초 1회 또는 node_modules가 없을 때)
-npm install
-
-# 개발 모드 (nodemon으로 자동 재시작)
-npm run dev
-
-# 프로덕션 모드
-npm start
-```
-
-### Node.js에서 다시 Python으로 돌아오기
-
-```bash
-# 루트에 복사된 JS 파일 제거
-rm server.js store.js package.json package-lock.json routes/room.js
-
-# Python 서버 실행
-uvicorn server:socket_app --host 0.0.0.0 --port 3000
-```
+서버 기본 포트: **3000**
+로컬 접속: `http://localhost:3000` 또는 `http://<라즈베리파이 IP>:3000`
 
 ---
 
-### 어떤 백엔드를 선택해야 할까?
+## Cloudflare Tunnel (외부 접속)
 
-| 상황 | 추천 | 이유 |
-|------|------|------|
-| 라즈베리파이 GPIO 제어 추가 예정 | **Python** | `RPi.GPIO`, `gpiozero` 라이브러리가 Python 전용 |
-| AI/ML 기능 추가 예정 | **Python** | PyTorch, transformers 등 Python 생태계가 압도적 |
-| JS/Node.js에 익숙한 팀 | **Node.js** | 학습 비용 없이 바로 개발 가능 |
-| API 문서 자동 생성이 필요 | **Python** | FastAPI가 `/docs`에서 Swagger UI 자동 제공 |
-| Socket.io 생태계 플러그인 사용 | **Node.js** | npm Socket.io 에코시스템이 더 넓음 |
-| 빠른 프로토타이핑 | 둘 다 가능 | FastAPI `/docs`가 테스트에 편리 |
+외부 인터넷에서도 접속할 수 있는 임시 URL을 무료로 발급받는다.
+계정 로그인 없이 `trycloudflare.com` 임시 도메인 사용.
+
+### 자동 설치 (권장)
+
+```bash
+bash install-tunnel.sh
+```
+
+스크립트가 자동으로:
+1. `cloudflared` 바이너리 다운로드 (linux-arm64)
+2. `talkbridge.service` systemd 서비스 등록
+3. `talkbridge-tunnel.service` systemd 서비스 등록
+4. 부팅 시 자동 시작 활성화
+5. 현재 터널 URL 출력
+
+### 터널 URL 확인
+
+```bash
+./show-url.sh
+```
+
+### 서비스 관리
+
+```bash
+# 상태 확인
+sudo systemctl status talkbridge.service
+sudo systemctl status talkbridge-tunnel.service
+
+# 재시작
+sudo systemctl restart talkbridge.service
+sudo systemctl restart talkbridge-tunnel.service
+
+# 실시간 로그
+journalctl -u talkbridge-tunnel.service -f
+```
+
+> 서비스 재시작 시 Cloudflare Tunnel URL이 변경된다.
 
 ---
 
 ## 사용 방법
 
-### 1. 호스트 (방 만드는 사람)
-1. `RasPIchat` WiFi에 접속 (비밀번호: `raspichat`)
-2. 브라우저에서 `http://10.42.0.1:3000` 접속
-3. **방 만들기** 버튼 클릭
-4. 표시된 QR코드를 참가자에게 공유
+### 호스트 (방 만드는 사람)
 
-### 2. 참가자
-1. `RasPIchat` WiFi에 접속
-2. QR코드 스캔 또는 방 코드 직접 입력
-3. 닉네임 입력 후 입장
+1. 브라우저에서 서버 주소 접속
+2. **방 만들기** 버튼 클릭
+3. (선택) 🔒 Secret Room 토글 활성화 → 입장 요청 승인/거절 모드
+4. QR코드 또는 방 코드를 참가자에게 공유
+5. **Start Chat** 클릭
 
----
+### 참가자
 
-## 라즈베리파이 배포
-
-### Python — 직접 실행 또는 systemd
-
-```bash
-python server.py
-```
-
-systemd 서비스로 등록하면 부팅 시 자동 실행된다 (`/etc/systemd/system/raspichat.service` 참고).
-
-### Node.js — pm2로 상시 실행
-
-```bash
-# js/ 폴더 파일을 루트로 복사한 후
-pm2 start server.js --name chat-app
-pm2 save
-pm2 startup
-```
-
-### 핫스팟 설정 (hostapd + dnsmasq)
-
-| 항목 | 값 |
-|------|-----|
-| SSID | `RasPIchat` |
-| 비밀번호 | `raspichat` |
-| 주파수 | 2.4GHz (채널 6) |
-| 보안 | WPA2 |
-| Pi IP | `10.42.0.1` |
-| DHCP 범위 | `10.42.0.10` ~ `10.42.0.100` |
+1. QR코드 스캔 또는 방 코드 직접 입력
+2. 닉네임 + 번역 언어 선택 후 입장
+3. 비밀방이면 호스트의 승인을 기다림
 
 ---
 
@@ -198,39 +166,51 @@ pm2 startup
 
 | Method | Endpoint | 설명 |
 |--------|----------|------|
-| POST | `/api/room` | 방 생성, 6자리 코드 반환 |
-| GET | `/api/room/:code` | 방 존재 여부 확인 |
-| GET | `/api/room/:code/qr` | QR코드 이미지 반환 |
-| GET | `/api/languages` | 지원 번역 언어 목록 |
-| POST | `/api/translate` | MyMemory 번역 프록시 |
-
-> Python(FastAPI) 실행 중에는 `http://localhost:3000/docs` 에서 Swagger UI로 API를 직접 테스트할 수 있다.
+| `POST` | `/api/room` | 방 생성, 6자리 코드 반환 |
+| `GET` | `/api/room/<code>` | 방 존재 여부 확인 |
+| `GET` | `/api/room/<code>/qr` | QR코드 이미지 반환 |
+| `PATCH` | `/api/room/<code>/secret` | 비밀방 여부 토글 |
+| `GET` | `/api/languages` | 지원 번역 언어 목록 |
+| `POST` | `/api/translate` | DeepL 번역 프록시 |
 
 ---
 
-## Socket.io 이벤트
+## Socket.IO 이벤트
 
-| 이벤트 | 방향 | 설명 |
-|--------|------|------|
-| `join-room` | 클라이언트 → 서버 | 방 입장 (code, nickname) |
-| `send-message` | 클라이언트 → 서버 | 메시지 전송 |
-| `send-file` | 클라이언트 → 서버 | 파일 전송 (filename, mimeType, dataUrl) |
-| `typing-start` | 클라이언트 → 서버 | 타이핑 시작 알림 |
-| `typing-stop` | 클라이언트 → 서버 | 타이핑 멈춤 알림 |
-| `receive-message` | 서버 → 클라이언트 | 메시지 수신 |
-| `receive-file` | 서버 → 클라이언트 | 파일 수신 (nickname, filename, mimeType, dataUrl, timestamp) |
-| `user-joined` | 서버 → 클라이언트 | 입장 알림 |
-| `user-left` | 서버 → 클라이언트 | 퇴장 알림 |
-| `room-users` | 서버 → 클라이언트 | 현재 참여자 수 |
-| `user-typing` | 서버 → 클라이언트 | 특정 사용자 타이핑 중 알림 |
-| `user-stop-typing` | 서버 → 클라이언트 | 특정 사용자 타이핑 멈춤 알림 |
+### 클라이언트 → 서버
+
+| 이벤트 | 설명 |
+|--------|------|
+| `join-room` | 방 입장 (code, nickname, isHost) |
+| `send-message` | 메시지 전송 |
+| `send-file` | 파일 전송 (filename, mimeType, dataUrl) |
+| `typing-start` | 타이핑 시작 알림 |
+| `typing-stop` | 타이핑 멈춤 알림 |
+| `approve-join` | 대기자 입장 승인 (호스트 전용) |
+| `deny-join` | 대기자 입장 거절 (호스트 전용) |
+
+### 서버 → 클라이언트
+
+| 이벤트 | 설명 |
+|--------|------|
+| `receive-message` | 메시지 수신 |
+| `receive-file` | 파일 수신 |
+| `user-joined` | 입장 알림 |
+| `user-left` | 퇴장 알림 |
+| `room-users` | 현재 참여자 수 + 닉네임 목록 |
+| `user-typing` | 특정 사용자 타이핑 중 |
+| `user-stop-typing` | 특정 사용자 타이핑 멈춤 |
+| `join-pending` | 비밀방 대기 중 (참가자 수신) |
+| `join-approved` | 입장 승인됨 (참가자 수신) |
+| `join-denied` | 입장 거절됨 (참가자 수신) |
+| `room-join-request` | 입장 요청 알림 (호스트 수신) |
 
 ---
 
 ## 주의사항
 
-- 서버 재시작 시 방, 메시지, 전송된 파일 모두 초기화됨 (DB 없음, 메모리 저장)
-- 파일 전송 최대 크기: **5MB** (Base64 소켓 전송 방식 — 서버 디스크에 저장 안 됨)
+- 서버 재시작 시 방·메시지·파일 모두 초기화됨 (DB 없음, 메모리 저장)
+- 파일 전송 최대 크기: **5MB** (Base64 소켓 전송, 서버 디스크 저장 없음)
 - 동시 접속 약 30명 이내 권장
-- CDN 사용 금지 — 오프라인 환경이므로 모든 리소스는 로컬에 포함
-- Node.js와 Python 서버를 동시에 실행하면 포트 충돌 — 반드시 하나만 실행
+- CDN 사용 없음 — 모든 리소스 로컬 포함 (오프라인 환경 호환)
+- Cloudflare Tunnel URL은 서비스 재시작마다 변경됨

@@ -8,25 +8,23 @@
 </head>
 <body>
   <div class="container">
-    <h1>Room Created!</h1>
-    <p class="subtitle">Share the code or QR code with your friends</p>
+    <h1 data-i18n="roomCreated">Room Created!</h1>
+    <p class="subtitle" data-i18n="shareHint">Share the code or QR code with your friends</p>
 
     <div class="card text-center">
-      <p style="color:#888; font-size:0.85rem;">Room Code</p>
+      <p style="color:#888; font-size:0.85rem;" data-i18n="roomCodeText">Room Code</p>
       <div class="room-code" id="room-code">------</div>
       <div class="qr-wrap">
         <img id="qr-img" src="" alt="Loading QR code...">
       </div>
-      <p style="color:#aaa; font-size:0.8rem;">Scan QR code to join instantly</p>
+      <p style="color:#aaa; font-size:0.8rem;" data-i18n="qrHint">Scan QR code to join instantly</p>
     </div>
 
-    <!-- 비밀방(Secret Room) 토글 -->
-    <!-- 토글을 켜면 sessionStorage에 isSecret=true 저장 →
-         방 생성 API에 secret:true 전달 → 호스트 승인 없이 입장 불가 -->
+    <!-- 비밀방 토글 -->
     <label class="secret-toggle-wrap card" style="margin-bottom:16px; cursor:pointer;">
       <div class="secret-toggle-label">
-        🔒 Secret Room
-        <div class="secret-toggle-sub">New members need your approval to join</div>
+        <span data-i18n="secretLabel">🔒 Secret Room</span>
+        <div class="secret-toggle-sub" data-i18n="secretDesc">New members need your approval to join</div>
       </div>
       <label class="toggle-switch">
         <input type="checkbox" id="toggle-secret">
@@ -34,36 +32,50 @@
       </label>
     </label>
 
-    <button class="btn btn-primary" id="btn-start">Start Chat</button>
+    <button class="btn btn-primary" id="btn-start" data-i18n="startChat">Start Chat</button>
   </div>
 
+  <script src="/i18n.js"></script>
   <script>
-    // URL에서 방 코드 추출 (예: /room/ABC123/host → "ABC123")
     const code = location.pathname.split('/')[2];
-
     document.getElementById('room-code').textContent = code;
-    document.getElementById('qr-img').src = `/api/room/${code}/qr`;
 
-    // 비밀방 토글 상태 변경 → 서버에 PATCH로 secret 옵션 업데이트
-    // Node.js에서는 socket.emit('set-secret', {code, secret}) 또는
-    // REST API(PATCH /api/room/:code)로 동일하게 처리
+    // 저장된 언어로 UI 즉시 적용
+    applyStoredLang();
+
+    // BUG-15: QR 이미지 로드 실패 처리
+    const qrImg = document.getElementById('qr-img');
+    qrImg.src = `/api/room/${code}/qr`;
+    qrImg.onerror = () => {
+      qrImg.style.display = 'none';
+      const dict = PAGE_I18N[localStorage.getItem('translateLang')] || PAGE_I18N['en'];
+      const err = document.createElement('p');
+      err.textContent = dict.qrError;
+      err.style.cssText = 'color:#ef4444; font-size:0.85rem; margin-top:8px;';
+      qrImg.parentNode.insertBefore(err, qrImg.nextSibling);
+    };
+
     const toggleSecret = document.getElementById('toggle-secret');
 
+    // BUG-14: 서버의 현재 secret 상태 가져와 토글에 반영
+    fetch(`/api/room/${code}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data && data.secret) toggleSecret.checked = true; })
+      .catch(() => {});
+
+    // 비밀방 토글 변경 → 서버 PATCH
     toggleSecret.addEventListener('change', () => {
       const isSecret = toggleSecret.checked;
-      // 방 생성 직후이므로 PATCH로 secret 플래그 업데이트
       fetch(`/api/room/${code}/secret`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ secret: isSecret }),
       }).catch(() => {
-        // 요청 실패 시 토글을 원래대로 되돌림
         toggleSecret.checked = !isSecret;
       });
     });
 
-    // "Start Chat" 버튼: 호스트임을 표시하고 join 페이지로 이동
-    // isHost=true → join-room 소켓 이벤트에 포함 → 서버가 host_sid 설정
+    // Start Chat: 호스트 플래그 저장 후 join으로 이동
     document.getElementById('btn-start').addEventListener('click', () => {
       sessionStorage.setItem('isHost', 'true');
       location.href = `/room/${code}/join`;
