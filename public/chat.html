@@ -15,7 +15,7 @@
         <!-- 참여자 수: 클릭 시 참여자 목록 패널 열림 -->
         <div class="room-info" id="user-count-wrap" title="참여자 목록 보기">0 online</div>
       </div>
-      <!-- 헤더 우측: 번역 선택 + 테마 버튼 -->
+      <!-- 헤더 우측: 번역 선택 + 테마 버튼 + 나가기 버튼 -->
       <div class="header-actions">
         <div class="translate-wrap">
           <select id="lang-select" title="Choose language">
@@ -24,6 +24,8 @@
         </div>
         <!-- 🎨 테마 선택 버튼 -->
         <button class="btn-theme" id="btn-theme" title="테마 변경">🎨</button>
+        <!-- 🚪 나가기 버튼 — 퇴장 확인 모달 트리거 -->
+        <button class="btn-leave" id="btn-leave" title="Leave">🚪</button>
       </div>
     </div>
 
@@ -157,6 +159,24 @@
             background:none; border:none; color:#fff; font-size:2rem; cursor:pointer;
             width:auto; padding:4px 12px;">✕</button>
     <img id="img-overlay-img" src="" alt="" style="max-width:95vw; max-height:90vh; object-fit:contain; border-radius:8px;">
+  </div>
+
+  <!-- ================================================================
+       퇴장 확인 모달
+       나가기 버튼 클릭 또는 뒤로가기 시 표시
+       채팅 내역·파일이 모두 삭제됨을 공지
+       ================================================================ -->
+  <div id="leave-modal" style="display:none; position:fixed; inset:0; background:var(--overlay-bg);
+       z-index:2100; align-items:center; justify-content:center; padding:24px;">
+    <div id="leave-modal-inner">
+      <div style="font-size:2rem; text-align:center; margin-bottom:8px;">🚪</div>
+      <h3 id="leave-modal-title" style="font-size:1rem; font-weight:700; margin-bottom:8px; text-align:center;"></h3>
+      <p id="leave-modal-desc" style="font-size:0.88rem; color:var(--text-secondary); text-align:center; margin-bottom:16px; white-space:pre-line;"></p>
+      <div class="dl-btn-wrap">
+        <button id="leave-modal-stay"    class="dl-btn-cancel"></button>
+        <button id="leave-modal-confirm" class="dl-btn-confirm" style="background:var(--danger, #ef4444);"></button>
+      </div>
+    </div>
   </div>
 
   <!-- BUG-08: 소켓 연결 실패 배너 (기본 hidden) -->

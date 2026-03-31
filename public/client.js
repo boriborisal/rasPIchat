@@ -67,6 +67,11 @@ const I18N = {
     dlCancel:     'Cancel',
     dlConfirm:    'Download',
     dragDrop:     '📎 Drop file here',
+    leaveBtn:     'Leave',
+    leaveTitle:   'Leave the room?',
+    leaveDesc:    'All chat history and files will be lost.',
+    leaveStay:    'Stay',
+    leaveConfirm: 'Leave',
   },
   'ko': {
     usersOnline:  n   => `${n}명 참여 중`,
@@ -96,6 +101,11 @@ const I18N = {
     dlCancel:     '취소',
     dlConfirm:    '다운로드',
     dragDrop:     '📎 파일을 여기에 놓으세요',
+    leaveBtn:     '나가기',
+    leaveTitle:   '방을 나가시겠습니까?',
+    leaveDesc:    '채팅 내역과 파일이 모두 삭제됩니다.',
+    leaveStay:    '계속 채팅',
+    leaveConfirm: '나가기',
   },
   'ja': {
     usersOnline:  n   => `${n}人参加中`,
@@ -125,6 +135,11 @@ const I18N = {
     dlCancel:     'キャンセル',
     dlConfirm:    'ダウンロード',
     dragDrop:     '📎 ここにファイルをドロップ',
+    leaveBtn:     '退出',
+    leaveTitle:   '退出しますか？',
+    leaveDesc:    'チャット履歴とファイルがすべて削除されます。',
+    leaveStay:    '続ける',
+    leaveConfirm: '退出',
   },
   'zh-CN': {
     usersOnline:  n   => `${n}人在线`,
@@ -154,6 +169,11 @@ const I18N = {
     dlCancel:     '取消',
     dlConfirm:    '下载',
     dragDrop:     '📎 将文件拖放到此处',
+    leaveBtn:     '退出',
+    leaveTitle:   '确定退出房间？',
+    leaveDesc:    '所有聊天记录和文件将会丢失。',
+    leaveStay:    '继续聊天',
+    leaveConfirm: '退出',
   },
   'zh-TW': {
     usersOnline:  n   => `${n}人在線`,
@@ -183,6 +203,11 @@ const I18N = {
     dlCancel:     '取消',
     dlConfirm:    '下載',
     dragDrop:     '📎 將檔案拖放到此處',
+    leaveBtn:     '退出',
+    leaveTitle:   '確定退出房間？',
+    leaveDesc:    '所有聊天記錄和檔案將會遺失。',
+    leaveStay:    '繼續聊天',
+    leaveConfirm: '退出',
   },
   'es': {
     usersOnline:  n   => `${n} en línea`,
@@ -212,6 +237,11 @@ const I18N = {
     dlCancel:     'Cancelar',
     dlConfirm:    'Descargar',
     dragDrop:     '📎 Suelta el archivo aquí',
+    leaveBtn:     'Salir',
+    leaveTitle:   '¿Salir de la sala?',
+    leaveDesc:    'Se perderá todo el historial de chat y los archivos.',
+    leaveStay:    'Quedarme',
+    leaveConfirm: 'Salir',
   },
   'fr': {
     usersOnline:  n   => `${n} en ligne`,
@@ -241,6 +271,11 @@ const I18N = {
     dlCancel:     'Annuler',
     dlConfirm:    'Télécharger',
     dragDrop:     '📎 Déposez le fichier ici',
+    leaveBtn:     'Quitter',
+    leaveTitle:   'Quitter le salon?',
+    leaveDesc:    'Tout l'historique et les fichiers seront supprimés.',
+    leaveStay:    'Rester',
+    leaveConfirm: 'Quitter',
   },
   'de': {
     usersOnline:  n   => `${n} online`,
@@ -270,6 +305,11 @@ const I18N = {
     dlCancel:     'Abbrechen',
     dlConfirm:    'Herunterladen',
     dragDrop:     '📎 Datei hier ablegen',
+    leaveBtn:     'Verlassen',
+    leaveTitle:   'Raum verlassen?',
+    leaveDesc:    'Der gesamte Chatverlauf und alle Dateien gehen verloren.',
+    leaveStay:    'Bleiben',
+    leaveConfirm: 'Verlassen',
   },
   'ru': {
     usersOnline:  n   => `${n} онлайн`,
@@ -299,6 +339,11 @@ const I18N = {
     dlCancel:     'Отмена',
     dlConfirm:    'Скачать',
     dragDrop:     '📎 Перетащите файл сюда',
+    leaveBtn:     'Выйти',
+    leaveTitle:   'Покинуть комнату?',
+    leaveDesc:    'Весь чат и файлы будут удалены.',
+    leaveStay:    'Остаться',
+    leaveConfirm: 'Выйти',
   },
   'ar': {
     usersOnline:  n   => `${n} متصل`,
@@ -328,6 +373,11 @@ const I18N = {
     dlCancel:     'إلغاء',
     dlConfirm:    'تنزيل',
     dragDrop:     '📎 أسقط الملف هنا',
+    leaveBtn:     'خروج',
+    leaveTitle:   'هل تريد مغادرة الغرفة؟',
+    leaveDesc:    'سيتم حذف جميع سجلات الدردشة والملفات.',
+    leaveStay:    'البقاء',
+    leaveConfirm: 'خروج',
   },
   'pt': {
     usersOnline:  n   => `${n} online`,
@@ -357,6 +407,11 @@ const I18N = {
     dlCancel:     'Cancelar',
     dlConfirm:    'Baixar',
     dragDrop:     '📎 Solte o arquivo aqui',
+    leaveBtn:     'Sair',
+    leaveTitle:   'Sair da sala?',
+    leaveDesc:    'Todo o histórico de chat e os arquivos serão perdidos.',
+    leaveStay:    'Ficar',
+    leaveConfirm: 'Sair',
   },
   'it': {
     usersOnline:  n   => `${n} online`,
@@ -386,6 +441,11 @@ const I18N = {
     dlCancel:     'Annulla',
     dlConfirm:    'Scarica',
     dragDrop:     '📎 Trascina il file qui',
+    leaveBtn:     'Esci',
+    leaveTitle:   'Uscire dalla stanza?',
+    leaveDesc:    'Tutta la cronologia e i file verranno eliminati.',
+    leaveStay:    'Rimani',
+    leaveConfirm: 'Esci',
   },
   'id': {
     usersOnline:  n   => `${n} online`,
@@ -415,6 +475,11 @@ const I18N = {
     dlCancel:     'Batal',
     dlConfirm:    'Unduh',
     dragDrop:     '📎 Jatuhkan file di sini',
+    leaveBtn:     'Keluar',
+    leaveTitle:   'Keluar dari ruangan?',
+    leaveDesc:    'Semua riwayat chat dan file akan hilang.',
+    leaveStay:    'Tetap',
+    leaveConfirm: 'Keluar',
   },
   'tr': {
     usersOnline:  n   => `${n} çevrimiçi`,
@@ -444,6 +509,11 @@ const I18N = {
     dlCancel:     'İptal',
     dlConfirm:    'İndir',
     dragDrop:     '📎 Dosyayı buraya bırakın',
+    leaveBtn:     'Çık',
+    leaveTitle:   'Odadan çıkılsın mı?',
+    leaveDesc:    'Tüm sohbet geçmişi ve dosyalar silinecek.',
+    leaveStay:    'Kal',
+    leaveConfirm: 'Çık',
   },
   'pl': {
     usersOnline:  n   => `${n} online`,
@@ -473,6 +543,11 @@ const I18N = {
     dlCancel:     'Anuluj',
     dlConfirm:    'Pobierz',
     dragDrop:     '📎 Upuść plik tutaj',
+    leaveBtn:     'Wyjdź',
+    leaveTitle:   'Opuścić pokój?',
+    leaveDesc:    'Cała historia czatu i pliki zostaną utracone.',
+    leaveStay:    'Zostań',
+    leaveConfirm: 'Wyjdź',
   },
   'nl': {
     usersOnline:  n   => `${n} online`,
@@ -502,6 +577,11 @@ const I18N = {
     dlCancel:     'Annuleren',
     dlConfirm:    'Downloaden',
     dragDrop:     '📎 Bestand hier neerzetten',
+    leaveBtn:     'Verlaten',
+    leaveTitle:   'Kamer verlaten?',
+    leaveDesc:    'Alle chatgeschiedenis en bestanden gaan verloren.',
+    leaveStay:    'Blijven',
+    leaveConfirm: 'Verlaten',
   },
   'sv': {
     usersOnline:  n   => `${n} online`,
@@ -531,6 +611,11 @@ const I18N = {
     dlCancel:     'Avbryt',
     dlConfirm:    'Ladda ner',
     dragDrop:     '📎 Släpp filen här',
+    leaveBtn:     'Lämna',
+    leaveTitle:   'Lämna rummet?',
+    leaveDesc:    'All chatthistorik och filer kommer att raderas.',
+    leaveStay:    'Stanna',
+    leaveConfirm: 'Lämna',
   },
   'uk': {
     usersOnline:  n   => `${n} онлайн`,
@@ -560,6 +645,11 @@ const I18N = {
     dlCancel:     'Скасувати',
     dlConfirm:    'Завантажити',
     dragDrop:     '📎 Перетягніть файл сюди',
+    leaveBtn:     'Вийти',
+    leaveTitle:   'Вийти з кімнати?',
+    leaveDesc:    'Весь чат і файли будуть видалені.',
+    leaveStay:    'Залишитись',
+    leaveConfirm: 'Вийти',
   },
 };
 
@@ -1369,3 +1459,117 @@ function escHtml(str) {
     .replace(/"/g,  '&quot;')
     .replace(/'/g,  '&#39;');
 }
+
+// =====================================================
+// 채팅 이력 수신 (room-history)
+// =====================================================
+// 서버가 재연결·신규 입장 시 기존 메시지를 일괄 전달
+// 이미 화면에 있는 메시지와 중복 방지를 위해 수신 전 DOM을 초기화
+socket.on('room-history', (messages) => {
+  if (!Array.isArray(messages) || messages.length === 0) return;
+
+  // 이미 렌더링된 메시지가 없을 때만 이력 삽입 (신규 입장)
+  // 재연결 시에는 화면이 비어 있으므로 항상 삽입
+  if (messagesEl.children.length > 0) return;
+
+  // 그룹핑 상태 초기화 — 이력 최초 렌더링
+  lastMsgSender = null;
+  lastMsgMinute = null;
+
+  messages.forEach(msg => {
+    if (msg.type === 'message') {
+      appendMessage({
+        sender:    msg.nickname,
+        text:      msg.text,
+        timestamp: msg.timestamp,
+        isMine:    msg.nickname === nickname,
+      });
+    } else if (msg.type === 'file') {
+      appendFile({
+        sender:    msg.nickname,
+        filename:  msg.filename,
+        mimeType:  msg.mimeType,
+        dataUrl:   msg.dataUrl,
+        timestamp: msg.timestamp,
+        isMine:    msg.nickname === nickname,
+      });
+    }
+  });
+});
+
+// =====================================================
+// 백그라운드 탭 복귀 감지 (Page Visibility API)
+// =====================================================
+// 모바일에서 앱을 백그라운드로 보내면 소켓이 끊길 수 있음
+// visibilitychange 이벤트로 포그라운드 복귀 시 재연결 시도
+// Node.js 서버 측 pending_leaves의 15초 유예와 연동하여
+// 15초 내 복귀하면 퇴장 처리 취소됨
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && !socket.connected) {
+    socket.connect();
+  }
+});
+
+// =====================================================
+// 퇴장 확인 모달
+// =====================================================
+// 나가기 버튼 클릭 또는 뒤로가기 시 경고 모달 표시
+// 모든 채팅 내역·파일이 삭제됨을 사용자에게 공지
+
+let _leavingConfirmed = false; // 사용자가 직접 "나가기" 확인 시 true → 재확인 없이 이동
+
+const leaveModal         = document.getElementById('leave-modal');
+const leaveTitleEl       = document.getElementById('leave-modal-title');
+const leaveDescEl        = document.getElementById('leave-modal-desc');
+const leaveStayBtn       = document.getElementById('leave-modal-stay');
+const leaveConfirmBtn    = document.getElementById('leave-modal-confirm');
+const btnLeave           = document.getElementById('btn-leave');
+
+// 퇴장 모달 열기
+function openLeaveModal() {
+  const lang  = langSelect.value || 'en';
+  leaveTitleEl.textContent    = t(lang, 'leaveTitle');
+  leaveDescEl.textContent     = t(lang, 'leaveDesc');
+  leaveStayBtn.textContent    = t(lang, 'leaveStay');
+  leaveConfirmBtn.textContent = t(lang, 'leaveConfirm');
+  leaveModal.style.display    = 'flex';
+  lockScroll();
+}
+
+function closeLeaveModal() {
+  leaveModal.style.display = 'none';
+  unlockScroll();
+}
+
+// 헤더 "나가기" 버튼
+if (btnLeave) {
+  btnLeave.addEventListener('click', openLeaveModal);
+}
+
+// 확인 → 실제 퇴장
+leaveConfirmBtn.addEventListener('click', () => {
+  _leavingConfirmed = true;
+  socket.disconnect();
+  location.href = '/';
+});
+
+// 취소
+leaveStayBtn.addEventListener('click', closeLeaveModal);
+leaveModal.addEventListener('click', (e) => { if (e.target === leaveModal) closeLeaveModal(); });
+
+// applyI18n에서 나가기 버튼 텍스트도 갱신
+// (applyI18n 함수 내부 수정 대신 langSelect change 이벤트에서 추가 처리)
+langSelect.addEventListener('change', () => {
+  if (btnLeave) {
+    const lang = langSelect.value || 'en';
+    btnLeave.title = t(lang, 'leaveBtn');
+  }
+}, { passive: true });
+
+// 브라우저 기본 종료/이탈 경고 (탭 닫기·새로고침·URL 이동 등)
+// 사용자가 퇴장 확인 버튼을 눌러 이동하는 경우에는 표시하지 않음
+window.addEventListener('beforeunload', (e) => {
+  if (_leavingConfirmed) return;
+  e.preventDefault();
+  e.returnValue = ''; // Chrome 계열은 returnValue 설정 필요
+});

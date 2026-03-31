@@ -54,6 +54,7 @@ def create_room():
         'secret':     is_secret,  # 비밀방 여부 — True면 호스트 승인 후 입장 가능
         'host_sid':   None,       # 방장(호스트) 소켓 ID — join-room 시 첫 번째 또는 isHost=True인 사람
         'wait_list':  [],         # 승인 대기 중인 사용자 목록 [{id: sid, nickname: str}]
+        'messages':   [],         # 채팅·파일 이력 (최대 MAX_HISTORY개) — 재연결 시 클라이언트에 재전송
     }
 
     return jsonify({'code': code, 'secret': is_secret})

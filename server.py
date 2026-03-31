@@ -71,13 +71,29 @@ DEEPL_LANG_MAP = {
     'uk':    'UK',
 }
 
+# 채팅/파일 이력 최대 저장 수 — 서버 메모리 보호용 상한
+MAX_HISTORY = 100
+
+# 재연결 유예 저장소: (nickname, room_code) → (old_sid, greenlet)
+# 백그라운드 탭·모바일 등으로 잠깐 끊겼다가 돌아오면 퇴장 처리를 취소함
+# Node.js에서는 Map + setTimeout/clearTimeout으로 동일하게 구현
+pending_leaves: dict = {}
+
 app = Flask(__name__, static_folder='public', static_url_path='')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'talkbridge-secret')
 
 # max_http_buffer_size: 소켓 메시지 최대 크기를 10MB로 설정
 # 기본값은 1MB — Base64 파일 전송 시 이 한도를 초과할 수 있으므로 확장 필요
 # Node.js socket.io에서는 new Server(httpServer, { maxHttpBufferSize: 10e6 }) 와 동일
-socketio = SocketIO(app, async_mode='eventlet', cors_allowed_origins='*', max_http_buffer_size=10_000_000)
+# ping_timeout/ping_interval: 백그라운드 탭에서 잠깐 연결이 끊겨도 즉시 퇴장 처리 방지
+socketio = SocketIO(
+    app,
+    async_mode='eventlet',
+    cors_allowed_origins='*',
+    max_http_buffer_size=10_000_000,
+    ping_timeout=60,      # 클라이언트 응답 대기 시간(초) — 기본 20초보다 길게 설정
+    ping_interval=25,     # 핑 전송 간격(초)
+)
 
 app.register_blueprint(room_blueprint, url_prefix='/api/room')
 
@@ -157,6 +173,43 @@ def on_connect():
     }
 
 
+def _do_leave(nickname, code, sid):
+    """실제 퇴장 처리 — disconnect 후 유예 기간(15초) 경과 시 실행됨.
+    재연결(on_join_room)에서 pending_leaves를 취소하면 이 함수는 호출되지 않음.
+    Node.js에서는 clearTimeout + setTimeout 콜백으로 동일하게 구현.
+    """
+    pending_leaves.pop((nickname, code), None)
+
+    if code not in rooms:
+        return
+
+    room = rooms[code]
+
+    # 대기열·참여자 목록에서 해당 sid 제거
+    room['wait_list'] = [w for w in room['wait_list'] if w['id'] != sid]
+    room['users']     = [u for u in room['users']     if u['id'] != sid]
+
+    # BUG-04: 방에 아무도 없으면 방 전체(이력 포함) 삭제
+    if not room['users']:
+        del rooms[code]
+        return
+
+    # BUG-01: 호스트 이탈 시 첫 번째 남은 참여자를 새 호스트로 승격
+    if room['host_sid'] == sid:
+        new_host = room['users'][0]
+        room['host_sid'] = new_host['id']
+        if new_host['id'] in socket_sessions:
+            socket_sessions[new_host['id']]['is_host'] = True
+
+    # 퇴장 이벤트 및 최신 참여자 목록 브로드캐스트
+    socketio.emit('user-left', {'nickname': nickname}, to=code)
+    users_list = [u['nickname'] for u in room['users']]
+    socketio.emit('room-users', {
+        'count': len(room['users']),
+        'users': users_list,
+    }, to=code)
+
+
 @socketio.on('join-room')
 def on_join_room(data):
     code     = data.get('code', '').upper()
@@ -168,6 +221,37 @@ def on_join_room(data):
         return
 
     room = rooms[code]
+
+    # ── 재연결 유예 취소 ──
+    # 백그라운드 탭 복귀 등으로 같은 닉네임+방코드로 재접속하면
+    # 퇴장 처리 예약을 취소하고 기존 users 목록의 old_sid를 새 sid로 교체
+    leave_key = (nickname, code)
+    if leave_key in pending_leaves:
+        old_sid, gt = pending_leaves.pop(leave_key)
+        gt.cancel()
+        # users 목록에서 이전 sid를 새 sid로 교체 (퇴장하지 않은 것으로 처리)
+        for u in room['users']:
+            if u['id'] == old_sid:
+                u['id'] = request.sid
+                break
+        # host_sid도 교체
+        if room['host_sid'] == old_sid:
+            room['host_sid'] = request.sid
+        # 세션 복원
+        join_room(code)
+        socket_sessions[request.sid]['room_code'] = code
+        socket_sessions[request.sid]['nickname']  = nickname
+        socket_sessions[request.sid]['is_host']   = (room['host_sid'] == request.sid)
+        # 채팅 이력 재전송 (재연결 후 빠진 메시지 복구)
+        if room.get('messages'):
+            emit('room-history', room['messages'])
+        # 참여자 수 갱신
+        users_list = [u['nickname'] for u in room['users']]
+        emit('room-users', {
+            'count': len(room['users']),
+            'users': users_list,
+        }, to=code)
+        return
 
     # 재연결(reconnect) 시 중복 추가 방지 — users와 wait_list 모두 확인
     # BUG-03: wait_list 포함하지 않으면 대기 중 재연결 시 중복 요청 발생
@@ -217,6 +301,11 @@ def on_join_room(data):
         'count': len(room['users']),
         'users': users_list,
     }, to=code)
+
+    # 채팅 이력 전송: 기존 메시지가 있으면 입장하는 사용자에게 전달
+    # 재연결·신규 입장 모두 동일하게 처리
+    if room.get('messages'):
+        emit('room-history', room['messages'])
 
 
 @socketio.on('approve-join')
@@ -268,6 +357,10 @@ def on_approve_join(data):
         'users': users_list,
     }, to=code)
 
+    # 승인된 사용자에게 채팅 이력 전송
+    if room.get('messages'):
+        emit('room-history', room['messages'], to=target_sid)
+
 
 @socketio.on('deny-join')
 def on_deny_join(data):
@@ -313,6 +406,18 @@ def on_send_message(data):
         'text':      text,
         'timestamp': timestamp,
     }, to=code)
+
+    # 채팅 이력 저장 — 방이 살아있는 동안 재연결 시 제공
+    room = rooms[code]
+    room['messages'].append({
+        'type':      'message',
+        'nickname':  nickname,
+        'text':      text,
+        'timestamp': timestamp,
+    })
+    # MAX_HISTORY 초과 시 가장 오래된 항목 제거 (FIFO)
+    if len(room['messages']) > MAX_HISTORY:
+        room['messages'].pop(0)
 
 
 @socketio.on('typing-start')
@@ -365,6 +470,19 @@ def on_send_file(data):
         'timestamp': timestamp,
     }, to=code)
 
+    # 파일 이력 저장 — 재연결 시 이전 파일도 복구 가능
+    room = rooms[code]
+    room['messages'].append({
+        'type':      'file',
+        'nickname':  nickname,
+        'filename':  filename,
+        'mimeType':  mime_type,
+        'dataUrl':   data_url,
+        'timestamp': timestamp,
+    })
+    if len(room['messages']) > MAX_HISTORY:
+        room['messages'].pop(0)
+
 
 @socketio.on('disconnect')
 def on_disconnect():
@@ -380,33 +498,19 @@ def on_disconnect():
 
     room = rooms[code]
 
-    # 대기열에서 제거 (승인 대기 중에 끊긴 경우)
+    # 대기열에서 즉시 제거 (승인 대기 중에 끊긴 경우 — 유예 없이 처리)
     room['wait_list'] = [w for w in room['wait_list'] if w['id'] != request.sid]
 
-    # 참여자 목록에서 제거
-    room['users'] = [u for u in room['users'] if u['id'] != request.sid]
+    # 이미 유예 중인 경우 이전 타이머 취소 후 새로 시작
+    leave_key = (nickname, code)
+    if leave_key in pending_leaves:
+        _, old_gt = pending_leaves[leave_key]
+        old_gt.cancel()
 
-    # BUG-04: 방에 아무도 없으면 방 자체를 메모리에서 삭제
-    if not room['users']:
-        del rooms[code]
-        return
-
-    # BUG-01: 퇴장한 사람이 호스트이면 남은 참여자 중 첫 번째를 새 호스트로 승격
-    # host_sid가 없으면 비밀방 입장 요청이 영원히 처리되지 않는 문제 방지
-    if room['host_sid'] == request.sid:
-        new_host = room['users'][0]
-        room['host_sid'] = new_host['id']
-        if new_host['id'] in socket_sessions:
-            socket_sessions[new_host['id']]['is_host'] = True
-
-    emit('user-left', {'nickname': nickname}, to=code, skip_sid=request.sid)
-
-    # 최신 참여자 수 + 목록 브로드캐스트
-    users_list = [u['nickname'] for u in room['users']]
-    emit('room-users', {
-        'count': len(room['users']),
-        'users': users_list,
-    }, to=code)
+    # 15초 유예 후 퇴장 처리 — 백그라운드 복귀 시 on_join_room에서 취소됨
+    # Node.js: const timer = setTimeout(() => doLeave(...), 15000); leaveTimers.set(key, timer)
+    gt = eventlet.spawn_after(15, _do_leave, nickname, code, request.sid)
+    pending_leaves[leave_key] = (request.sid, gt)
 
 
 if __name__ == '__main__':
