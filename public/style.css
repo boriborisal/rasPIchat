@@ -509,7 +509,9 @@ input[type="text"]:focus {
 .chat-input-wrap {
   display: flex;
   gap: 10px;
-  padding: 12px 16px;
+  /* env(safe-area-inset-bottom): iPhone 홈 인디케이터 영역만큼 패딩 추가 */
+  /* viewport-fit=cover 설정 시 iOS Safari가 이 값을 제공 */
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
   background: var(--surface);
   border-top: 1px solid var(--border);
   flex-shrink: 0;

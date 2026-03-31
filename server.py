@@ -97,6 +97,16 @@ socketio = SocketIO(
 
 app.register_blueprint(room_blueprint, url_prefix='/api/room')
 
+# JS/CSS 정적 파일에 no-cache 헤더 추가
+# 브라우저가 이전 버전의 i18n.js 등을 캐싱하는 문제 방지
+# Node.js에서는 express.static의 etag/maxAge 옵션으로 동일하게 설정
+@app.after_request
+def add_no_cache_for_static(response):
+    if request.path.endswith(('.js', '.css')):
+        response.cache_control.no_cache = True
+        response.cache_control.must_revalidate = True
+    return response
+
 # 소켓 세션 저장소: sid → {room_code, nickname, is_host}
 # Node.js에서는 Map 또는 객체로 동일하게 관리
 socket_sessions: dict = {}

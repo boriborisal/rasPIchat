@@ -598,27 +598,31 @@ function applyPageI18n(lang) {
   });
 }
 
+// 기기 언어를 감지해 지원 목록 중 가장 가까운 언어 코드 반환
+// (예: 'ko-KR' → 'ko', 'zh-CN' → 'zh-CN', 'fr-FR' → 'fr')
+function _detectDeviceLang() {
+  const supported = Object.keys(PAGE_I18N);
+  const raw = (navigator.languages && navigator.languages[0]) || navigator.language || '';
+  if (supported.includes(raw)) return raw;
+  const base = raw.split('-')[0].toLowerCase();
+  return supported.find(k => k === base) || 'en';
+}
+
 // 현재 저장된 언어로 즉시 적용 (페이지 로드 시 호출)
-// QR 코드로 첫 입장하는 사용자처럼 localStorage에 언어가 없는 경우:
-//   navigator.languages[0]로 기기 기본 언어를 감지해 적용
+// 규칙:
+//   1) localStorage에 언어 없음 → 기기 언어 자동 감지 후 저장
+//   2) localStorage에 'en'이 있지만 기기 언어가 다름 → 기기 언어 우선 적용
+//      (과거 기본값 'en'이 잘못 저장된 경우 교정)
+//   3) localStorage에 기기와 다른 언어가 있음 → 사용자가 명시적으로 선택한 것으로 존중
 // Node.js에서는 Accept-Language 헤더 파싱으로 동일하게 구현
 function applyStoredLang() {
-  let lang = localStorage.getItem('translateLang') || '';
+  const stored  = localStorage.getItem('translateLang') || '';
+  const device  = _detectDeviceLang();
+  let   lang    = stored;
 
-  if (!lang) {
-    // 기기 언어 자동 감지 (예: 'ko-KR' → 'ko', 'zh-CN' → 'zh-CN')
-    const raw = (navigator.languages && navigator.languages[0]) || navigator.language || '';
-    // 지원 언어 목록 (PAGE_I18N 키)
-    const supported = Object.keys(PAGE_I18N);
-    // 정확한 매칭 시도 (예: 'zh-CN')
-    if (supported.includes(raw)) {
-      lang = raw;
-    } else {
-      // 기본 언어 코드만 추출 (예: 'ko-KR' → 'ko')
-      const base = raw.split('-')[0].toLowerCase();
-      lang = supported.find(k => k === base) || 'en';
-    }
-    // 감지된 언어를 저장해두어 다음 페이지에서도 유지
+  if (!stored || stored === 'en' && device !== 'en') {
+    // 저장 안 됐거나, 기본값 'en'인데 기기 언어가 영어가 아닌 경우 → 기기 언어 사용
+    lang = device;
     localStorage.setItem('translateLang', lang);
   }
 
