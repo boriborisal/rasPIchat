@@ -1752,11 +1752,17 @@ if (btnLeave) {
 leaveConfirmBtn.addEventListener('click', () => {
   _leavingConfirmed = true;
   sessionStorage.removeItem('isHost');
-  // 명시적 퇴장: 서버에 leave-room 이벤트 전송 → 30분 유예 없이 즉시 퇴장 처리
-  // disconnect만 사용하면 30분 동안 참여자 목록에 남아있는 문제(호스트 포함) 발생
-  socket.emit('leave-room');
-  socket.disconnect();
-  location.href = '/';
+
+  // ack 패턴: 서버가 leave-room 처리를 완료한 후(ack 수신) 페이지 이동
+  // socket.emit → socket.disconnect() → location.href 순서로 호출하면
+  // disconnect/navigation이 leave-room 패킷 전송 전에 연결을 끊어 서버 미처리됨
+  let navigated = false;
+  function goHome() {
+    if (!navigated) { navigated = true; location.href = '/'; }
+  }
+
+  socket.emit('leave-room', goHome);      // ack 수신 시 이동
+  setTimeout(goHome, 500);                // 네트워크 오류 등으로 ack 미수신 시 500ms 폴백
 });
 
 // 취소

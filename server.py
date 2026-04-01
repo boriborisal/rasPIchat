@@ -683,6 +683,10 @@ def on_leave_room():
         gt.cancel()
     # 유예 없이 즉시 퇴장
     _do_leave(nickname, code, request.sid)
+    # True 반환 → Flask-SocketIO가 클라이언트에 ack 전송
+    # 클라이언트는 ack를 받은 후 location.href = '/'로 이동하므로
+    # leave-room 패킷이 처리되기 전에 연결이 끊기는 race condition 방지
+    return True
 
 
 @socketio.on('disconnect')
