@@ -2,7 +2,29 @@ import eventlet
 eventlet.monkey_patch()
 
 import os
+import logging
+from logging.handlers import RotatingFileHandler
 from datetime import datetime
+
+# ── 로깅 설정 ──
+# 로그 파일: logs/server.log (최대 5MB × 3개 롤오버)
+_LOG_DIR = os.path.join(os.path.dirname(__file__), 'logs')
+os.makedirs(_LOG_DIR, exist_ok=True)
+
+logger = logging.getLogger('talkbridge')
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    _fh = RotatingFileHandler(
+        os.path.join(_LOG_DIR, 'server.log'),
+        maxBytes=5 * 1024 * 1024,
+        backupCount=3,
+        encoding='utf-8',
+    )
+    _fh.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
+    logger.addHandler(_fh)
+    _ch = logging.StreamHandler()
+    _ch.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
+    logger.addHandler(_ch)
 
 import requests
 from flask import Flask, request, jsonify, send_from_directory
@@ -82,15 +104,15 @@ pending_leaves: dict = {}
 app = Flask(__name__, static_folder='public', static_url_path='')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'talkbridge-secret')
 
-# max_http_buffer_size: 소켓 메시지 최대 크기를 10MB로 설정
-# 기본값은 1MB — Base64 파일 전송 시 이 한도를 초과할 수 있으므로 확장 필요
-# Node.js socket.io에서는 new Server(httpServer, { maxHttpBufferSize: 10e6 }) 와 동일
+# max_http_buffer_size: 소켓 메시지 최대 크기를 25MB로 설정
+# 카메라 촬영 이미지(최대 20MB) Base64 인코딩 시 약 27MB → 넉넉하게 25MB 허용
+# Node.js socket.io에서는 new Server(httpServer, { maxHttpBufferSize: 25e6 }) 와 동일
 # ping_timeout/ping_interval: 백그라운드 탭에서 잠깐 연결이 끊겨도 즉시 퇴장 처리 방지
 socketio = SocketIO(
     app,
     async_mode='eventlet',
     cors_allowed_origins='*',
-    max_http_buffer_size=10_000_000,
+    max_http_buffer_size=25_000_000,
     ping_timeout=60,      # 클라이언트 응답 대기 시간(초) — 기본 20초보다 길게 설정
     ping_interval=25,     # 핑 전송 간격(초)
 )
@@ -168,7 +190,9 @@ def translate():
 
         data = resp.json()
         translated = data['translations'][0]['text']
-        return jsonify({'translatedText': translated})
+        # detected_source_language: 클라이언트가 같은 언어 번역을 생략하는 데 사용
+        source_lang = data['translations'][0].get('detected_source_language', '').lower()
+        return jsonify({'translatedText': translated, 'sourceLang': source_lang})
 
     except Exception:
         return jsonify({'error': '번역 요청 실패'}), 502
@@ -190,12 +214,14 @@ def get_socket_ip() -> str:
 @socketio.on('connect')
 def on_connect():
     # 새 소켓 연결 시 세션 초기화 — IP는 연결 시점에 확정되므로 여기서 저장
+    ip = get_socket_ip()
     socket_sessions[request.sid] = {
         'room_code': None,
         'nickname':  None,
         'is_host':   False,
-        'ip':        get_socket_ip(),
+        'ip':        ip,
     }
+    logger.info(f'[CONNECT] sid={request.sid} ip={ip}')
 
 
 def _build_room_users_payload(room):
@@ -370,9 +396,8 @@ def on_join_room(data):
             room['host_sid'] = request.sid
 
         # ── 비밀방 처리 ──
-        # 호스트가 아직 없어도 게스트는 wait_list에 추가 (호스트 입장 전이면 대기)
-        # BUG: 이전 코드는 host_sid is None이면 게스트가 호스트로 승격되어 비밀방 체크 우회
-        if room['secret'] and not is_host:
+        # 이미 한 번 승인된 닉네임은 재입장 시 대기열 없이 바로 통과
+        if room['secret'] and not is_host and nickname not in room.get('approved', set()):
             if not already_waiting:
                 room['wait_list'].append({'id': request.sid, 'nickname': nickname})
             # 세션에 방 코드·닉네임 저장 (disconnect 시 정리를 위해 필요)
@@ -380,13 +405,10 @@ def on_join_room(data):
             socket_sessions[request.sid]['nickname']  = nickname
 
             # BUG-H1: already_waiting이면 호스트에게 재전송 안 함 (중복 모달 방지)
-            # 신규 요청일 때만 호스트에게 room-join-request 전송
             if not already_waiting and room['host_sid']:
-                emit('room-join-request', {
-                    'nickname': nickname,
-                }, to=room['host_sid'])
+                emit('room-join-request', {'nickname': nickname}, to=room['host_sid'])
+                logger.info(f'[JOIN_REQ] {nickname} → room {code}')
 
-            # 요청자 본인에게 대기 중 상태 알림
             emit('join-pending', {})
             return  # 아직 방에 join_room 하지 않음
 
@@ -398,10 +420,10 @@ def on_join_room(data):
     socket_sessions[request.sid]['is_host']   = is_host or (room['host_sid'] == request.sid)
 
     if not already_in:
-        # IP를 함께 저장 — 닉네임 충돌 시 같은 기기 재연결인지 판별에 사용
         ip = socket_sessions[request.sid].get('ip', 'unknown')
         room['users'].append({'id': request.sid, 'nickname': nickname, 'ip': ip})
         emit('user-joined', {'nickname': nickname}, to=code, skip_sid=request.sid)
+        logger.info(f'[JOIN] {nickname} → room {code} (host={is_host})')
 
     # 참여자 수 + 닉네임 목록 + hostNickname 전송 (BUG-C3/H4)
     emit('room-users', _build_room_users_payload(room), to=code)
@@ -458,11 +480,14 @@ def on_approve_join(data):
     ip = socket_sessions.get(target_sid, {}).get('ip', 'unknown')
     room['users'].append({'id': target_sid, 'nickname': approved_nickname, 'ip': ip})
 
+    # 재입장 시 재승인 없이 바로 입장 — 승인된 닉네임 기록
+    room.setdefault('approved', set()).add(approved_nickname)
+    logger.info(f'[APPROVE] {approved_nickname} ← room {code}')
+
     # 세션 업데이트
     if target_sid in socket_sessions:
         socket_sessions[target_sid]['is_host'] = False
 
-    # 승인된 사용자 본인에게 알림 → 클라이언트가 페이지 진입 완료 처리
     emit('join-approved', {}, to=target_sid)
 
     # 방 전체에 입장 알림 (승인된 사람 제외)
@@ -496,11 +521,11 @@ def on_deny_join(data):
     if not waiting:
         return
 
-    target_sid = waiting['id']  # 현재 실제 SID 사용
+    target_sid = waiting['id']
     room['wait_list'] = [w for w in room['wait_list'] if w['nickname'] != target_nick]
 
-    # 거절된 사용자에게 알림 → 클라이언트가 거절 화면 표시
     emit('join-denied', {}, to=target_sid)
+    logger.info(f'[DENY] {target_nick} ✗ room {code}')
 
 
 @socketio.on('kick-user')
@@ -544,8 +569,8 @@ def on_kick_user(data):
 
     # 강퇴된 사용자에게 알림 → 클라이언트가 홈으로 이동
     emit('kicked', {}, to=target_sid)
+    logger.info(f'[KICK] {target_nick} kicked from room {code}')
 
-    # 소켓 방에서 퇴장
     socketio.server.leave_room(target_sid, code, namespace='/')
 
     # 방 전체에 퇴장 알림 및 최신 참여자 목록 브로드캐스트 (hostNickname 포함 — BUG-H4)
@@ -590,6 +615,8 @@ def on_send_message(data):
     # MAX_HISTORY 초과 시 가장 오래된 항목 제거 (FIFO)
     if len(room['messages']) > MAX_HISTORY:
         room['messages'].pop(0)
+    preview = text[:60] + ('…' if len(text) > 60 else '')
+    logger.info(f'[MSG] {nickname} in {code}: {preview}')
 
 
 @socketio.on('typing-start')
@@ -632,10 +659,10 @@ def on_send_file(data):
     data_url  = data.get('dataUrl', '')
     timestamp = datetime.now().strftime('%H:%M')
 
-    # BUG-3-S2: 서버 측 파일 크기 검증 — 클라이언트 우회 방지
-    # 5MB 바이너리 → base64 인코딩 시 약 6.67MB, 7MB를 상한으로 설정
-    # max_http_buffer_size(10MB) 이내이지만 서버에서 추가 방어
-    if len(data_url) > 7 * 1024 * 1024:
+    # 서버 측 파일 크기 검증 — 클라이언트 우회 방지
+    # 20MB 바이너리 → base64 인코딩 시 약 27MB, 28MB를 상한으로 설정
+    if len(data_url) > 28 * 1024 * 1024:
+        logger.warning(f'[FILE_BLOCKED] {nickname} in {code}: {filename} too large')
         return
 
     # 같은 방의 모든 클라이언트에게 파일 데이터 브로드캐스트
@@ -662,6 +689,25 @@ def on_send_file(data):
     })
     if len(room['messages']) > MAX_HISTORY:
         room['messages'].pop(0)
+    logger.info(f'[FILE] {nickname} in {code}: {filename} ({mime_type})')
+
+
+@socketio.on('get-wait-list')
+def on_get_wait_list():
+    """호스트가 탭 복귀 시 서버에 현재 대기 목록을 재요청하는 이벤트.
+    백그라운드/카메라 사용 중 놓친 입장 승인 요청을 복구하기 위해 사용.
+    클라이언트가 visibilitychange 시 emit 하며, 서버는 현재 wait_list를
+    room-join-request 이벤트로 재전송함.
+    """
+    session = socket_sessions.get(request.sid, {})
+    code    = session.get('room_code')
+    if not code or code not in rooms:
+        return
+    room = rooms[code]
+    if room['host_sid'] != request.sid:
+        return
+    for waiting in room['wait_list']:
+        emit('room-join-request', {'nickname': waiting['nickname']})
 
 
 @socketio.on('leave-room')
@@ -681,7 +727,7 @@ def on_leave_room():
     if leave_key in pending_leaves:
         _, gt = pending_leaves.pop(leave_key)
         gt.cancel()
-    # 유예 없이 즉시 퇴장
+    logger.info(f'[LEAVE] {nickname} ← room {code} (explicit)')
     _do_leave(nickname, code, request.sid)
     # True 반환 → Flask-SocketIO가 클라이언트에 ack 전송
     # 클라이언트는 ack를 받은 후 location.href = '/'로 이동하므로
@@ -694,6 +740,7 @@ def on_disconnect():
     session  = socket_sessions.pop(request.sid, {})
     code     = session.get('room_code')
     nickname = session.get('nickname')
+    logger.info(f'[DISCONNECT] {nickname or "?"} sid={request.sid} room={code or "-"}')
 
     if not code or code not in rooms:
         # 대기열에만 있던 사용자가 끊긴 경우: 모든 방의 대기열에서 제거

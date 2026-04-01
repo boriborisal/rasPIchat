@@ -859,6 +859,84 @@ input[type="text"]:focus {
 }
 
 /* ================================================================
+ * 텍스트 오버레이 — 번역 구분 섹션
+ * 원문/번역을 hr로 구분하여 표시
+ * ================================================================ */
+.text-overlay-divider {
+  border: none;
+  border-top: 1px solid var(--input-border);
+  margin: 4px 0;
+}
+
+.text-overlay-translation {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  word-break: break-word;
+  white-space: pre-wrap;
+  color: var(--text-secondary);
+}
+
+/* ================================================================
+ * 채팅 링크 버튼 — 메시지 내 URL을 인라인 링크처럼 표시
+ * 클릭 시 경고 모달 → 새 탭 오픈 (noopener,noreferrer)
+ * ================================================================ */
+.chat-link {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: var(--primary);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+  font-family: inherit;
+  line-height: inherit;
+  word-break: break-all;
+  display: inline;
+  width: auto;
+}
+
+.chat-link:hover {
+  opacity: 0.75;
+}
+
+/* ================================================================
+ * 긴 메시지 번역 힌트 — 버블에 표시되는 안내 문구
+ * 실제 번역은 전체 보기 오버레이에서 확인 가능
+ * ================================================================ */
+.trans-hint {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin-top: 2px;
+}
+
+/* ================================================================
+ * 파일 업로드 로딩 — 업로드 중 버튼 비활성화 표시
+ * ================================================================ */
+.uploading-indicator {
+  display: inline-block;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ================================================================
+ * 링크 경고 모달 내부 박스
+ * ================================================================ */
+#link-warn-inner {
+  background: var(--modal-bg);
+  color: var(--modal-text);
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 360px;
+  width: 100%;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+}
+
+/* ================================================================
  * 비밀방 — 호스트 입장 승인 요청 모달
  * 새 사람이 입장 요청할 때 호스트에게 표시
  * ================================================================ */

@@ -64,10 +64,16 @@
   <!-- ================================================================
        긴 메시지 전체보기 오버레이
        300자 이상 메시지의 "전체 보기" 버튼 클릭 시 표시
+       원문 + 번역(있을 경우)이 구분선으로 나뉘어 표시됨
        ================================================================ -->
   <div id="text-overlay">
     <div class="text-overlay-box">
-      <div id="text-overlay-content" class="text-overlay-content"></div>
+      <!-- 원문 텍스트 -->
+      <div id="text-overlay-original" class="text-overlay-content"></div>
+      <!-- 번역 구분선 (번역 있을 때만 표시) -->
+      <hr id="text-overlay-divider" class="text-overlay-divider" style="display:none;">
+      <!-- 번역 텍스트 (번역 있을 때만 표시) -->
+      <div id="text-overlay-translation" class="text-overlay-translation" style="display:none;"></div>
       <button class="text-overlay-close" id="btn-close-text-overlay">닫기</button>
     </div>
   </div>
@@ -182,6 +188,26 @@
          id="invite-code-label">방 번호</p>
       <div id="invite-code" style="font-size:1.6rem; font-weight:800; letter-spacing:4px;
            color:var(--accent,#4f46e5); font-family:monospace;"></div>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       링크 클릭 경고 모달 — 외부 링크 클릭 시 표시
+       확인 시 새 탭으로 열림 (noopener,noreferrer)
+       ================================================================ -->
+  <div id="link-warn-modal" style="display:none; position:fixed; inset:0; background:var(--overlay-bg);
+       z-index:3000; align-items:center; justify-content:center; padding:24px;">
+    <div id="link-warn-inner">
+      <div style="font-size:2rem; text-align:center; margin-bottom:8px;">🔗</div>
+      <h3 id="link-warn-title" style="font-size:1rem; font-weight:700; margin-bottom:8px; text-align:center;"></h3>
+      <p id="link-warn-url" style="font-size:0.78rem; color:var(--text-secondary,#888); text-align:center;
+         word-break:break-all; margin-bottom:8px; background:var(--input-bg,#f3f3f3);
+         border-radius:8px; padding:8px 10px;"></p>
+      <p id="link-warn-desc" style="font-size:0.84rem; color:var(--text-secondary,#888); text-align:center; margin-bottom:16px;"></p>
+      <div class="dl-btn-wrap">
+        <button id="link-warn-cancel" class="dl-btn-cancel"></button>
+        <button id="link-warn-confirm" class="dl-btn-confirm"></button>
+      </div>
     </div>
   </div>
 

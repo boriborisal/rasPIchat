@@ -68,6 +68,7 @@ def create_room():
         'wait_list':  [],         # 승인 대기 중인 사용자 목록 [{id: sid, nickname: str}]
         'messages':   [],         # 채팅·파일 이력 (최대 MAX_HISTORY개) — 재연결 시 클라이언트에 재전송
         'banned':     set(),      # BUG-C2: 강퇴된 닉네임 블랙리스트 — 재입장 방지
+        'approved':   set(),      # 비밀방 승인 이력 — 재입장 시 대기열 없이 바로 통과
     }
 
     return jsonify({'code': code, 'secret': is_secret})

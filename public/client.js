@@ -59,7 +59,7 @@ const I18N = {
     msgTooLong:   'Message is too long (max 1,000 characters).',
     typing:       names => `${names.join(', ')} ${names.length === 1 ? 'is' : 'are'} typing...`,
     typingMany:   (first, n) => `${first} and ${n} others are typing...`,
-    fileTooLarge: mb => `File is too large (${mb} MB). Max 5 MB allowed.`,
+    fileTooLarge: mb => `File is too large (${mb} MB). Max 20 MB allowed.`,
     fileReadError:'Failed to read the file.',
     dlTitle:      'Download File',
     dlDesc:       (sender, filename) => `File from "${sender}"\nFile name: ${filename}\n\nOnly download files from people you trust.`,
@@ -78,6 +78,12 @@ const I18N = {
     kickConfirm:  'Kick',
     connLost:      '⚠ Connection lost. Trying to reconnect…',
     roomEnded:     'The room has ended. Redirecting home…',
+    transInOverlay:'Tap "Show full" to see translation',
+    uploading:     'Uploading…',
+    fileAttach:    'Attach file',
+    linkWarnTitle: 'Open external link?',
+    linkWarnDesc:  'This link will open in a new tab.',
+    linkWarnOpen:  'Open',
   },
   'ko': {
     usersOnline:  n   => `${n}명 참여 중`,
@@ -99,7 +105,7 @@ const I18N = {
     msgTooLong:   '메시지는 최대 1,000자까지 입력할 수 있습니다.',
     typing:       names => `${names.join(', ')}님이 입력 중이에요.`,
     typingMany:   (first, n) => `${first} 외 ${n}명이 입력 중이에요.`,
-    fileTooLarge: mb => `파일이 너무 큽니다 (${mb} MB). 최대 5 MB까지 전송 가능합니다.`,
+    fileTooLarge: mb => `파일이 너무 큽니다 (${mb} MB). 최대 20 MB까지 전송 가능합니다.`,
     fileReadError:'파일을 읽는 중 오류가 발생했습니다.',
     dlTitle:      '파일 다운로드',
     dlDesc:       (sender, filename) => `"${sender}"님이 보낸 파일입니다.\n파일명: ${filename}\n\n출처를 알 수 없는 파일은 악성 소프트웨어를 포함할 수 있습니다. 신뢰하는 경우에만 다운로드하세요.`,
@@ -118,6 +124,12 @@ const I18N = {
     kickConfirm:  '강퇴',
     connLost:      '⚠ 연결이 끊겼습니다. 재연결 중…',
     roomEnded:     '방이 종료되었습니다. 홈으로 이동합니다…',
+    transInOverlay:'전체 보기에서 번역을 확인할 수 있습니다',
+    uploading:     '업로드 중…',
+    fileAttach:    '파일 쳊부',
+    linkWarnTitle: '외부 링크를 열까요?',
+    linkWarnDesc:  '이 링크는 새 탭에서 열립니다.',
+    linkWarnOpen:  '열기',
   },
   'ja': {
     usersOnline:  n   => `${n}人参加中`,
@@ -139,7 +151,7 @@ const I18N = {
     msgTooLong:   'メッセージは最大1,000文字です。',
     typing:       names => `${names.join('、')}が入力中...`,
     typingMany:   (first, n) => `${first}ほか${n}人が入力中...`,
-    fileTooLarge: mb => `ファイルが大きすぎます（${mb} MB）。最大5 MBまでです。`,
+    fileTooLarge: mb => `ファイルが大きすぎます（${mb} MB）。最大20 MBまでです。`,
     fileReadError:'ファイルの読み取りに失敗しました。',
     dlTitle:      'ファイルのダウンロード',
     dlDesc:       (sender, filename) => `"${sender}"からのファイルです。\nファイル名: ${filename}\n\n信頼できる場合のみダウンロードしてください。`,
@@ -158,6 +170,12 @@ const I18N = {
     kickConfirm:  '追放',
     connLost:      '⚠ 接続が切れました。再接続中…',
     roomEnded:     'ルームが終了しました。ホームに移動します…',
+    transInOverlay:'「全文を見る」で翻訳を確認できます',
+    uploading:     'アップロード中…',
+    fileAttach:    'ファイルを添付',
+    linkWarnTitle: '外部リンクを開きますか？',
+    linkWarnDesc:  'このリンクは新しいタブで開かれます。',
+    linkWarnOpen:  '開く',
   },
   'zh-CN': {
     usersOnline:  n   => `${n}人在线`,
@@ -179,7 +197,7 @@ const I18N = {
     msgTooLong:   '消息最多1,000个字符。',
     typing:       names => `${names.join('、')}正在输入...`,
     typingMany:   (first, n) => `${first}等${n}人正在输入...`,
-    fileTooLarge: mb => `文件过大（${mb} MB），最大允许5 MB。`,
+    fileTooLarge: mb => `文件过大（${mb} MB），最大允许20 MB。`,
     fileReadError:'读取文件失败。',
     dlTitle:      '下载文件',
     dlDesc:       (sender, filename) => `来自"${sender}"的文件\n文件名: ${filename}\n\n请仅下载您信任的文件。`,
@@ -198,6 +216,12 @@ const I18N = {
     kickConfirm:  '踢出',
     connLost:      '⚠ 连接已断开。正在重新连接…',
     roomEnded:     '房间已结束。正在跳转主页…',
+    transInOverlay:'点击“查看全文”可查看翻译',
+    uploading:     '上传中…',
+    fileAttach:    '附加文件',
+    linkWarnTitle: '打开外部链接？',
+    linkWarnDesc:  '该链接将在新标签页中打开。',
+    linkWarnOpen:  '打开',
   },
   'zh-TW': {
     usersOnline:  n   => `${n}人在線`,
@@ -219,7 +243,7 @@ const I18N = {
     msgTooLong:   '訊息最多1,000個字元。',
     typing:       names => `${names.join('、')}正在輸入...`,
     typingMany:   (first, n) => `${first}等${n}人正在輸入...`,
-    fileTooLarge: mb => `檔案過大（${mb} MB），最大允許5 MB。`,
+    fileTooLarge: mb => `檔案過大（${mb} MB），最大允許20 MB。`,
     fileReadError:'讀取檔案失敗。',
     dlTitle:      '下載檔案',
     dlDesc:       (sender, filename) => `來自"${sender}"的檔案\n檔案名稱: ${filename}\n\n請僅下載您信任的檔案。`,
@@ -238,6 +262,12 @@ const I18N = {
     kickConfirm:  '踢出',
     connLost:      '⚠ 連線中斷。正在重新連線…',
     roomEnded:     '房間已結束。正在跳轉首頁…',
+    transInOverlay:'點擊「查看全文」可查看翻譯',
+    uploading:     '上傳中…',
+    fileAttach:    '附加檔案',
+    linkWarnTitle: '開啟外部連結？',
+    linkWarnDesc:  '此連結將在新分頁中開問。',
+    linkWarnOpen:  '開啟',
   },
   'es': {
     usersOnline:  n   => `${n} en línea`,
@@ -259,7 +289,7 @@ const I18N = {
     msgTooLong:   'El mensaje tiene máximo 1.000 caracteres.',
     typing:       names => `${names.join(', ')} ${names.length === 1 ? 'está' : 'están'} escribiendo...`,
     typingMany:   (first, n) => `${first} y ${n} más están escribiendo...`,
-    fileTooLarge: mb => `Archivo demasiado grande (${mb} MB). Máximo 5 MB.`,
+    fileTooLarge: mb => `Archivo demasiado grande (${mb} MB). Máximo 20 MB.`,
     fileReadError:'Error al leer el archivo.',
     dlTitle:      'Descargar archivo',
     dlDesc:       (sender, filename) => `Archivo de "${sender}"\nNombre: ${filename}\n\nDescarga solo archivos de personas de confianza.`,
@@ -278,6 +308,12 @@ const I18N = {
     kickConfirm:  'Expulsar',
     connLost:      '⚠ Conexión perdida. Intentando reconectar…',
     roomEnded:     'La sala ha terminado. Redirigiendo al inicio…',
+    transInOverlay:'"Ver completo" para ver la traducción',
+    uploading:     'Subiendo…',
+    fileAttach:    'Adjuntar archivo',
+    linkWarnTitle: '¿Abrir enlace externo?',
+    linkWarnDesc:  'Este enlace se abrirá en una nueva pestaña.',
+    linkWarnOpen:  'Abrir',
   },
   'fr': {
     usersOnline:  n   => `${n} en ligne`,
@@ -299,7 +335,7 @@ const I18N = {
     msgTooLong:   'Le message ne peut pas dépasser 1 000 caractères.',
     typing:       names => `${names.join(', ')} ${names.length === 1 ? 'est en train d\'écrire' : 'sont en train d\'écrire'}...`,
     typingMany:   (first, n) => `${first} et ${n} autres écrivent...`,
-    fileTooLarge: mb => `Fichier trop volumineux (${mb} Mo). Maximum 5 Mo.`,
+    fileTooLarge: mb => `Fichier trop volumineux (${mb} Mo). Maximum 20 Mo.`,
     fileReadError:'Impossible de lire le fichier.',
     dlTitle:      'Télécharger le fichier',
     dlDesc:       (sender, filename) => `Fichier de "${sender}"\nNom du fichier : ${filename}\n\nNe téléchargez que les fichiers de confiance.`,
@@ -318,6 +354,12 @@ const I18N = {
     kickConfirm:  'Exclure',
     connLost:      '⚠ Connexion perdue. Tentative de reconnexion…',
     roomEnded:     'Le salon est terminé. Retour à l\'accueil…',
+    transInOverlay:'Voir la traduction dans "Voir tout"',
+    uploading:     'Envoi en cours…',
+    fileAttach:    'Joindre un fichier',
+    linkWarnTitle: 'Ouvrir le lien externe ?',
+    linkWarnDesc:  'Ce lien s\'ouvrira dans un nouvel onglet.',
+    linkWarnOpen:  'Ouvrir',
   },
   'de': {
     usersOnline:  n   => `${n} online`,
@@ -339,7 +381,7 @@ const I18N = {
     msgTooLong:   'Nachricht maximal 1.000 Zeichen.',
     typing:       names => `${names.join(', ')} ${names.length === 1 ? 'tippt' : 'tippen'}...`,
     typingMany:   (first, n) => `${first} und ${n} weitere tippen...`,
-    fileTooLarge: mb => `Datei zu groß (${mb} MB). Maximal 5 MB erlaubt.`,
+    fileTooLarge: mb => `Datei zu groß (${mb} MB). Maximal 20 MB erlaubt.`,
     fileReadError:'Datei konnte nicht gelesen werden.',
     dlTitle:      'Datei herunterladen',
     dlDesc:       (sender, filename) => `Datei von „${sender}"\nDateiname: ${filename}\n\nLade nur Dateien von vertrauenswürdigen Personen herunter.`,
@@ -358,6 +400,12 @@ const I18N = {
     kickConfirm:  'Rauswerfen',
     connLost:      '⚠ Verbindung verloren. Versuche zu reconnecten…',
     roomEnded:     'Der Raum wurde beendet. Zurück zur Startseite…',
+    transInOverlay:'"Vollständig anzeigen" für Übersetzung',
+    uploading:     'Wird hochgeladen…',
+    fileAttach:    'Datei anhängen',
+    linkWarnTitle: 'Externen Link öffnen?',
+    linkWarnDesc:  'Dieser Link wird in einem neuen Tab geöffnet.',
+    linkWarnOpen:  'Öffnen',
   },
   'ru': {
     usersOnline:  n   => `${n} онлайн`,
@@ -379,7 +427,7 @@ const I18N = {
     msgTooLong:   'Сообщение не может превышать 1 000 символов.',
     typing:       names => `${names.join(', ')} печатает...`,
     typingMany:   (first, n) => `${first} и ещё ${n} печатают...`,
-    fileTooLarge: mb => `Файл слишком большой (${mb} МБ). Максимум 5 МБ.`,
+    fileTooLarge: mb => `Файл слишком большой (${mb} МБ). Максимум 20 МБ.`,
     fileReadError:'Не удалось прочитать файл.',
     dlTitle:      'Скачать файл',
     dlDesc:       (sender, filename) => `Файл от «${sender}»\nИмя файла: ${filename}\n\nСкачивайте только файлы от людей, которым доверяете.`,
@@ -398,6 +446,12 @@ const I18N = {
     kickConfirm:  'Выгнать',
     connLost:      '⚠ Соединение потеряно. Повторное подключение…',
     roomEnded:     'Комната завершена. Переход на главную…',
+    transInOverlay:'Перевод в разделе «Показать всё»',
+    uploading:     'Загрузка…',
+    fileAttach:    'Прикрепить файл',
+    linkWarnTitle: 'Открыть внешнюю ссылку?',
+    linkWarnDesc:  'Эта ссылка откроется в новой вкладке.',
+    linkWarnOpen:  'Открыть',
   },
   'ar': {
     usersOnline:  n   => `${n} متصل`,
@@ -419,7 +473,7 @@ const I18N = {
     msgTooLong:   'الحد الأقصى للرسالة 1,000 حرف.',
     typing:       names => `${names.join('، ')} يكتب...`,
     typingMany:   (first, n) => `${first} و${n} آخرون يكتبون...`,
-    fileTooLarge: mb => `الملف كبير جدًا (${mb} ميغابايت). الحد الأقصى 5 ميغابايت.`,
+    fileTooLarge: mb => `الملف كبير جدًا (${mb} ميغابايت). الحد الأقصى 20 ميغابايت.`,
     fileReadError:'فشل قراءة الملف.',
     dlTitle:      'تنزيل الملف',
     dlDesc:       (sender, filename) => `ملف من "${sender}"\nاسم الملف: ${filename}\n\nقم بالتنزيل فقط من أشخاص موثوقين.`,
@@ -438,6 +492,12 @@ const I18N = {
     kickConfirm:  'طرد',
     connLost:      '⚠ انقطع الاتصال. جارٍ إعادة الاتصال…',
     roomEnded:     'انتهت الغرفة. جارٍ التوجيه للرئيسية…',
+    transInOverlay:'اضغط "عرض الكامل" لرؤية الترجمة',
+    uploading:     'جارٍ الرفع…',
+    fileAttach:    'إرفاق ملف',
+    linkWarnTitle: 'فتح رابط خارجي؟',
+    linkWarnDesc:  'سيتم فتح هذا الرابط في علامة تبويب جديدة.',
+    linkWarnOpen:  'فتح',
   },
   'pt': {
     usersOnline:  n   => `${n} online`,
@@ -459,7 +519,7 @@ const I18N = {
     msgTooLong:   'A mensagem tem no máximo 1.000 caracteres.',
     typing:       names => `${names.join(', ')} ${names.length === 1 ? 'está' : 'estão'} digitando...`,
     typingMany:   (first, n) => `${first} e mais ${n} estão digitando...`,
-    fileTooLarge: mb => `Arquivo muito grande (${mb} MB). Máximo 5 MB.`,
+    fileTooLarge: mb => `Arquivo muito grande (${mb} MB). Máximo 20 MB.`,
     fileReadError:'Falha ao ler o arquivo.',
     dlTitle:      'Baixar arquivo',
     dlDesc:       (sender, filename) => `Arquivo de "${sender}"\nNome do arquivo: ${filename}\n\nBaixe apenas arquivos de pessoas confiáveis.`,
@@ -478,6 +538,12 @@ const I18N = {
     kickConfirm:  'Expulsar',
     connLost:      '⚠ Conexão perdida. Tentando reconectar…',
     roomEnded:     'A sala terminou. Redirecionando para a página inicial…',
+    transInOverlay:'"Ver tudo" para ver a tradução',
+    uploading:     'Enviando…',
+    fileAttach:    'Anexar arquivo',
+    linkWarnTitle: 'Abrir link externo?',
+    linkWarnDesc:  'Este link será aberto em uma nova aba.',
+    linkWarnOpen:  'Abrir',
   },
   'it': {
     usersOnline:  n   => `${n} online`,
@@ -499,7 +565,7 @@ const I18N = {
     msgTooLong:   'Il messaggio può avere al massimo 1.000 caratteri.',
     typing:       names => `${names.join(', ')} ${names.length === 1 ? 'sta' : 'stanno'} scrivendo...`,
     typingMany:   (first, n) => `${first} e altri ${n} stanno scrivendo...`,
-    fileTooLarge: mb => `File troppo grande (${mb} MB). Massimo 5 MB.`,
+    fileTooLarge: mb => `File troppo grande (${mb} MB). Massimo 20 MB.`,
     fileReadError:'Impossibile leggere il file.',
     dlTitle:      'Scarica file',
     dlDesc:       (sender, filename) => `File da "${sender}"\nNome file: ${filename}\n\nScarica solo file da persone di fiducia.`,
@@ -518,6 +584,12 @@ const I18N = {
     kickConfirm:  'Espelli',
     connLost:      '⚠ Connessione persa. Tentativo di riconnessione…',
     roomEnded:     'La stanza è terminata. Reindirizzamento alla home…',
+    transInOverlay:'"Vedi tutto" per vedere la traduzione',
+    uploading:     'Caricamento…',
+    fileAttach:    'Allega file',
+    linkWarnTitle: 'Aprire il link esterno?',
+    linkWarnDesc:  'Questo link verrà aperto in una nuova scheda.',
+    linkWarnOpen:  'Apri',
   },
   'id': {
     usersOnline:  n   => `${n} online`,
@@ -539,7 +611,7 @@ const I18N = {
     msgTooLong:   'Pesan maksimal 1.000 karakter.',
     typing:       names => `${names.join(', ')} sedang mengetik...`,
     typingMany:   (first, n) => `${first} dan ${n} lainnya sedang mengetik...`,
-    fileTooLarge: mb => `File terlalu besar (${mb} MB). Maks 5 MB.`,
+    fileTooLarge: mb => `File terlalu besar (${mb} MB). Maks 20 MB.`,
     fileReadError:'Gagal membaca file.',
     dlTitle:      'Unduh File',
     dlDesc:       (sender, filename) => `File dari "${sender}"\nNama file: ${filename}\n\nUnduh hanya file dari orang yang Anda percaya.`,
@@ -558,6 +630,12 @@ const I18N = {
     kickConfirm:  'Keluarkan',
     connLost:      '⚠ Koneksi terputus. Mencoba menyambung kembali…',
     roomEnded:     'Ruangan telah berakhir. Mengarahkan ke beranda…',
+    transInOverlay:'"Lihat semua" untuk melihat terjemahan',
+    uploading:     'Mengunggah…',
+    fileAttach:    'Lampirkan file',
+    linkWarnTitle: 'Buka tautan eksternal?',
+    linkWarnDesc:  'Tautan ini akan dibuka di tab baru.',
+    linkWarnOpen:  'Buka',
   },
   'tr': {
     usersOnline:  n   => `${n} çevrimiçi`,
@@ -579,7 +657,7 @@ const I18N = {
     msgTooLong:   'Mesaj en fazla 1.000 karakter olabilir.',
     typing:       names => `${names.join(', ')} yazıyor...`,
     typingMany:   (first, n) => `${first} ve ${n} kişi daha yazıyor...`,
-    fileTooLarge: mb => `Dosya çok büyük (${mb} MB). Maks 5 MB.`,
+    fileTooLarge: mb => `Dosya çok büyük (${mb} MB). Maks 20 MB.`,
     fileReadError:'Dosya okunamadı.',
     dlTitle:      'Dosyayı İndir',
     dlDesc:       (sender, filename) => `"${sender}" tarafından gönderilen dosya\nDosya adı: ${filename}\n\nSadece güvendiğiniz kişilerin dosyalarını indirin.`,
@@ -598,6 +676,12 @@ const I18N = {
     kickConfirm:  'At',
     connLost:      '⚠ Bağlantı kesildi. Yeniden bağlanmaya çalışılıyor…',
     roomEnded:     'Oda sona erdi. Ana sayfaya yönlendiriliyor…',
+    transInOverlay:'"Tamamını gör" çevirisini göster',
+    uploading:     'Yükleniyor…',
+    fileAttach:    'Dosya ekle',
+    linkWarnTitle: 'Harici bağlantı açılsın mı?',
+    linkWarnDesc:  'Bu bağlantı yeni sekmede açılacak.',
+    linkWarnOpen:  'Aç',
   },
   'pl': {
     usersOnline:  n   => `${n} online`,
@@ -619,7 +703,7 @@ const I18N = {
     msgTooLong:   'Wiadomość może mieć maksymalnie 1 000 znaków.',
     typing:       names => `${names.join(', ')} pisze...`,
     typingMany:   (first, n) => `${first} i ${n} innych pisze...`,
-    fileTooLarge: mb => `Plik jest zbyt duży (${mb} MB). Maks 5 MB.`,
+    fileTooLarge: mb => `Plik jest zbyt duży (${mb} MB). Maks 20 MB.`,
     fileReadError:'Nie udało się odczytać pliku.',
     dlTitle:      'Pobierz plik',
     dlDesc:       (sender, filename) => `Plik od "${sender}"\nNazwa pliku: ${filename}\n\nPobieraj tylko pliki od zaufanych osób.`,
@@ -638,6 +722,12 @@ const I18N = {
     kickConfirm:  'Wyrzuć',
     connLost:      '⚠ Połączenie utracone. Próba ponownego połączenia…',
     roomEnded:     'Pokój zakończył się. Przekierowywanie do strony głównej…',
+    transInOverlay:'"Pokaż całość" aby zobaczyć tłumaczenie',
+    uploading:     'Przesyłanie…',
+    fileAttach:    'Załącz plik',
+    linkWarnTitle: 'Otworzyć zewnętrzny link?',
+    linkWarnDesc:  'Ten link otworzy się w nowej karcie.',
+    linkWarnOpen:  'Otwórz',
   },
   'nl': {
     usersOnline:  n   => `${n} online`,
@@ -659,7 +749,7 @@ const I18N = {
     msgTooLong:   'Bericht mag maximaal 1.000 tekens bevatten.',
     typing:       names => `${names.join(', ')} typt...`,
     typingMany:   (first, n) => `${first} en ${n} anderen typen...`,
-    fileTooLarge: mb => `Bestand te groot (${mb} MB). Maximaal 5 MB.`,
+    fileTooLarge: mb => `Bestand te groot (${mb} MB). Maximaal 20 MB.`,
     fileReadError:'Kan het bestand niet lezen.',
     dlTitle:      'Bestand downloaden',
     dlDesc:       (sender, filename) => `Bestand van "${sender}"\nBestandsnaam: ${filename}\n\nDownload alleen bestanden van mensen die u vertrouwt.`,
@@ -678,6 +768,12 @@ const I18N = {
     kickConfirm:  'Verwijderen',
     connLost:      '⚠ Verbinding verbroken. Opnieuw verbinden…',
     roomEnded:     'De kamer is beëindigd. Doorsturen naar home…',
+    transInOverlay:'"Volledig weergeven" voor de vertaling',
+    uploading:     'Uploaden…',
+    fileAttach:    'Bestand bijvoegen',
+    linkWarnTitle: 'Externe link openen?',
+    linkWarnDesc:  'Deze link wordt geopend in een nieuw tabblad.',
+    linkWarnOpen:  'Openen',
   },
   'sv': {
     usersOnline:  n   => `${n} online`,
@@ -699,7 +795,7 @@ const I18N = {
     msgTooLong:   'Meddelandet får innehålla max 1 000 tecken.',
     typing:       names => `${names.join(', ')} skriver...`,
     typingMany:   (first, n) => `${first} och ${n} andra skriver...`,
-    fileTooLarge: mb => `Filen är för stor (${mb} MB). Max 5 MB.`,
+    fileTooLarge: mb => `Filen är för stor (${mb} MB). Max 20 MB.`,
     fileReadError:'Det gick inte att läsa filen.',
     dlTitle:      'Ladda ner fil',
     dlDesc:       (sender, filename) => `Fil från "${sender}"\nFilnamn: ${filename}\n\nLadda bara ner filer från personer du litar på.`,
@@ -718,6 +814,12 @@ const I18N = {
     kickConfirm:  'Kasta ut',
     connLost:      '⚠ Anslutningen bröts. Försöker återansluta…',
     roomEnded:     'Rummet avslutades. Omdirigerar till startsidan…',
+    transInOverlay:'"Visa allt" för att se översättningen',
+    uploading:     'Laddar upp…',
+    fileAttach:    'Bifoga fil',
+    linkWarnTitle: 'Öppna extern länk?',
+    linkWarnDesc:  'Den här länken öppnas i en ny flik.',
+    linkWarnOpen:  'Öppna',
   },
   'uk': {
     usersOnline:  n   => `${n} онлайн`,
@@ -739,7 +841,7 @@ const I18N = {
     msgTooLong:   'Повідомлення не може перевищувати 1 000 символів.',
     typing:       names => `${names.join(', ')} друкує...`,
     typingMany:   (first, n) => `${first} та ще ${n} друкують...`,
-    fileTooLarge: mb => `Файл завеликий (${mb} МБ). Максимум 5 МБ.`,
+    fileTooLarge: mb => `Файл завеликий (${mb} МБ). Максимум 20 МБ.`,
     fileReadError:'Не вдалося прочитати файл.',
     dlTitle:      'Завантажити файл',
     dlDesc:       (sender, filename) => `Файл від «${sender}»\nІм'я файлу: ${filename}\n\nЗавантажуйте лише файли від довірених осіб.`,
@@ -758,6 +860,12 @@ const I18N = {
     kickConfirm:  'Вигнати',
     connLost:      '⚠ З\'єднання втрачено. Повторне підключення…',
     roomEnded:     'Кімната завершена. Перехід на головну…',
+    transInOverlay:'«Показати все» для перегляду перекладу',
+    uploading:     'Завантаження…',
+    fileAttach:    'Прикріпити файл',
+    linkWarnTitle: 'Відкрити зовнішнє посилання?',
+    linkWarnDesc:  'Це посилання відкриється в новій вкладці.',
+    linkWarnOpen:  'Відкрити',
   },
 };
 
@@ -830,8 +938,8 @@ const joinRequestSub   = document.getElementById('join-request-sub');
 const btnApprove       = document.getElementById('btn-approve');
 const btnDeny          = document.getElementById('btn-deny');
 
-// 파일 크기 제한: 5MB
-const MAX_FILE_SIZE  = 5 * 1024 * 1024;
+// 파일 크기 제한: 20MB (카메라 촬영 이미지 대응)
+const MAX_FILE_SIZE  = 20 * 1024 * 1024;
 // 미리보기 글자수 — 이 이상이면 말풍선에서 잘라서 표시
 const MAX_PREVIEW    = 300;
 // 메시지 최대 글자수 (전송 차단)
@@ -847,8 +955,9 @@ let currentUserCount = 0;     // 현재 참여자 수 (언어 변경 시 재렌�
 let currentUsers     = [];    // 현재 참여자 닉네임 배열 (목록 패널 표시용)
 
 // 비밀방 승인 요청 큐: 여러 사람이 동시에 요청할 경우 순서대로 처리
-let joinRequestQueue  = [];
-let processingRequest = false;
+let joinRequestQueue   = [];
+let processingRequest  = false;
+let _currentJoinNick   = null; // 현재 모달에 표시 중인 닉네임 (중복 방지용)
 
 // BUG-11: 중첩 모달 overflow 카운터
 // 여러 모달이 동시에 열릴 때 한 모달을 닫아도 다른 모달이 남아있으면 overflow:hidden 유지
@@ -976,11 +1085,33 @@ kickModal.addEventListener('click', (e) => {
 });
 
 // =====================================================
-// 전체보기 오버레이
+// 전체보기 오버레이 (원문 + 번역 함께 표시)
 // =====================================================
 
-function openTextOverlay(text) {
-  textOverlayContent.textContent = text;
+// openTextOverlay(text, translationEl?)
+// translationEl: 버블 내 번역 div — 클릭 시점의 번역 텍스트를 읽어 오버레이에 표시
+function openTextOverlay(text, translationEl) {
+  // 원문 영역
+  const origEl = document.getElementById('text-overlay-original');
+  if (origEl) origEl.textContent = text;
+  else textOverlayContent.textContent = text; // fallback
+
+  // 번역 영역
+  const transArea = document.getElementById('text-overlay-translation');
+  const transDivider = document.getElementById('text-overlay-divider');
+  if (transArea && transDivider) {
+    const trans = translationEl ? translationEl.textContent : '';
+    const isValidTrans = trans && trans !== t(langSelect.value || 'en', 'translating') && !trans.startsWith('⚠');
+    if (isValidTrans) {
+      transArea.textContent = trans;
+      transDivider.style.display = 'block';
+      transArea.style.display    = 'block';
+    } else {
+      transDivider.style.display = 'none';
+      transArea.style.display    = 'none';
+    }
+  }
+
   textOverlay.classList.add('open');
   lockScroll();
 }
@@ -994,6 +1125,56 @@ btnCloseTextOverlay.addEventListener('click', closeTextOverlay);
 textOverlay.addEventListener('click', (e) => {
   if (e.target === textOverlay) closeTextOverlay();
 });
+
+// =====================================================
+// 번역 캐시 (localStorage) — 고유 해시 키 방식
+// =====================================================
+// 동일 텍스트+언어 조합은 API 재호출 없이 캐시에서 즉시 반환
+// Node.js에서는 Map 또는 Redis로 동일하게 구현
+const _TC_KEY  = 'tb_trans_cache'; // localStorage 키
+const _TC_MAX  = 300;              // 최대 캐시 항목 수
+
+function _tcHash(lang, text) {
+  // djb2 해시 — 긴 텍스트를 짧은 숫자 키로 변환 (충돌 확률 약 1/4B)
+  let h = 5381;
+  const s = lang + '\0' + text;
+  for (let i = 0; i < s.length; i++) {
+    h = (((h << 5) + h) ^ s.charCodeAt(i)) >>> 0;
+  }
+  return 'tc_' + h.toString(36);
+}
+
+function _tcLoad() {
+  try { return JSON.parse(localStorage.getItem(_TC_KEY) || '{}'); } catch { return {}; }
+}
+
+function _tcSave(cache) {
+  try {
+    localStorage.setItem(_TC_KEY, JSON.stringify(cache));
+  } catch {
+    // 용량 초과 시: 절반을 삭제하고 재시도 (오래된 것 먼저 FIFO)
+    const keys = Object.keys(cache);
+    keys.slice(0, Math.ceil(keys.length / 2)).forEach(k => delete cache[k]);
+    try { localStorage.setItem(_TC_KEY, JSON.stringify(cache)); } catch { /* 포기 */ }
+  }
+}
+
+function tcGet(lang, text) {
+  const cache = _tcLoad();
+  const val   = cache[_tcHash(lang, text)];
+  return val; // undefined(미스) | null(같은언어) | string(번역 결과)
+}
+
+function tcSet(lang, text, result) {
+  const cache = _tcLoad();
+  cache[_tcHash(lang, text)] = result;
+  // 최대 항목 초과 시 앞쪽(오래된) 절반 제거
+  const keys = Object.keys(cache);
+  if (keys.length > _TC_MAX) {
+    keys.slice(0, keys.length - _TC_MAX).forEach(k => delete cache[k]);
+  }
+  _tcSave(cache);
+}
 
 // =====================================================
 // 언어 목록 로드
@@ -1027,8 +1208,10 @@ fetch('/api/languages')
 langSelect.addEventListener('change', () => {
   const lang = langSelect.value;
   sessionStorage.setItem('translateLang', lang);
-  applyI18n(lang);      // UI 전체 언어 교체
-  retranslateAll(lang); // 기존 메시지 전체 재번역
+  localStorage.setItem('translateLang', lang);
+  applyI18n(lang); // UI 전체 언어 교체
+  // 기존 메시지는 재번역하지 않음 — 이후 새 메시지부터 변경된 언어로 번역
+  // (retranslateAll 제거: 언어 변경 시 기존 채팅 유지)
 });
 
 // =====================================================
@@ -1193,23 +1376,26 @@ socket.on('kicked', () => {
 });
 
 // 입장 요청(호스트에게만 수신): 승인 요청 큐에 추가 후 모달 처리
-socket.on('room-join-request', ({ sid, nickname: requesterName }) => {
-  joinRequestQueue.push({ sid, nickname: requesterName });
-  // 현재 모달이 닫혀 있을 때만 다음 요청을 꺼내서 표시
-  if (!processingRequest) {
-    showNextJoinRequest();
-  }
+// get-wait-list 재전송 시에도 동일 이벤트가 오므로 중복 방지 필수
+socket.on('room-join-request', ({ nickname: requesterName }) => {
+  // 이미 모달에 표시 중이거나 큐에 있으면 추가하지 않음
+  if (requesterName === _currentJoinNick) return;
+  if (joinRequestQueue.some(r => r.nickname === requesterName)) return;
+  joinRequestQueue.push({ nickname: requesterName });
+  if (!processingRequest) showNextJoinRequest();
 });
 
 // 다음 입장 요청 모달 표시
 // 큐(배열) 방식으로 여러 요청을 순서대로 처리
 function showNextJoinRequest() {
   if (joinRequestQueue.length === 0) {
-    processingRequest = false;
+    processingRequest  = false;
+    _currentJoinNick   = null;
     return;
   }
   processingRequest = true;
-  const { nickname: requesterName } = joinRequestQueue.shift(); // 큐에서 첫 번째 항목 꺼내기
+  const { nickname: requesterName } = joinRequestQueue.shift();
+  _currentJoinNick = requesterName;
 
   const lang = langSelect.value || 'en';
   joinRequestName.textContent = t(lang, 'joinRequest', requesterName);
@@ -1303,6 +1489,16 @@ socket.on('user-stop-typing', ({ nickname: who }) => { typingUsers.delete(who); 
 // =====================================================
 // 파일 전송
 // =====================================================
+
+// 업로드 중 UI 잠금 — 파일 버튼·전송 버튼·입력창 비활성화 + 로딩 표시
+function setUploadState(uploading) {
+  btnFile.disabled    = uploading;
+  btnSend.disabled    = uploading;
+  msgInput.disabled   = uploading;
+  btnFile.textContent = uploading ? '⏳' : '📎';
+  btnFile.title       = uploading ? t(langSelect.value || 'en', 'uploading') : t(langSelect.value || 'en', 'fileAttach');
+}
+
 function sendFile(file) {
   const lang = langSelect.value || 'en';
   if (file.size > MAX_FILE_SIZE) {
@@ -1310,15 +1506,25 @@ function sendFile(file) {
     alert(t(lang, 'fileTooLarge', mb));
     return;
   }
+
+  setUploadState(true);
   const reader = new FileReader();
   reader.onload = (e) => {
-    socket.emit('send-file', {
-      filename: file.name,
-      mimeType: file.type || 'application/octet-stream',
-      dataUrl:  e.target.result,
-    });
+    // setTimeout(0): 이벤트 루프에 양보 → FileReader 처리 중 대기한
+    // 수신 소켓 메시지(다른 사람 채팅)가 먼저 처리되어 화면에 표시됨
+    setTimeout(() => {
+      socket.emit('send-file', {
+        filename: file.name,
+        mimeType: file.type || 'application/octet-stream',
+        dataUrl:  e.target.result,
+      });
+      setUploadState(false);
+    }, 0);
   };
-  reader.onerror = () => alert(t(lang, 'fileReadError'));
+  reader.onerror = () => {
+    alert(t(lang, 'fileReadError'));
+    setUploadState(false);
+  };
   reader.readAsDataURL(file);
 }
 
@@ -1376,13 +1582,13 @@ function appendMessage({ sender, text, timestamp, isMine }) {
   bubbleEl.className = 'bubble';
   bubbleEl.dir       = 'auto'; // LTR/RTL 자동 감지 (아랍어 등)
 
-  // 원문 영역
+  // 원문 영역 — URL 감지하여 링크 경고 버튼으로 렌더링
   const originalEl = document.createElement('div');
   originalEl.className = 'bubble-original';
 
-  // ★ 글자수 제한 접기: MAX_PREVIEW(300)자 이상이면 일부만 표시
   const isLong = text.length > MAX_PREVIEW;
-  originalEl.textContent = isLong ? text.slice(0, MAX_PREVIEW) + '…' : text;
+  // 긴 메시지: 앞 MAX_PREVIEW자만 표시 / 짧은 메시지: 전체 표시 (링크 포함)
+  renderTextWithLinks(originalEl, isLong ? text.slice(0, MAX_PREVIEW) + '…' : text);
   bubbleEl.appendChild(originalEl);
 
   // 구분선 (번역 완료 시 보임)
@@ -1391,24 +1597,29 @@ function appendMessage({ sender, text, timestamp, isMine }) {
   bubbleEl.appendChild(dividerEl);
 
   // 번역 텍스트 영역
+  // 긴 메시지는 버블에서 번역 생략 — 전체보기 오버레이에서 번역 표시
   const translationEl = document.createElement('div');
   translationEl.className = 'bubble-translation';
+  if (isLong) {
+    // 긴 메시지: 번역 숨기고 "전체 보기에서 번역 확인" 힌트 표시
+    translationEl.className += ' trans-hint';
+    translationEl.textContent = t(langSelect.value || 'en', 'transInOverlay');
+    dividerEl.style.display   = 'block';
+  }
   bubbleEl.appendChild(translationEl);
 
   div.appendChild(bubbleEl);
 
-  // ★ "전체 보기" 버튼: 말풍선 바로 아래, 긴 메시지에만 표시
+  // "전체 보기" 버튼: 긴 메시지에만 표시
   if (isLong) {
     const showMoreBtn = document.createElement('button');
     showMoreBtn.className   = 'btn-show-more';
-    const uiLang            = langSelect.value || 'en';
-    showMoreBtn.textContent = t(uiLang, 'showMore');
-    // 클릭 시 전체 원문을 오버레이로 표시
-    showMoreBtn.addEventListener('click', () => openTextOverlay(text));
+    showMoreBtn.textContent = t(langSelect.value || 'en', 'showMore');
+    // 클릭 시 전체 원문 + 번역을 오버레이로 표시
+    showMoreBtn.addEventListener('click', () => openTextOverlay(text, translationEl));
     div.appendChild(showMoreBtn);
   }
 
-  // 타임스탬프
   const timeEl = document.createElement('span');
   timeEl.className   = `time${isGrouped ? ' time-hidden' : ''}`;
   timeEl.textContent = timestamp;
@@ -1417,12 +1628,79 @@ function appendMessage({ sender, text, timestamp, isMine }) {
   messagesEl.appendChild(div);
   scrollToBottom();
 
-  // 번역 언어가 선택된 경우 번역 실행
   const target = langSelect.value;
   if (target) {
-    translateText(text, target, translationEl, dividerEl);
+    if (isLong) {
+      // 긴 메시지: 전체 원문으로 번역 실행 — 결과는 translationEl에 저장되어
+      // 전체보기 클릭 시 openTextOverlay가 읽어서 표시함 (버블에는 힌트만 보임)
+      translateText(text, target, translationEl, null);
+    } else {
+      translateText(text, target, translationEl, dividerEl);
+    }
   }
 }
+
+// =====================================================
+// 텍스트 내 URL 감지 → 링크 경고 버튼으로 렌더링
+// =====================================================
+// innerHTML 미사용 — 텍스트 노드 + button 요소를 직접 조립하여 XSS 방지
+const _URL_RE = /https?:\/\/[^\s<>"'()[\]{}]+/g;
+
+function renderTextWithLinks(container, text) {
+  _URL_RE.lastIndex = 0;
+  let lastIdx = 0, match;
+  while ((match = _URL_RE.exec(text)) !== null) {
+    if (match.index > lastIdx) {
+      container.appendChild(document.createTextNode(text.slice(lastIdx, match.index)));
+    }
+    const btn = document.createElement('button');
+    btn.className   = 'chat-link';
+    btn.textContent = match[0];
+    const url = match[0];
+    btn.addEventListener('click', () => openLinkWarning(url));
+    container.appendChild(btn);
+    lastIdx = match.index + match[0].length;
+  }
+  if (lastIdx < text.length) {
+    container.appendChild(document.createTextNode(text.slice(lastIdx)));
+  }
+}
+
+// =====================================================
+// 링크 경고 모달
+// =====================================================
+const linkWarnModal   = document.getElementById('link-warn-modal');
+const linkWarnUrlEl   = document.getElementById('link-warn-url');
+const linkWarnCancel  = document.getElementById('link-warn-cancel');
+const linkWarnConfirm = document.getElementById('link-warn-confirm');
+let   _linkWarnTarget = null;
+
+function openLinkWarning(url) {
+  const lang = langSelect.value || 'en';
+  _linkWarnTarget = url;
+  document.getElementById('link-warn-title').textContent = t(lang, 'linkWarnTitle');
+  linkWarnUrlEl.textContent = url.length > 60 ? url.slice(0, 60) + '…' : url;
+  document.getElementById('link-warn-desc').textContent  = t(lang, 'linkWarnDesc');
+  linkWarnCancel.textContent  = t(lang, 'dlCancel');
+  linkWarnConfirm.textContent = t(lang, 'linkWarnOpen');
+  linkWarnModal.style.display = 'flex';
+  lockScroll();
+}
+
+function closeLinkWarning() {
+  linkWarnModal.style.display = 'none';
+  _linkWarnTarget = null;
+  unlockScroll();
+}
+
+if (linkWarnCancel)  linkWarnCancel.addEventListener('click', closeLinkWarning);
+if (linkWarnConfirm) linkWarnConfirm.addEventListener('click', () => {
+  if (_linkWarnTarget) window.open(_linkWarnTarget, '_blank', 'noopener,noreferrer');
+  closeLinkWarning();
+});
+if (linkWarnModal)   linkWarnModal.addEventListener('click', (e) => {
+  if (e.target === linkWarnModal) closeLinkWarning();
+});
 
 // =====================================================
 // 시스템 메시지 표시 (입장/퇴장)
@@ -1447,10 +1725,26 @@ function appendSystem(key, who) {
 }
 
 // =====================================================
-// 번역 요청 함수
+// 번역 요청 함수 (캐시 + 같은언어 생략 포함)
 // =====================================================
 function translateText(text, target, el, dividerEl) {
   const uiLang = langSelect.value || 'en';
+
+  // 1. 캐시 확인 — 이전에 번역한 결과 즉시 반환
+  const cached = tcGet(target, text);
+  if (cached !== undefined) {
+    if (cached === null) {
+      // null: 원문과 번역 언어 동일 → 번역 표시 생략
+      el.textContent = '';
+      if (dividerEl) dividerEl.style.display = 'none';
+    } else {
+      el.textContent = cached;
+      el.style.opacity = '';
+      if (dividerEl) dividerEl.style.display = 'block';
+    }
+    return;
+  }
+
   el.textContent = t(uiLang, 'translating');
   if (dividerEl) dividerEl.style.display = 'block';
 
@@ -1462,16 +1756,27 @@ function translateText(text, target, el, dividerEl) {
     .then(r => r.json())
     .then(data => {
       if (data.translatedText) {
-        el.textContent = data.translatedText;
+        // 2. 같은 언어 감지 — DeepL이 반환한 소스 언어와 대상 언어 비교
+        // DeepL: "EN-US" → prefix "en", target: "en" → 동일 → 번역 생략
+        const srcPrefix = (data.sourceLang || '').split('-')[0].toLowerCase();
+        const tgtPrefix = target.split('-')[0].toLowerCase();
+        if (srcPrefix && srcPrefix === tgtPrefix) {
+          el.textContent = '';
+          if (dividerEl) dividerEl.style.display = 'none';
+          tcSet(target, text, null); // null = 같은 언어 캐시
+          return;
+        }
+        el.textContent   = data.translatedText;
+        el.style.opacity = '';
         if (dividerEl) dividerEl.style.display = 'block';
+        tcSet(target, text, data.translatedText); // 3. 결과 캐시 저장
       } else {
         el.textContent = '';
         if (dividerEl) dividerEl.style.display = 'none';
       }
     })
     .catch(() => {
-      // BUG-05: 번역 실패(타임아웃 포함) 시 조용히 숨기는 대신 연한 경고 표시
-      el.textContent = '⚠ translation failed';
+      el.textContent   = '⚠ translation failed';
       el.style.opacity = '0.5';
       if (dividerEl) dividerEl.style.display = 'block';
     });
@@ -1707,8 +2012,13 @@ socket.on('room-history', (messages) => {
 // Node.js 서버 측 pending_leaves의 15초 유예와 연동하여
 // 15초 내 복귀하면 퇴장 처리 취소됨
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && !socket.connected) {
-    socket.connect();
+  if (document.visibilityState === 'visible') {
+    if (!socket.connected) {
+      socket.connect();
+    } else if (isHost) {
+      // 탭 복귀 시 대기 큐 재요청 — 백그라운드/카메라 사용 중 놓친 승인 요청 복구
+      socket.emit('get-wait-list');
+    }
   }
 });
 

@@ -112,6 +112,17 @@
       btnNext.disabled = false;
 
       sessionStorage.setItem('nickname', nickname);
+
+      // 이미 언어 설정이 저장되어 있으면 2단계 스킵 → 바로 채팅방 입장
+      const savedLang = localStorage.getItem('translateLang');
+      if (savedLang !== null) {
+        // null 체크: ''(번역 없음) 포함, 이전에 한 번이라도 설정했다면 스킵
+        sessionStorage.setItem('translateLang', savedLang);
+        sessionStorage.setItem('roomCode', code);
+        location.href = `/room/${code}/chat`;
+        return;
+      }
+
       document.getElementById('step-nickname').style.display = 'none';
       document.getElementById('step-lang').style.display = 'block';
       loadLanguages();
