@@ -57,6 +57,8 @@
     </div>
     <!-- JS에서 participant-tag 요소들을 동적으로 추가 -->
     <div id="participants-list"></div>
+    <!-- 초대 버튼: 참여자 목록 아래 고정 -->
+    <button id="btn-invite" class="btn-invite">🔗 초대하기</button>
   </div>
 
   <!-- ================================================================
@@ -155,6 +157,31 @@
         <button id="kick-modal-cancel" class="dl-btn-cancel"></button>
         <button id="kick-modal-confirm" class="dl-btn-confirm" style="background:var(--danger, #ef4444);"></button>
       </div>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       초대 QR 오버레이 — 참여자 패널의 초대하기 버튼 클릭 시 표시
+       QR 이미지: /api/room/{code}/qr, 방 코드도 함께 표시
+       ================================================================ -->
+  <div id="invite-overlay" style="display:none; position:fixed; inset:0;
+       background:rgba(0,0,0,0.65); z-index:2200;
+       align-items:center; justify-content:center; padding:24px;">
+    <div id="invite-box" style="background:var(--card-bg, #fff); border-radius:20px;
+         padding:28px 24px; max-width:320px; width:100%; text-align:center;
+         box-shadow:0 8px 40px rgba(0,0,0,0.25); position:relative;">
+      <button id="invite-close" style="position:absolute; top:12px; right:14px;
+              background:none; border:none; font-size:1.4rem; cursor:pointer;
+              color:var(--text-secondary,#888); width:auto; padding:2px 8px;">✕</button>
+      <h3 id="invite-title" style="font-size:1rem; font-weight:700; margin:0 0 16px;">
+        초대하기
+      </h3>
+      <img id="invite-qr" src="" alt="QR" style="width:200px; height:200px;
+           border-radius:12px; display:block; margin:0 auto 16px;">
+      <p style="font-size:0.8rem; color:var(--text-secondary,#888); margin:0 0 6px;"
+         id="invite-code-label">방 번호</p>
+      <div id="invite-code" style="font-size:1.6rem; font-weight:800; letter-spacing:4px;
+           color:var(--accent,#4f46e5); font-family:monospace;"></div>
     </div>
   </div>
 

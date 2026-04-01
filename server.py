@@ -174,13 +174,45 @@ def translate():
         return jsonify({'error': '번역 요청 실패'}), 502
 
 
+def get_socket_ip() -> str:
+    """소켓 요청에서 실제 클라이언트 IP를 추출합니다.
+    Cloudflare 터널을 통한 접속 시 CF-Connecting-IP 헤더를 우선 사용합니다.
+    LAN 직접 접속 시 REMOTE_ADDR를 사용합니다.
+    """
+    env = request.environ
+    ip = (
+        env.get('HTTP_CF_CONNECTING_IP') or
+        env.get('HTTP_X_FORWARDED_FOR', '')
+    ).split(',')[0].strip()
+    return ip or env.get('REMOTE_ADDR', 'unknown')
+
+
 @socketio.on('connect')
 def on_connect():
-    # 새 소켓 연결 시 세션 초기화
+    # 새 소켓 연결 시 세션 초기화 — IP는 연결 시점에 확정되므로 여기서 저장
     socket_sessions[request.sid] = {
         'room_code': None,
         'nickname':  None,
         'is_host':   False,
+        'ip':        get_socket_ip(),
+    }
+
+
+def _build_room_users_payload(room):
+    """room-users 이벤트 페이로드 생성 헬퍼.
+    count, users(닉네임 배열), hostNickname(현재 호스트 닉네임)을 포함.
+    클라이언트가 매번 isHost 상태를 서버 기준으로 동기화하는 데 사용됨.
+    (BUG-C3, BUG-H4 수정)
+    """
+    users_list = [u['nickname'] for u in room['users']]
+    host_nick  = next(
+        (u['nickname'] for u in room['users'] if u['id'] == room['host_sid']),
+        None
+    )
+    return {
+        'count':        len(room['users']),
+        'users':        users_list,
+        'hostNickname': host_nick,
     }
 
 
@@ -204,29 +236,32 @@ def _do_leave(nickname, code, sid):
         room['wait_list'] = [w for w in room['wait_list'] if w['id'] != sid]
         return
 
+    # BUG-H3: 퇴장 시 타이핑 표시자 정리 — 타이핑 중에 끊기면 영구 표시 방지
+    socketio.emit('user-stop-typing', {'nickname': nickname}, to=code)
+
     # 대기열·참여자 목록에서 해당 sid 제거
     room['wait_list'] = [w for w in room['wait_list'] if w['id'] != sid]
     room['users']     = [u for u in room['users']     if u['id'] != sid]
 
-    # BUG-04: 방에 아무도 없으면 방 전체(이력 포함) 삭제
+    # 모든 참여자가 퇴장하면 방 삭제 — 단, 60초 유예 덕분에
+    # join.html 닉네임+언어 선택 시간 내 재입장 시도는 타이머 취소로 보존됨
     if not room['users']:
+        for waiter in room.get('wait_list', []):
+            socketio.emit('join-denied', {}, to=waiter['id'])
         del rooms[code]
         return
 
-    # BUG-01: 호스트 이탈 시 첫 번째 남은 참여자를 새 호스트로 승격
+    # BUG-C3: 호스트 이탈 시 첫 번째 남은 참여자를 새 호스트로 승격
+    # room-users 이벤트에 hostNickname을 포함하므로 별도 you-are-host 이벤트 불필요
     if room['host_sid'] == sid:
         new_host = room['users'][0]
         room['host_sid'] = new_host['id']
         if new_host['id'] in socket_sessions:
             socket_sessions[new_host['id']]['is_host'] = True
 
-    # 퇴장 이벤트 및 최신 참여자 목록 브로드캐스트
+    # 퇴장 이벤트 및 최신 참여자 목록 브로드캐스트 (hostNickname 포함)
     socketio.emit('user-left', {'nickname': nickname}, to=code)
-    users_list = [u['nickname'] for u in room['users']]
-    socketio.emit('room-users', {
-        'count': len(room['users']),
-        'users': users_list,
-    }, to=code)
+    socketio.emit('room-users', _build_room_users_payload(room), to=code)
 
 
 @socketio.on('join-room')
@@ -237,9 +272,16 @@ def on_join_room(data):
     is_host  = bool(data.get('isHost', False))
 
     if code not in rooms:
+        # 서버 재시작 등으로 방이 사라진 경우 — 클라이언트에 알려 홈으로 유도
+        emit('room-not-found', {})
         return
 
     room = rooms[code]
+
+    # BUG-C2: 강퇴 블랙리스트 확인 — 강퇴된 닉네임은 재입장 불가
+    if nickname in room.get('banned', set()):
+        emit('join-banned', {})
+        return
 
     # ── 재연결 유예 취소 ──
     # 백그라운드 탭 복귀 등으로 같은 닉네임+방코드로 재접속하면
@@ -248,37 +290,60 @@ def on_join_room(data):
     if leave_key in pending_leaves:
         old_sid, gt = pending_leaves.pop(leave_key)
         gt.cancel()
+
         # users 목록에서 이전 sid를 새 sid로 교체 (퇴장하지 않은 것으로 처리)
+        found_in_users = False
         for u in room['users']:
             if u['id'] == old_sid:
                 u['id'] = request.sid
+                found_in_users = True
                 break
         # host_sid도 교체
         if room['host_sid'] == old_sid:
             room['host_sid'] = request.sid
-        # 세션 복원
-        join_room(code)
+
         socket_sessions[request.sid]['room_code'] = code
         socket_sessions[request.sid]['nickname']  = nickname
         socket_sessions[request.sid]['is_host']   = (room['host_sid'] == request.sid)
-        # 채팅 이력 재전송 (재연결 후 빠진 메시지 복구)
-        if room.get('messages'):
-            emit('room-history', room['messages'])
-        # 참여자 수 갱신
-        users_list = [u['nickname'] for u in room['users']]
-        emit('room-users', {
-            'count': len(room['users']),
-            'users': users_list,
-        }, to=code)
+
+        if found_in_users:
+            # 일반 참여자 재연결 — 채팅방 복구
+            join_room(code)
+            if room.get('messages'):
+                emit('room-history', room['messages'])
+            emit('room-users', _build_room_users_payload(room), to=code)
+        else:
+            # wait_list에만 있던 사용자(비밀방 대기자) 재연결
+            # on_disconnect에서 wait_list에서 제거됐으므로 다시 추가해야 함
+            if room['secret'] and not is_host:
+                ip = socket_sessions[request.sid].get('ip', 'unknown')
+                room['wait_list'].append({'id': request.sid, 'nickname': nickname, 'ip': ip})
+                socket_sessions[request.sid]['room_code'] = code
+                socket_sessions[request.sid]['nickname']  = nickname
+                if room['host_sid']:
+                    emit('room-join-request', {'nickname': nickname}, to=room['host_sid'])
+                emit('join-pending', {})
+            else:
+                # 일반방에서 users에도 없고 wait_list에도 없는 예외 상황 → 정식 입장 처리
+                ip = socket_sessions[request.sid].get('ip', 'unknown')
+                join_room(code)
+                room['users'].append({'id': request.sid, 'nickname': nickname, 'ip': ip})
+                emit('user-joined', {'nickname': nickname}, to=code, skip_sid=request.sid)
+                emit('room-users', _build_room_users_payload(room), to=code)
+                if room.get('messages'):
+                    emit('room-history', room['messages'])
         return
 
     # 재연결(reconnect) 시 중복 추가 방지
     # SID뿐 아니라 닉네임으로도 검색 — on_disconnect보다 on_join_room이 먼저 실행되는
     # race condition 에서 새 SID로는 못 찾지만 닉네임은 동일하기 때문
+    # BUG-C1: 닉네임 중복은 join.html의 API 사전 체크(/api/room/<code>/nickname-check)로 방지.
+    # 소켓 레벨에서 socket_sessions 여부로 판단하면 새로고침 race condition과 구분 불가 —
+    # old SID가 아직 socket_sessions에 있어도 새로고침(정상 재연결)일 수 있기 때문.
     existing_user = next((u for u in room['users'] if u['nickname'] == nickname), None)
     if existing_user:
         if existing_user['id'] != request.sid:
-            # SID가 바뀐 재연결 → SID만 교체 (중복 추가 방지)
+            # SID가 다른 재연결 → SID만 교체 (중복 추가 방지)
             old_sid = existing_user['id']
             existing_user['id'] = request.sid
             if room['host_sid'] == old_sid:
@@ -314,12 +379,10 @@ def on_join_room(data):
             socket_sessions[request.sid]['room_code'] = code
             socket_sessions[request.sid]['nickname']  = nickname
 
-            # 호스트가 이미 있으면 입장 요청 이벤트 전송
-            # 호스트가 없으면 host 입장 후 on_join_room에서 일괄 전송
-            # Node.js: io.to(room.hostId).emit('room-join-request', {...})
-            if room['host_sid']:
+            # BUG-H1: already_waiting이면 호스트에게 재전송 안 함 (중복 모달 방지)
+            # 신규 요청일 때만 호스트에게 room-join-request 전송
+            if not already_waiting and room['host_sid']:
                 emit('room-join-request', {
-                    'sid':      request.sid,
                     'nickname': nickname,
                 }, to=room['host_sid'])
 
@@ -335,15 +398,13 @@ def on_join_room(data):
     socket_sessions[request.sid]['is_host']   = is_host or (room['host_sid'] == request.sid)
 
     if not already_in:
-        room['users'].append({'id': request.sid, 'nickname': nickname})
+        # IP를 함께 저장 — 닉네임 충돌 시 같은 기기 재연결인지 판별에 사용
+        ip = socket_sessions[request.sid].get('ip', 'unknown')
+        room['users'].append({'id': request.sid, 'nickname': nickname, 'ip': ip})
         emit('user-joined', {'nickname': nickname}, to=code, skip_sid=request.sid)
 
-    # 참여자 수 + 닉네임 목록을 함께 전송 (클라이언트의 참여자 패널에 표시)
-    users_list = [u['nickname'] for u in room['users']]
-    emit('room-users', {
-        'count': len(room['users']),
-        'users': users_list,
-    }, to=code)
+    # 참여자 수 + 닉네임 목록 + hostNickname 전송 (BUG-C3/H4)
+    emit('room-users', _build_room_users_payload(room), to=code)
 
     # 채팅 이력 전송: 기존 메시지가 있으면 입장하는 사용자에게 전달
     # 재연결·신규 입장 모두 동일하게 처리
@@ -376,22 +437,26 @@ def on_approve_join(data):
     if room['host_sid'] != request.sid:
         return
 
-    target_sid = data.get('sid')
-    # 대기열에서 해당 sid 찾기
-    waiting = next((w for w in room['wait_list'] if w['id'] == target_sid), None)
+    # BUG-C4: SID 대신 닉네임 기반으로 검색 — 재연결 후 SID 불일치 방지
+    target_nick = data.get('nickname')
+    waiting = next((w for w in room['wait_list'] if w['nickname'] == target_nick), None)
     if not waiting:
         return
 
-    # 대기열에서 제거
-    room['wait_list'] = [w for w in room['wait_list'] if w['id'] != target_sid]
+    target_sid = waiting['id']  # 현재 실제 SID 사용
     approved_nickname = waiting['nickname']
+
+    # 대기열에서 제거
+    room['wait_list'] = [w for w in room['wait_list'] if w['nickname'] != target_nick]
 
     # 승인된 사용자를 Socket.io 방에 추가
     # Flask-SocketIO에서 다른 클라이언트의 sid를 방에 넣는 방법:
     # socketio.server.enter_room(sid, room_name, namespace)
     # Node.js: socket.join(roomCode) — 상대방 소켓 객체를 직접 가져와 join 호출
     socketio.server.enter_room(target_sid, code, namespace='/')
-    room['users'].append({'id': target_sid, 'nickname': approved_nickname})
+    # BUG-3-S1: IP 필드 포함 — nickname_check의 재연결 판별(동일 IP 여부)에 필요
+    ip = socket_sessions.get(target_sid, {}).get('ip', 'unknown')
+    room['users'].append({'id': target_sid, 'nickname': approved_nickname, 'ip': ip})
 
     # 세션 업데이트
     if target_sid in socket_sessions:
@@ -403,12 +468,8 @@ def on_approve_join(data):
     # 방 전체에 입장 알림 (승인된 사람 제외)
     emit('user-joined', {'nickname': approved_nickname}, to=code, skip_sid=target_sid)
 
-    # 최신 참여자 목록 브로드캐스트
-    users_list = [u['nickname'] for u in room['users']]
-    emit('room-users', {
-        'count': len(room['users']),
-        'users': users_list,
-    }, to=code)
+    # 최신 참여자 목록 브로드캐스트 (hostNickname 포함 — BUG-C3/H4)
+    emit('room-users', _build_room_users_payload(room), to=code)
 
     # 승인된 사용자에게 채팅 이력 전송
     if room.get('messages'):
@@ -429,9 +490,14 @@ def on_deny_join(data):
     if room['host_sid'] != request.sid:
         return
 
-    target_sid = data.get('sid')
-    # 대기열에서 제거
-    room['wait_list'] = [w for w in room['wait_list'] if w['id'] != target_sid]
+    # BUG-C4: SID 대신 닉네임 기반으로 검색 — 재연결 후 SID 불일치 방지
+    target_nick = data.get('nickname')
+    waiting = next((w for w in room['wait_list'] if w['nickname'] == target_nick), None)
+    if not waiting:
+        return
+
+    target_sid = waiting['id']  # 현재 실제 SID 사용
+    room['wait_list'] = [w for w in room['wait_list'] if w['nickname'] != target_nick]
 
     # 거절된 사용자에게 알림 → 클라이언트가 거절 화면 표시
     emit('join-denied', {}, to=target_sid)
@@ -467,8 +533,14 @@ def on_kick_user(data):
     # 참여자 목록에서 제거
     room['users'] = [u for u in room['users'] if u['id'] != target_sid]
 
+    # BUG-C2: 강퇴 블랙리스트에 추가 — 재입장 방지
+    room.setdefault('banned', set()).add(target_nick)
+
     # pending_leaves 유예 대기 중이면 취소
     pending_leaves.pop((target_nick, code), None)
+
+    # BUG-H3: 타이핑 표시자 정리 — 강퇴 시 타이핑 중이었으면 영구 표시 방지
+    socketio.emit('user-stop-typing', {'nickname': target_nick}, to=code)
 
     # 강퇴된 사용자에게 알림 → 클라이언트가 홈으로 이동
     emit('kicked', {}, to=target_sid)
@@ -476,16 +548,11 @@ def on_kick_user(data):
     # 소켓 방에서 퇴장
     socketio.server.leave_room(target_sid, code, namespace='/')
 
-    # 방 전체에 퇴장 알림 및 최신 참여자 목록 브로드캐스트
+    # 방 전체에 퇴장 알림 및 최신 참여자 목록 브로드캐스트 (hostNickname 포함 — BUG-H4)
     socketio.emit('user-left', {'nickname': target_nick}, to=code)
-    users_list = [u['nickname'] for u in room['users']]
-    socketio.emit('room-users', {
-        'count': len(room['users']),
-        'users': users_list,
-    }, to=code)
-
-    # 방이 비면 삭제
-    if not room['users']:
+    if room['users']:
+        socketio.emit('room-users', _build_room_users_payload(room), to=code)
+    else:
         del rooms[code]
 
 
@@ -498,10 +565,10 @@ def on_send_message(data):
     if not code or code not in rooms:
         return
 
-    text      = data.get('text', '')
+    text = data.get('text', '').strip()
 
-    # BUG-02: 서버 측 메시지 길이 검증 — 클라이언트 우회 방지
-    if len(text) > 1000:
+    # BUG-M1: 빈 메시지 및 길이 검증 — 클라이언트 우회 방지
+    if not text or len(text) > 1000:
         return
 
     timestamp = datetime.now().strftime('%H:%M')
@@ -565,8 +632,14 @@ def on_send_file(data):
     data_url  = data.get('dataUrl', '')
     timestamp = datetime.now().strftime('%H:%M')
 
+    # BUG-3-S2: 서버 측 파일 크기 검증 — 클라이언트 우회 방지
+    # 5MB 바이너리 → base64 인코딩 시 약 6.67MB, 7MB를 상한으로 설정
+    # max_http_buffer_size(10MB) 이내이지만 서버에서 추가 방어
+    if len(data_url) > 7 * 1024 * 1024:
+        return
+
     # 같은 방의 모든 클라이언트에게 파일 데이터 브로드캐스트
-    # Base64 dataUrl을 그대로 전달 — 서버는 저장하지 않음 (메모리에도 남지 않음)
+    # Base64 dataUrl을 그대로 전달
     emit('receive-file', {
         'nickname':  nickname,
         'filename':  filename,
@@ -575,18 +648,41 @@ def on_send_file(data):
         'timestamp': timestamp,
     }, to=code)
 
-    # 파일 이력 저장 — 재연결 시 이전 파일도 복구 가능
+    # 파일 이력 저장 — 재연결 시 파일 복원 가능
+    # BUG-3-S2 수정으로 서버 측 7MB 상한이 보장되므로
+    # MAX_HISTORY(100)개 × 최대 ~7MB = 최대 ~700MB → 메모리 허용 범위로 수용
     room = rooms[code]
     room['messages'].append({
         'type':      'file',
         'nickname':  nickname,
         'filename':  filename,
         'mimeType':  mime_type,
-        'dataUrl':   data_url,
+        'dataUrl':   data_url,  # 이력에 포함 — 재연결 시 파일 표시 가능
         'timestamp': timestamp,
     })
     if len(room['messages']) > MAX_HISTORY:
         room['messages'].pop(0)
+
+
+@socketio.on('leave-room')
+def on_leave_room():
+    """사용자가 나가기 버튼을 확인했을 때 클라이언트가 명시적으로 발송하는 이벤트.
+    on_disconnect와 달리 30분 유예 없이 즉시 퇴장 처리 — 나간 사람이 참여자 목록에
+    남아있는 문제(호스트 포함) 방지.
+    Node.js: socket.on('leave-room', () => { doLeave(socket); })
+    """
+    session  = socket_sessions.get(request.sid, {})
+    code     = session.get('room_code')
+    nickname = session.get('nickname')
+    if not code or code not in rooms:
+        return
+    # 이미 예약된 pending leave 타이머가 있으면 취소
+    leave_key = (nickname, code)
+    if leave_key in pending_leaves:
+        _, gt = pending_leaves.pop(leave_key)
+        gt.cancel()
+    # 유예 없이 즉시 퇴장
+    _do_leave(nickname, code, request.sid)
 
 
 @socketio.on('disconnect')
@@ -612,13 +708,42 @@ def on_disconnect():
         _, old_gt = pending_leaves[leave_key]
         old_gt.cancel()
 
-    # 15초 유예 후 퇴장 처리 — 백그라운드 복귀 시 on_join_room에서 취소됨
-    # Node.js: const timer = setTimeout(() => doLeave(...), 15000); leaveTimers.set(key, timer)
-    gt = eventlet.spawn_after(15, _do_leave, nickname, code, request.sid)
+    # 30분(1800초) 유예 후 퇴장 처리 — 재연결 시 on_join_room에서 취소됨
+    # Node.js: const timer = setTimeout(() => doLeave(...), 1800000); leaveTimers.set(key, timer)
+    gt = eventlet.spawn_after(1800, _do_leave, nickname, code, request.sid)
     pending_leaves[leave_key] = (request.sid, gt)
 
 
 if __name__ == '__main__':
+    import sys, signal
+
+    PID_FILE = '/tmp/talkbridge.pid'
+
+    # 이미 실행 중인 인스턴스가 있으면 강제 종료 — 중복 프로세스 방지
+    # eventlet은 SO_REUSEPORT를 사용해 같은 포트에 여러 프로세스 바인딩이 가능하므로
+    # PID 파일로 단일 인스턴스를 보장해야 함
+    if os.path.exists(PID_FILE):
+        try:
+            old_pid = int(open(PID_FILE).read().strip())
+            if old_pid != os.getpid():
+                os.kill(old_pid, signal.SIGTERM)
+                import time; time.sleep(0.5)
+        except (ProcessLookupError, ValueError):
+            pass  # 이미 종료된 프로세스
+
+    with open(PID_FILE, 'w') as f:
+        f.write(str(os.getpid()))
+
+    def _cleanup(sig, frame):
+        try:
+            os.remove(PID_FILE)
+        except FileNotFoundError:
+            pass
+        sys.exit(0)
+
+    signal.signal(signal.SIGTERM, _cleanup)
+    signal.signal(signal.SIGINT, _cleanup)
+
     debug = os.environ.get('FLASK_DEBUG', '0') == '1'
     print(f'TalkBridge 서버 실행 중: http://localhost:{PORT}')
     socketio.run(app, host='0.0.0.0', port=PORT, debug=debug)

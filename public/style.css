@@ -731,6 +731,21 @@ input[type="text"]:focus {
   gap: 8px;
 }
 
+/* 초대 버튼 — 참여자 패널 하단 고정 */
+.btn-invite {
+  margin: 0 12px 12px;
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  background: var(--accent, #4f46e5);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.btn-invite:hover { opacity: 0.88; }
+
 /* 참여자 항목 태그 */
 .participant-tag {
   display: flex;

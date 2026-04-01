@@ -1,3 +1,4 @@
+import os
 import random
 import string
 import io
@@ -27,6 +28,17 @@ def get_lan_ip() -> str:
     except Exception:
         return '127.0.0.1'  # 감지 실패 시 localhost 폴백
 
+def get_request_ip() -> str:
+    """HTTP 요청에서 실제 클라이언트 IP를 추출합니다.
+    Cloudflare 터널: CF-Connecting-IP → X-Forwarded-For → remote_addr 순으로 시도합니다.
+    """
+    ip = (
+        request.headers.get('CF-Connecting-IP') or
+        request.headers.get('X-Forwarded-For', '')
+    ).split(',')[0].strip()
+    return ip or request.remote_addr or 'unknown'
+
+
 blueprint = Blueprint('room', __name__)
 
 
@@ -55,6 +67,7 @@ def create_room():
         'host_sid':   None,       # 방장(호스트) 소켓 ID — join-room 시 첫 번째 또는 isHost=True인 사람
         'wait_list':  [],         # 승인 대기 중인 사용자 목록 [{id: sid, nickname: str}]
         'messages':   [],         # 채팅·파일 이력 (최대 MAX_HISTORY개) — 재연결 시 클라이언트에 재전송
+        'banned':     set(),      # BUG-C2: 강퇴된 닉네임 블랙리스트 — 재입장 방지
     }
 
     return jsonify({'code': code, 'secret': is_secret})
@@ -74,6 +87,35 @@ def set_room_secret(code):
     rooms[code]['secret'] = secret
 
     return jsonify({'code': code, 'secret': secret})
+
+
+@blueprint.route('/<code>/nickname-check')
+def nickname_check(code):
+    """BUG-C1: 닉네임 중복 사전 체크 — join.html에서 입장 전 호출
+    사용 중인 닉네임이면 available=False, 강퇴된 닉네임이면 reason='banned' 반환
+    """
+    code = code.upper()
+    if code not in rooms:
+        return jsonify({'available': False, 'reason': 'room_not_found'}), 404
+
+    nickname = request.args.get('nickname', '').strip()
+    if not nickname:
+        return jsonify({'available': False, 'reason': 'invalid'}), 400
+
+    room = rooms[code]
+
+    if nickname in room.get('banned', set()):
+        return jsonify({'available': False, 'reason': 'banned'})
+
+    existing = next((u for u in room['users'] if u['nickname'] == nickname), None)
+    if existing:
+        # 같은 IP에서 같은 닉네임 → 새로고침·재연결로 간주하여 통과
+        # 다른 IP에서 같은 닉네임 → 진짜 중복으로 차단
+        if existing.get('ip') == get_request_ip():
+            return jsonify({'available': True})
+        return jsonify({'available': False, 'reason': 'taken'})
+
+    return jsonify({'available': True})
 
 
 @blueprint.route('/<code>')
@@ -98,18 +140,29 @@ def get_qr(code):
     if code not in rooms:
         return jsonify({'error': '방을 찾을 수 없습니다'}), 404
 
-    host = request.host  # 예: "localhost:3000" 또는 "192.168.1.100:3000"
+    # BUG-L1: PUBLIC_URL 환경변수가 설정된 경우 QR에 해당 URL 사용 (외부망 공유용)
+    # 예: PUBLIC_URL=https://myserver.com → QR = https://myserver.com/room/CODE/join
+    public_url = os.environ.get('PUBLIC_URL', '').rstrip('/')
+    if public_url:
+        url = f'{public_url}/room/{code}/join'
+    else:
+        host = request.host  # 예: "localhost:3000" 또는 "tuner-xxx.trycloudflare.com"
 
-    # localhost나 127.0.0.1로 접근한 경우 → 실제 LAN IP로 교체
-    # 다른 기기에서 QR 스캔 시 로컬호스트로 연결되는 문제 방지
-    # Node.js에서는 동일하게 req.hostname을 확인 후 교체합니다.
-    hostname = host.split(':')[0]
-    port     = host.split(':')[1] if ':' in host else '80'
+        hostname = host.split(':')[0]
+        port     = host.split(':')[1] if ':' in host else None
 
-    if hostname in ('localhost', '127.0.0.1'):
-        hostname = get_lan_ip()
-
-    url = f'http://{hostname}:{port}/room/{code}/join'
+        if hostname in ('localhost', '127.0.0.1'):
+            # LAN 직접 접속 — 실제 LAN IP + 포트로 QR 생성
+            hostname = get_lan_ip()
+            url = f'http://{hostname}:{port or "3000"}/room/{code}/join'
+        else:
+            # Cloudflare 터널 등 외부 도메인 — X-Forwarded-Proto로 스킴 감지
+            # Cloudflare는 항상 HTTPS이므로 포트 없이 https:// 사용
+            scheme = request.headers.get('X-Forwarded-Proto', 'http')
+            if port:
+                url = f'{scheme}://{hostname}:{port}/room/{code}/join'
+            else:
+                url = f'{scheme}://{hostname}/room/{code}/join'
 
     qr_image = qrcode.make(url)
     buf = io.BytesIO()

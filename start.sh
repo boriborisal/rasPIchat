@@ -23,4 +23,11 @@ if [ -f ".env" ]; then
     set +a                  # 자동 export 해제
 fi
 
+# 이미 실행 중인 서버가 있으면 종료 (중복 실행 방지)
+if pgrep -f "python server.py" > /dev/null; then
+    echo "기존 서버 종료 중..."
+    pkill -f "python server.py"
+    sleep 1
+fi
+
 python server.py

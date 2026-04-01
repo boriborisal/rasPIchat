@@ -16,7 +16,15 @@
       <p style="color:#888; font-size:0.85rem;" data-i18n="roomCodeText">Room Code</p>
       <div class="room-code" id="room-code">------</div>
       <div class="qr-wrap">
-        <img id="qr-img" src="" alt="Loading QR code...">
+        <!-- QR 로딩 중 스피너 -->
+        <div id="qr-spinner" style="width:200px; height:200px; display:flex;
+             align-items:center; justify-content:center; margin:0 auto;">
+          <div style="width:36px; height:36px; border:4px solid #e0e0e0;
+               border-top-color:#4f46e5; border-radius:50%;
+               animation:spin 0.8s linear infinite;"></div>
+        </div>
+        <!-- 실제 QR 이미지 — src는 JS에서 onload/onerror 설정 후 주입 -->
+        <img id="qr-img" alt="QR code" style="display:none;">
       </div>
       <p style="color:#aaa; font-size:0.8rem;" data-i18n="qrHint">Scan QR code to join instantly</p>
     </div>
@@ -32,17 +40,45 @@
     // 저장된 언어로 UI 즉시 적용
     applyStoredLang();
 
-    // BUG-15: QR 이미지 로드 실패 처리
-    const qrImg = document.getElementById('qr-img');
-    qrImg.src = `/api/room/${code}/qr`;
-    qrImg.onerror = () => {
+    // QR 이미지 로드 — onload/onerror를 src 설정 전에 붙여야
+    // 이미지가 캐시돼 있어도 핸들러가 반드시 호출됨
+    const qrImg     = document.getElementById('qr-img');
+    const qrSpinner = document.getElementById('qr-spinner');
+
+    function showQrError() {
+      qrSpinner.style.display = 'none';
       qrImg.style.display = 'none';
       const dict = PAGE_I18N[localStorage.getItem('translateLang')] || PAGE_I18N['en'];
       const err = document.createElement('p');
-      err.textContent = dict.qrError;
+      err.textContent = dict.qrError || 'Failed to load QR code.';
       err.style.cssText = 'color:#ef4444; font-size:0.85rem; margin-top:8px;';
-      qrImg.parentNode.insertBefore(err, qrImg.nextSibling);
+      qrImg.parentNode.appendChild(err);
+    }
+
+    // onload/onerror를 src 설정 전에 등록해야 캐시된 경우에도 핸들러 호출 보장
+    // 실패 시 최대 5회 재시도 (0.8초 간격) — 서버 다중 프로세스 문제 등 일시 오류 대비
+    let qrRetry = 0;
+    const QR_MAX_RETRY = 5;
+
+    function tryLoadQr() {
+      // ?t= 쿼리로 브라우저 캐시 우회 — 재시도마다 새 요청 보장
+      qrImg.src = `/api/room/${code}/qr?t=${Date.now()}`;
+    }
+
+    qrImg.onload = () => {
+      qrSpinner.style.display = 'none';
+      qrImg.style.display     = 'inline-block'; // text-align:center 센터링에 inline 필요
     };
+    qrImg.onerror = () => {
+      if (qrRetry < QR_MAX_RETRY) {
+        qrRetry++;
+        setTimeout(tryLoadQr, 800);
+      } else {
+        showQrError();
+      }
+    };
+
+    tryLoadQr();
 
     // Start Chat: 호스트 플래그 저장 후 join으로 이동
     document.getElementById('btn-start').addEventListener('click', () => {

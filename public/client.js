@@ -11,7 +11,8 @@
 const nickname = sessionStorage.getItem('nickname');
 const roomCode = sessionStorage.getItem('roomCode');
 // host.html에서 sessionStorage.setItem('isHost', 'true')로 설정됨
-const isHost   = sessionStorage.getItem('isHost') === 'true';
+// BUG-C3/H4: let으로 선언 — room-users 이벤트의 hostNickname으로 서버 기준 동기화
+let isHost   = sessionStorage.getItem('isHost') === 'true';
 
 if (!nickname || !roomCode) {
   location.href = '/';
@@ -75,6 +76,8 @@ const I18N = {
     kickTitle:    name => `Kick ${name}?`,
     kickCancel:   'Cancel',
     kickConfirm:  'Kick',
+    connLost:      '⚠ Connection lost. Trying to reconnect…',
+    roomEnded:     'The room has ended. Redirecting home…',
   },
   'ko': {
     usersOnline:  n   => `${n}명 참여 중`,
@@ -113,6 +116,8 @@ const I18N = {
     kickTitle:    name => `${name}님을 강퇴하시겠습니까?`,
     kickCancel:   '취소',
     kickConfirm:  '강퇴',
+    connLost:      '⚠ 연결이 끊겼습니다. 재연결 중…',
+    roomEnded:     '방이 종료되었습니다. 홈으로 이동합니다…',
   },
   'ja': {
     usersOnline:  n   => `${n}人参加中`,
@@ -151,6 +156,8 @@ const I18N = {
     kickTitle:    name => `${name}を追放しますか？`,
     kickCancel:   'キャンセル',
     kickConfirm:  '追放',
+    connLost:      '⚠ 接続が切れました。再接続中…',
+    roomEnded:     'ルームが終了しました。ホームに移動します…',
   },
   'zh-CN': {
     usersOnline:  n   => `${n}人在线`,
@@ -189,6 +196,8 @@ const I18N = {
     kickTitle:    name => `确定踢出 ${name}？`,
     kickCancel:   '取消',
     kickConfirm:  '踢出',
+    connLost:      '⚠ 连接已断开。正在重新连接…',
+    roomEnded:     '房间已结束。正在跳转主页…',
   },
   'zh-TW': {
     usersOnline:  n   => `${n}人在線`,
@@ -227,6 +236,8 @@ const I18N = {
     kickTitle:    name => `確定踢出 ${name}？`,
     kickCancel:   '取消',
     kickConfirm:  '踢出',
+    connLost:      '⚠ 連線中斷。正在重新連線…',
+    roomEnded:     '房間已結束。正在跳轉首頁…',
   },
   'es': {
     usersOnline:  n   => `${n} en línea`,
@@ -265,6 +276,8 @@ const I18N = {
     kickTitle:    name => `¿Expulsar a ${name}?`,
     kickCancel:   'Cancelar',
     kickConfirm:  'Expulsar',
+    connLost:      '⚠ Conexión perdida. Intentando reconectar…',
+    roomEnded:     'La sala ha terminado. Redirigiendo al inicio…',
   },
   'fr': {
     usersOnline:  n   => `${n} en ligne`,
@@ -303,6 +316,8 @@ const I18N = {
     kickTitle:    name => `Exclure ${name} ?`,
     kickCancel:   'Annuler',
     kickConfirm:  'Exclure',
+    connLost:      '⚠ Connexion perdue. Tentative de reconnexion…',
+    roomEnded:     'Le salon est terminé. Retour à l\'accueil…',
   },
   'de': {
     usersOnline:  n   => `${n} online`,
@@ -341,6 +356,8 @@ const I18N = {
     kickTitle:    name => `${name} rauswerfen?`,
     kickCancel:   'Abbrechen',
     kickConfirm:  'Rauswerfen',
+    connLost:      '⚠ Verbindung verloren. Versuche zu reconnecten…',
+    roomEnded:     'Der Raum wurde beendet. Zurück zur Startseite…',
   },
   'ru': {
     usersOnline:  n   => `${n} онлайн`,
@@ -379,6 +396,8 @@ const I18N = {
     kickTitle:    name => `Выгнать ${name}?`,
     kickCancel:   'Отмена',
     kickConfirm:  'Выгнать',
+    connLost:      '⚠ Соединение потеряно. Повторное подключение…',
+    roomEnded:     'Комната завершена. Переход на главную…',
   },
   'ar': {
     usersOnline:  n   => `${n} متصل`,
@@ -417,6 +436,8 @@ const I18N = {
     kickTitle:    name => `طرد ${name}؟`,
     kickCancel:   'إلغاء',
     kickConfirm:  'طرد',
+    connLost:      '⚠ انقطع الاتصال. جارٍ إعادة الاتصال…',
+    roomEnded:     'انتهت الغرفة. جارٍ التوجيه للرئيسية…',
   },
   'pt': {
     usersOnline:  n   => `${n} online`,
@@ -455,6 +476,8 @@ const I18N = {
     kickTitle:    name => `Expulsar ${name}?`,
     kickCancel:   'Cancelar',
     kickConfirm:  'Expulsar',
+    connLost:      '⚠ Conexão perdida. Tentando reconectar…',
+    roomEnded:     'A sala terminou. Redirecionando para a página inicial…',
   },
   'it': {
     usersOnline:  n   => `${n} online`,
@@ -493,6 +516,8 @@ const I18N = {
     kickTitle:    name => `Espellere ${name}?`,
     kickCancel:   'Annulla',
     kickConfirm:  'Espelli',
+    connLost:      '⚠ Connessione persa. Tentativo di riconnessione…',
+    roomEnded:     'La stanza è terminata. Reindirizzamento alla home…',
   },
   'id': {
     usersOnline:  n   => `${n} online`,
@@ -531,6 +556,8 @@ const I18N = {
     kickTitle:    name => `Keluarkan ${name}?`,
     kickCancel:   'Batal',
     kickConfirm:  'Keluarkan',
+    connLost:      '⚠ Koneksi terputus. Mencoba menyambung kembali…',
+    roomEnded:     'Ruangan telah berakhir. Mengarahkan ke beranda…',
   },
   'tr': {
     usersOnline:  n   => `${n} çevrimiçi`,
@@ -569,6 +596,8 @@ const I18N = {
     kickTitle:    name => `${name} atılsın mı?`,
     kickCancel:   'İptal',
     kickConfirm:  'At',
+    connLost:      '⚠ Bağlantı kesildi. Yeniden bağlanmaya çalışılıyor…',
+    roomEnded:     'Oda sona erdi. Ana sayfaya yönlendiriliyor…',
   },
   'pl': {
     usersOnline:  n   => `${n} online`,
@@ -607,6 +636,8 @@ const I18N = {
     kickTitle:    name => `Wyrzucić ${name}?`,
     kickCancel:   'Anuluj',
     kickConfirm:  'Wyrzuć',
+    connLost:      '⚠ Połączenie utracone. Próba ponownego połączenia…',
+    roomEnded:     'Pokój zakończył się. Przekierowywanie do strony głównej…',
   },
   'nl': {
     usersOnline:  n   => `${n} online`,
@@ -645,6 +676,8 @@ const I18N = {
     kickTitle:    name => `${name} verwijderen?`,
     kickCancel:   'Annuleren',
     kickConfirm:  'Verwijderen',
+    connLost:      '⚠ Verbinding verbroken. Opnieuw verbinden…',
+    roomEnded:     'De kamer is beëindigd. Doorsturen naar home…',
   },
   'sv': {
     usersOnline:  n   => `${n} online`,
@@ -683,6 +716,8 @@ const I18N = {
     kickTitle:    name => `Kasta ut ${name}?`,
     kickCancel:   'Avbryt',
     kickConfirm:  'Kasta ut',
+    connLost:      '⚠ Anslutningen bröts. Försöker återansluta…',
+    roomEnded:     'Rummet avslutades. Omdirigerar till startsidan…',
   },
   'uk': {
     usersOnline:  n   => `${n} онлайн`,
@@ -721,6 +756,8 @@ const I18N = {
     kickTitle:    name => `Вигнати ${name}?`,
     kickCancel:   'Скасувати',
     kickConfirm:  'Вигнати',
+    connLost:      '⚠ З\'єднання втрачено. Повторне підключення…',
+    roomEnded:     'Кімната завершена. Перехід на головну…',
   },
 };
 
@@ -735,16 +772,33 @@ function t(lang, key, ...args) {
 // ----- DOM 요소 참조 -----
 document.getElementById('header-code').textContent = roomCode;
 
-const socket          = io(); // Socket.io 연결
+// Cloudflare 터널 환경에서는 polling이 차단되므로 websocket만 사용
+// 로컬(LAN) 환경에서도 websocket이 더 안정적
+const socket          = io({ transports: ['websocket'] });
 
 // BUG-08: 소켓 연결 실패 시 배너 표시, 재연결 성공 시 숨김
+const connectErrorBanner = document.getElementById('connect-error-banner');
+
 socket.on('connect_error', () => {
-  const banner = document.getElementById('connect-error-banner');
-  if (banner) banner.style.display = 'block';
+  if (connectErrorBanner) {
+    const lang = (langSelect && langSelect.value) || localStorage.getItem('translateLang') || 'en';
+    connectErrorBanner.textContent = t(lang, 'connLost') || '⚠ Connection lost. Trying to reconnect…';
+    connectErrorBanner.style.display = 'block';
+  }
 });
 socket.on('connect', () => {
-  const banner = document.getElementById('connect-error-banner');
-  if (banner) banner.style.display = 'none';
+  if (connectErrorBanner) connectErrorBanner.style.display = 'none';
+});
+
+// 서버 재시작 등으로 방이 사라진 경우 (Invalid session → 재연결 후 join-room 실패)
+// 조용히 실패하는 대신 홈으로 안내
+socket.on('room-not-found', () => {
+  if (connectErrorBanner) {
+    connectErrorBanner.style.display = 'block';
+    const lang = (langSelect && langSelect.value) || localStorage.getItem('translateLang') || 'en';
+    connectErrorBanner.textContent = t(lang, 'roomEnded') || '⚠ Room ended. Redirecting home…';
+  }
+  setTimeout(() => { location.href = '/'; }, 3000);
 });
 const messagesEl      = document.getElementById('messages');
 const msgInput        = document.getElementById('msg-input');
@@ -831,6 +885,7 @@ function renderParticipantsList(users) {
     const nameSpan = document.createElement('span');
     nameSpan.className = 'participant-name';
     // 내 닉네임이면 👤 아이콘, 다른 사람은 💬 아이콘
+    // BUG-3-C1: textContent는 자체 HTML 이스케이프 — escHtml 중복 적용 불필요
     nameSpan.textContent = (name === nickname ? '👤 ' : '💬 ') + name;
     tag.appendChild(nameSpan);
 
@@ -851,6 +906,35 @@ function renderParticipantsList(users) {
 userCountWrap.addEventListener('click', openParticipantsPanel);
 btnClosePanel.addEventListener('click', closeParticipantsPanel);
 participantsBackdrop.addEventListener('click', closeParticipantsPanel);
+
+// =====================================================
+// 초대 QR 오버레이
+// =====================================================
+const inviteOverlay   = document.getElementById('invite-overlay');
+const inviteClose     = document.getElementById('invite-close');
+const inviteQr        = document.getElementById('invite-qr');
+const inviteCodeEl    = document.getElementById('invite-code');
+const btnInvite       = document.getElementById('btn-invite');
+
+// 초대 오버레이 열기: QR 이미지를 서버에서 가져와 표시
+btnInvite.addEventListener('click', () => {
+  inviteCodeEl.textContent = roomCode;
+  inviteQr.src = `/api/room/${roomCode}/qr`;
+  inviteOverlay.style.display = 'flex';
+});
+
+inviteClose.addEventListener('click', () => {
+  inviteOverlay.style.display = 'none';
+  inviteQr.src = '';          // 캐시 해제 불필요하지만 재요청 방지
+});
+
+// 오버레이 배경 클릭 시 닫기
+inviteOverlay.addEventListener('click', (e) => {
+  if (e.target === inviteOverlay) {
+    inviteOverlay.style.display = 'none';
+    inviteQr.src = '';
+  }
+});
 
 // =====================================================
 // 강퇴 확인 모달
@@ -929,6 +1013,10 @@ fetch('/api/languages')
     const saved = sessionStorage.getItem('translateLang') || localStorage.getItem('translateLang') || '';
     if (saved) langSelect.value = saved;
     applyI18n(langSelect.value);
+    // 이슈 3: room-history 메시지가 언어 목록 fetch보다 먼저 도착하면
+    // appendMessage 시점에 langSelect.value가 ''이라 번역이 스킵됨.
+    // 언어 목록 로드 완료 후 이미 렌더링된 메시지를 재번역해 이 타이밍 문제를 해결.
+    if (saved) retranslateAll(saved);
   })
   .catch(() => { /* 언어 로드 실패 시 영어 UI 유지 */ });
 
@@ -1031,11 +1119,24 @@ socket.on('user-left', ({ nickname: who }) => {
 });
 
 // 참여자 수 + 목록 업데이트
-// server.py가 room-users 이벤트에 count(숫자)와 users(닉네임 배열)를 함께 전송
-socket.on('room-users', ({ count, users }) => {
+// server.py가 room-users 이벤트에 count, users(배열), hostNickname을 함께 전송
+socket.on('room-users', ({ count, users, hostNickname }) => {
   currentUserCount = count;
   currentUsers     = Array.isArray(users) ? users : [];
-  const lang       = langSelect.value || 'en';
+
+  // BUG-C3/H4: 호스트 상태를 서버 기준으로 동기화
+  // 호스트 교체(승계) 또는 다음 방에서의 오동작 방지
+  if (hostNickname !== undefined) {
+    const wasHost = isHost;
+    isHost = (hostNickname === nickname);
+    sessionStorage.setItem('isHost', isHost ? 'true' : 'false');
+    // 호스트 권한이 새로 생기면 참여자 목록 재렌더 (강퇴 버튼 표시)
+    if (isHost && !wasHost) {
+      renderParticipantsList(currentUsers);
+    }
+  }
+
+  const lang = langSelect.value || 'en';
   userCountWrap.textContent = t(lang, 'usersOnline', count);
   // 패널이 열려 있으면 목록 즉시 갱신
   if (participantsPanel.classList.contains('open')) {
@@ -1066,10 +1167,28 @@ socket.on('join-denied', () => {
   location.href = '/';
 });
 
-// 강퇴됨: 호스트가 이 사용자를 강퇴함 → 알림 후 메인으로 이동
+// BUG-C1: 닉네임 중복 — 같은 닉네임이 이미 방에 있음
+socket.on('join-nickname-taken', () => {
+  const lang = langSelect.value || 'en';
+  alert(t(lang, 'nickTaken') || 'This nickname is already in use. Please go back and choose a different one.');
+  location.href = '/';
+});
+
+// BUG-C2: 강퇴 블랙리스트에 있음 — 재입장 불가
+socket.on('join-banned', () => {
+  const lang = langSelect.value || 'en';
+  alert(t(lang, 'joinBanned') || 'You have been banned from this room.');
+  location.href = '/';
+});
+
+// 강퇴됨: 호스트가 이 사용자를 강퇴함 → 패널/모달 닫고 알림 후 메인으로 이동
 socket.on('kicked', () => {
+  // BUG-M4: 강퇴 시 열린 패널·모달 먼저 닫기
+  closeParticipantsPanel();
+  closeKickModal();
   const lang = langSelect.value || 'en';
   alert(t(lang, 'kickedMsg'));
+  sessionStorage.removeItem('isHost');
   location.href = '/';
 });
 
@@ -1098,16 +1217,17 @@ function showNextJoinRequest() {
 
   joinRequestModal.classList.add('open');
 
+  // BUG-C4: SID 대신 닉네임으로 전송 — 재연결 후 SID 불일치 방지
   // 승인 버튼: 서버에 approve-join 이벤트 전송
   btnApprove.onclick = () => {
-    socket.emit('approve-join', { sid });
+    socket.emit('approve-join', { nickname: requesterName });
     joinRequestModal.classList.remove('open');
     showNextJoinRequest(); // 다음 요청 처리
   };
 
   // 거절 버튼: 서버에 deny-join 이벤트 전송
   btnDeny.onclick = () => {
-    socket.emit('deny-join', { sid });
+    socket.emit('deny-join', { nickname: requesterName });
     joinRequestModal.classList.remove('open');
     showNextJoinRequest();
   };
@@ -1246,7 +1366,8 @@ function appendMessage({ sender, text, timestamp, isMine }) {
   if (!isMine && !isGrouped) {
     const nickEl = document.createElement('span');
     nickEl.className   = 'nickname';
-    nickEl.textContent = escHtml(sender);
+    // BUG-3-C1: textContent가 자체 이스케이프 수행 — escHtml 중복 적용 시 이중 인코딩 발생
+    nickEl.textContent = sender;
     div.appendChild(nickEl);
   }
 
@@ -1401,21 +1522,30 @@ function dataUrlToBlob(dataUrl) {
 // =====================================================
 // 파일 말풍선 생성 (appendFile)
 // =====================================================
-function appendFile({ sender, filename, mimeType, dataUrl, timestamp, isMine }) {
+function appendFile({ sender, filename, mimeType, dataUrl, timestamp, isMine, noDownload }) {
   const div = document.createElement('div');
   div.className = `msg ${isMine ? 'mine' : 'other'}`;
 
   if (!isMine) {
     const nickEl = document.createElement('span');
     nickEl.className   = 'nickname';
-    nickEl.textContent = escHtml(sender);
+    // BUG-3-C1: textContent 자체 이스케이프 — escHtml 중복 불필요
+    nickEl.textContent = sender;
     div.appendChild(nickEl);
   }
 
   const bubbleEl = document.createElement('div');
   bubbleEl.className = 'bubble bubble-file';
 
-  if (mimeType.startsWith('image/')) {
+  if (noDownload) {
+    // BUG-H2: 이력 복구 시 dataUrl 없는 파일 — 다운로드 불가 표시
+    const info = document.createElement('span');
+    info.className   = 'file-link';
+    info.style.opacity = '0.5';
+    info.style.cursor  = 'default';
+    info.textContent = `📄 ${filename}`;
+    bubbleEl.appendChild(info);
+  } else if (mimeType.startsWith('image/')) {
     const img = document.createElement('img');
     img.src       = dataUrl;
     img.alt       = escHtml(filename);
@@ -1536,9 +1666,10 @@ function escHtml(str) {
 socket.on('room-history', (messages) => {
   if (!Array.isArray(messages) || messages.length === 0) return;
 
-  // 이미 렌더링된 메시지가 없을 때만 이력 삽입 (신규 입장)
-  // 재연결 시에는 화면이 비어 있으므로 항상 삽입
-  if (messagesEl.children.length > 0) return;
+  // 이미 렌더링된 채팅 메시지가 없을 때만 이력 삽입 (신규 입장)
+  // BUG-3-C2: .children.length 체크는 sys-msg(입장 알림)도 포함해 false positive 발생
+  // → .msg 요소(실제 메시지 말풍선)만 확인하도록 수정
+  if (messagesEl.querySelectorAll('.msg').length > 0) return;
 
   // 그룹핑 상태 초기화 — 이력 최초 렌더링
   lastMsgSender = null;
@@ -1553,13 +1684,16 @@ socket.on('room-history', (messages) => {
         isMine:    msg.nickname === nickname,
       });
     } else if (msg.type === 'file') {
+      // BUG-H2: 이력의 파일은 dataUrl이 비어 있음 (메모리 보호)
+      // dataUrl 없이 메타데이터만 표시 (다운로드 불가 표시)
       appendFile({
         sender:    msg.nickname,
         filename:  msg.filename,
         mimeType:  msg.mimeType,
-        dataUrl:   msg.dataUrl,
+        dataUrl:   msg.dataUrl || '',
         timestamp: msg.timestamp,
         isMine:    msg.nickname === nickname,
+        noDownload: !msg.dataUrl,  // dataUrl 없으면 다운로드 불가 표시
       });
     }
   });
@@ -1614,9 +1748,13 @@ if (btnLeave) {
   btnLeave.addEventListener('click', openLeaveModal);
 }
 
-// 확인 → 실제 퇴장
+// 확인 → 실제 퇴장 (BUG-H4: isHost 정리 — 다음 방에서 오동작 방지)
 leaveConfirmBtn.addEventListener('click', () => {
   _leavingConfirmed = true;
+  sessionStorage.removeItem('isHost');
+  // 명시적 퇴장: 서버에 leave-room 이벤트 전송 → 30분 유예 없이 즉시 퇴장 처리
+  // disconnect만 사용하면 30분 동안 참여자 목록에 남아있는 문제(호스트 포함) 발생
+  socket.emit('leave-room');
   socket.disconnect();
   location.href = '/';
 });
