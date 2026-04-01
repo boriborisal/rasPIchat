@@ -912,15 +912,26 @@ input[type="text"]:focus {
 }
 
 /* ================================================================
- * 파일 업로드 로딩 — 업로드 중 버튼 비활성화 표시
+ * 파일 업로드 프로그레스 바 — 입력창 위에 표시
+ * setUploadState(true/false)로 제어
  * ================================================================ */
-.uploading-indicator {
-  display: inline-block;
-  animation: spin 0.8s linear infinite;
+#upload-progress-wrap {
+  padding: 0 12px 4px;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+#upload-progress-bar {
+  height: 3px;
+  border-radius: 3px;
+  background: var(--primary);
+  /* 무한 왕복 애니메이션 — 실제 진행률 미표시(소켓 특성상 불가) */
+  animation: upload-slide 1.4s ease-in-out infinite;
+  transform-origin: left;
+}
+
+@keyframes upload-slide {
+  0%   { transform: scaleX(0);   margin-left: 0;    }
+  50%  { transform: scaleX(0.6); margin-left: 0;    }
+  100% { transform: scaleX(0);   margin-left: 100%; }
 }
 
 /* ================================================================

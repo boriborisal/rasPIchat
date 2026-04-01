@@ -690,6 +690,7 @@ def on_send_file(data):
     if len(room['messages']) > MAX_HISTORY:
         room['messages'].pop(0)
     logger.info(f'[FILE] {nickname} in {code}: {filename} ({mime_type})')
+    return True  # ACK — 클라이언트가 전송 완료를 확인하고 로딩 해제
 
 
 @socketio.on('get-wait-list')

@@ -1490,13 +1490,18 @@ socket.on('user-stop-typing', ({ nickname: who }) => { typingUsers.delete(who); 
 // 파일 전송
 // =====================================================
 
-// 업로드 중 UI 잠금 — 파일 버튼·전송 버튼·입력창 비활성화 + 로딩 표시
+// 업로드 중 UI 잠금 — 파일 버튼·전송 버튼·입력창 비활성화 + 프로그레스 바 표시
+// uploading=true: 프로그레스 바 표시 + 버튼 비활성화
+// uploading=false: 프로그레스 바 숨김 + 버튼 활성화
 function setUploadState(uploading) {
   btnFile.disabled    = uploading;
   btnSend.disabled    = uploading;
   msgInput.disabled   = uploading;
   btnFile.textContent = uploading ? '⏳' : '📎';
   btnFile.title       = uploading ? t(langSelect.value || 'en', 'uploading') : t(langSelect.value || 'en', 'fileAttach');
+
+  const wrap = document.getElementById('upload-progress-wrap');
+  if (wrap) wrap.style.display = uploading ? 'block' : 'none';
 }
 
 function sendFile(file) {
@@ -1513,12 +1518,15 @@ function sendFile(file) {
     // setTimeout(0): 이벤트 루프에 양보 → FileReader 처리 중 대기한
     // 수신 소켓 메시지(다른 사람 채팅)가 먼저 처리되어 화면에 표시됨
     setTimeout(() => {
+      // ACK 콜백 패턴 — 서버가 파일을 수신·브로드캐스트 완료 후 true 반환
+      // setUploadState(false)를 ACK 이후에 호출해야 프로그레스 바가 실제 전송 동안 유지됨
       socket.emit('send-file', {
         filename: file.name,
         mimeType: file.type || 'application/octet-stream',
         dataUrl:  e.target.result,
+      }, () => {
+        setUploadState(false);
       });
-      setUploadState(false);
     }, 0);
   };
   reader.onerror = () => {
