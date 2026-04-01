@@ -1979,16 +1979,25 @@ function escHtml(str) {
 socket.on('room-history', (messages) => {
   if (!Array.isArray(messages) || messages.length === 0) return;
 
-  // 이미 렌더링된 채팅 메시지가 없을 때만 이력 삽입 (신규 입장)
+  // 재연결 후 누락 메시지 복원:
+  // 이미 렌더링된 .msg 수(= 이전에 받은 이력 수)만큼 앞을 건너뛰고
+  // 그 이후 메시지만 추가 — 카메라 전환 등으로 앱 전환 후 복귀 시 누락 없음
+  //
   // BUG-3-C2: .children.length 체크는 sys-msg(입장 알림)도 포함해 false positive 발생
   // → .msg 요소(실제 메시지 말풍선)만 확인하도록 수정
-  if (messagesEl.querySelectorAll('.msg').length > 0) return;
+  const existingCount = messagesEl.querySelectorAll('.msg').length;
 
-  // 그룹핑 상태 초기화 — 이력 최초 렌더링
-  lastMsgSender = null;
-  lastMsgMinute = null;
+  if (existingCount === 0) {
+    // 신규 입장: 그룹핑 상태 초기화 후 전체 렌더링
+    lastMsgSender = null;
+    lastMsgMinute = null;
+  }
 
-  messages.forEach(msg => {
+  // 이미 표시된 메시지는 건너뜀 — 재연결 시 누락분만 추가
+  const newMessages = messages.slice(existingCount);
+  if (newMessages.length === 0) return;
+
+  newMessages.forEach(msg => {
     if (msg.type === 'message') {
       appendMessage({
         sender:    msg.nickname,
@@ -2022,10 +2031,17 @@ socket.on('room-history', (messages) => {
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
     if (!socket.connected) {
+      // 연결 끊김 → 재연결 (join-room 재전송 → room-history 수신)
       socket.connect();
-    } else if (isHost) {
-      // 탭 복귀 시 대기 큐 재요청 — 백그라운드/카메라 사용 중 놓친 승인 요청 복구
-      socket.emit('get-wait-list');
+    } else {
+      // 연결 살아있지만 iOS 등에서 이벤트 누락 가능 → join-room 재전송으로 이력 동기화
+      // room-history 핸들러가 existingCount 이후분만 추가하므로 중복 없음
+      socket.emit('join-room', { code: roomCode, nickname, isHost });
+
+      if (isHost) {
+        // 탭 복귀 시 대기 큐 재요청 — 백그라운드/카메라 사용 중 놓친 승인 요청 복구
+        socket.emit('get-wait-list');
+      }
     }
   }
 });
