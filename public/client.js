@@ -1209,7 +1209,7 @@ function showNextJoinRequest() {
     return;
   }
   processingRequest = true;
-  const { sid, nickname: requesterName } = joinRequestQueue.shift(); // 큐에서 첫 번째 항목 꺼내기
+  const { nickname: requesterName } = joinRequestQueue.shift(); // 큐에서 첫 번째 항목 꺼내기
 
   const lang = langSelect.value || 'en';
   joinRequestName.textContent = t(lang, 'joinRequest', requesterName);
@@ -1782,3 +1782,17 @@ langSelect.addEventListener('change', () => {
 // 새로고침(F5)과 탭 닫기를 구분할 수 없어 새로고침마다 "사이트 떠나기?" 팝업이 떠
 // 오히려 방에서 나가는 느낌을 주는 UX 문제 발생
 // → 헤더의 🚪 나가기 버튼 모달이 명시적 퇴장 확인의 유일한 진입점
+
+// =====================================================
+// 뒤로가기(기기 물리/제스처 버튼) 인터셉트
+// =====================================================
+// history.pushState로 현재 URL을 히스토리 스택에 한 번 더 쌓아두면
+// 뒤로가기 시 실제 이전 페이지 대신 popstate 이벤트가 발생함.
+// 새로고침(F5)·탭 닫기는 popstate를 발생시키지 않으므로 뒤로가기만 정확히 감지.
+history.pushState(null, '', location.href);
+window.addEventListener('popstate', () => {
+  // 실제 이동을 막기 위해 즉시 state를 다시 push
+  history.pushState(null, '', location.href);
+  // 나가기 버튼과 동일한 확인 모달 표시
+  openLeaveModal();
+});
